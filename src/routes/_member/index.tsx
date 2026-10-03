@@ -1,16 +1,11 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { authClient } from '../../auth/auth-client'
+import { createFileRoute } from '@tanstack/react-router'
+import { useSignOut } from '../../auth/use-sign-out'
 
 export const Route = createFileRoute('/_member/')({ component: QuickView })
 
 function QuickView() {
   const { member } = Route.useRouteContext()
-  const router = useRouter()
-
-  async function signOut() {
-    await authClient.signOut()
-    await router.navigate({ to: '/sign-in' })
-  }
+  const signOut = useSignOut()
 
   return (
     <main>
@@ -21,6 +16,7 @@ function QuickView() {
           GitHub: <a href={member.githubUrl}>{member.githubUrl}</a>
         </p>
       )}
+      <p>Discord: {member.discordHandle}</p>
       <p>The Directory is coming soon.</p>
       <button type="button" onClick={signOut}>
         Sign out

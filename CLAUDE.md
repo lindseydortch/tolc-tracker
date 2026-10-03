@@ -34,6 +34,10 @@ Before writing any code for a ticket (including under `/implement`), check the c
 - Otherwise, run `git checkout main && git pull`, then `gh issue develop <n> --name feat/<n>-<slug> --base main --checkout`. This creates the branch and links it to the issue.
 - Never commit ticket work directly to `main`.
 
+## Commit messages and PR descriptions
+
+End every commit message and PR description with its own body text. Leave out all Claude attribution: no `Co-Authored-By: Claude` or `Claude-Session` trailers, no "Generated with Claude Code" footer, no session links. This applies to every commit and PR in this project, including squash-merge messages.
+
 ## Ticket lifecycle
 
 1. **Build**: `/implement #<n>` on the ticket's branch (TDD, typecheck, tests).
