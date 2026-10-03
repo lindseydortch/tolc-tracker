@@ -15,7 +15,7 @@ import {
   DiscordUnavailableError,
   type MembershipChecker,
 } from './membership-checker'
-import { findSkill, findTargetRole } from './catalog-entries'
+import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
 import {
@@ -24,7 +24,7 @@ import {
   type Catalogs,
   type PreferredStack,
 } from './profile'
-import { emptySearch, rankSearchResults, type DirectorySearch } from './search'
+import { rankSearchResults, type DirectorySearch } from './search'
 
 export type StackLayer = (typeof skills.$inferSelect)['suggestedLayer'] & {}
 
@@ -382,39 +382,18 @@ export function createDirectory(
       return found.length > 0
     },
 
-    // Every complete, non-hidden Member, whatever their Job Search Status.
-    // Secondary Skills stay off the cards; they're on the profile page.
-    async directoryEntries(): Promise<DirectoryEntry[]> {
-      return directory.searchDirectory(emptySearch)
-    },
-
     // The Directory Members matching `search`, best first: see
-    // `rankSearchResults`. With nothing chosen, the whole Directory.
+    // `rankSearchResults`. With nothing chosen, every complete, non-hidden
+    // Member, whatever their Job Search Status.
     async searchDirectory(search: DirectorySearch): Promise<DirectoryEntry[]> {
-      const resolve = (
-        typed: string[],
-        find: (db: Db, typed: string) => Promise<{ name: string } | null>,
-      ) =>
-        Promise.all(
-          typed
-            .filter((name) => normalizeName(name))
-            .map(async (name) => (await find(db, name))?.name ?? null),
-        )
       const profiles = await completeProfiles(eq(members.hidden, false))
-      const ranked = rankSearchResults(
-        profiles.map((profile) => ({
-          ...profile,
-          primarySkills: Object.values(profile.preferredStack),
-        })),
-        {
-          ...search,
-          skills: await resolve(search.skills, findSkill),
-          targetRoles: await resolve(search.targetRoles, findTargetRole),
-        },
-      )
-      return ranked.map(
-        ({ secondarySkills: _, primarySkills: __, ...entry }) => entry,
-      )
+      const ranked = rankSearchResults(profiles, {
+        ...search,
+        skills: await canonicalSkillNames(db, search.skills),
+        targetRoles: await canonicalTargetRoleNames(db, search.targetRoles),
+      })
+      // Secondary Skills stay off the cards; they're on the profile page.
+      return ranked.map(({ secondarySkills: _, ...entry }) => entry)
     },
 
     // Null unless the Member is in the Directory, so a Hidden Member or an

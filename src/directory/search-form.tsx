@@ -36,6 +36,7 @@ export function SearchForm({
     >
       <NamesField
         legend="Skills"
+        noun="Skill"
         hint="Members must have every Skill chosen."
         catalog={catalogs.skills}
         chosen={draft.skills}
@@ -43,6 +44,7 @@ export function SearchForm({
       />
       <NamesField
         legend="Target Roles"
+        noun="Target Role"
         hint="Members with any of these."
         catalog={catalogs.roles}
         chosen={draft.targetRoles}
@@ -81,12 +83,15 @@ export function SearchForm({
 // Skills or Target Roles, picked one at a time from a Catalog by name or Alias.
 function NamesField({
   legend,
+  noun,
   hint,
   catalog,
   chosen,
   onChange,
 }: {
   legend: string
+  // What one chosen name is, such as "Skill".
+  noun: string
   hint: string
   catalog: { name: string; aliases: string[] }[]
   chosen: string[]
@@ -127,7 +132,7 @@ function NamesField({
         ))}
       </datalist>
       <label>
-        Add a {legend === 'Skills' ? 'Skill' : 'Target Role'}{' '}
+        Add a {noun}{' '}
         <input
           list={listId}
           value={typed}

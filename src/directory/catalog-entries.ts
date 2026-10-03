@@ -22,8 +22,18 @@ export function findSkill(db: Db, typed: string): Promise<CatalogEntryRef | null
   return findEntry(skillStore(db, null), typed)
 }
 
-export function findTargetRole(db: Db, typed: string): Promise<CatalogEntryRef | null> {
-  return findEntry(targetRoleStore(db), typed)
+// The canonical Skill Catalog name for each typed name or Alias, or null
+// where the Catalog has none. Blank names are dropped.
+export function canonicalSkillNames(db: Db, typed: string[]): Promise<(string | null)[]> {
+  return canonicalNames(skillStore(db, null), typed)
+}
+
+// The same as `canonicalSkillNames`, for the Role Catalog.
+export function canonicalTargetRoleNames(
+  db: Db,
+  typed: string[],
+): Promise<(string | null)[]> {
+  return canonicalNames(targetRoleStore(db), typed)
 }
 
 // The Skill a typed name stands for, created in the Skill Catalog if it
@@ -52,6 +62,14 @@ async function findEntry(
   if (byName) return byName
   const [byAlias] = await store.byAlias(key)
   return byAlias ?? null
+}
+
+function canonicalNames(store: CatalogStore, typed: string[]): Promise<(string | null)[]> {
+  return Promise.all(
+    typed
+      .filter((name) => normalizeName(name))
+      .map(async (name) => (await findEntry(store, name))?.name ?? null),
+  )
 }
 
 async function findOrCreateEntry(
