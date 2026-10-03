@@ -23,3 +23,23 @@ The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-hu
 ### Domain docs
 
 Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Branching
+
+Each ticket from #2 to #10 gets its own branch and merges to `main` through its own PR. Tickets #11 (Design pass) and #12 (Deploy) don't follow this rule.
+
+Before writing any code for a ticket (including under `/implement`), check the current branch:
+
+- If it is already `feat/<n>-*` for this ticket, continue.
+- Otherwise, run `git checkout main && git pull`, then `gh issue develop <n> --name feat/<n>-<slug> --base main --checkout`. This creates the branch and links it to the issue.
+- Never commit ticket work directly to `main`.
+
+## Ticket lifecycle
+
+1. **Build**: `/implement #<n>` on the ticket's branch (TDD, typecheck, tests).
+2. **Review**: `/code-review` against `main`. Fix the findings the Admin accepts.
+3. **Commit and open a PR**: commit to the ticket branch, push, and open a PR to `main` whose body says `Closes #<n>`. Stop there: the agent never merges.
+4. **Approve and merge**: the Admin reviews the PR on GitHub and squash-merges it into `main`, which closes the issue and deletes the branch.
+5. **Next ticket**: every new ticket branch starts from the freshly pulled `main`.
+
+Don't start a ticket until every ticket that blocks it is merged into `main`. Never branch from another ticket's unmerged branch. Tickets that unblock at the same time (such as #7 and #8 after #6) can run in parallel, each on its own branch from `main`.
