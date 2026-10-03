@@ -67,8 +67,12 @@ A yes/no on a Member's profile saying whether they know TypeScript, shown on the
 _Avoid_: TS flag, prefers TypeScript
 
 **Link**:
-A URL on a Member's profile. LinkedIn and GitHub are required. Resume, Portfolio, Bluesky, and free-form labeled Links are optional.
+A URL on a Member's profile. LinkedIn and GitHub are required. Resume, Portfolio, Bluesky, and Custom Links are optional.
 _Avoid_: social, URL
+
+**Custom Link**:
+A Link with a label the Member writes themselves, such as a project or a talk. A Member can have several.
+_Avoid_: free-form link, other link
 
 **Skill**:
 One canonical technology, such as "React", that Primary and Secondary Skills point to.

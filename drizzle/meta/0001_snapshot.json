@@ -1,5 +1,5 @@
 {
-  "id": "b6fde508-9363-4871-8f7a-c03b1603bc92",
+  "id": "dfd891c7-5cb9-403e-bad9-e7698980bc60",
   "prevId": "de6bbd66-01ed-4a18-b4ff-ddff6a7c7b69",
   "version": "7",
   "dialect": "postgresql",
@@ -95,8 +95,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "auth_user_id": {
+          "name": "auth_user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -111,12 +111,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "members_user_id_user_id_fk": {
-          "name": "members_user_id_user_id_fk",
+        "members_auth_user_id_user_id_fk": {
+          "name": "members_auth_user_id_user_id_fk",
           "tableFrom": "members",
           "tableTo": "user",
           "columnsFrom": [
-            "user_id"
+            "auth_user_id"
           ],
           "columnsTo": [
             "id"
@@ -127,11 +127,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "members_user_id_unique": {
-          "name": "members_user_id_unique",
+        "members_auth_user_id_unique": {
+          "name": "members_auth_user_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "user_id"
+            "auth_user_id"
           ]
         }
       },

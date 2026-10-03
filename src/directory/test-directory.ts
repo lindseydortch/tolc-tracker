@@ -10,7 +10,7 @@ export async function createTestDirectory() {
 }
 
 // Also exposes `signUpWithGitHub`, standing in for Better Auth creating its
-// user row on a first GitHub sign-in.
+// user row on a first GitHub sign-in. Returns that row's id (`authUserId`).
 export async function createTestSetup() {
   const db = drizzle(new PGlite(), { schema })
   await migrate(db, { migrationsFolder: 'drizzle' })

@@ -53,10 +53,11 @@ export const targetRoleAliases = pgTable('target_role_aliases', {
   normalizedName: text('normalized_name').notNull().unique(),
 })
 
-// A Member is created on first GitHub sign-in and belongs to one Better Auth user.
+// A Member is created on first GitHub sign-in. `authUserId` points at Better
+// Auth's own user row, which holds the sign-in identity.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
-  userId: text('user_id')
+  authUserId: text('auth_user_id')
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: 'cascade' }),
