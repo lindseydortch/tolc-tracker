@@ -1,15 +1,14 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
-import { requireSignedInMember } from '../auth/session'
+import { landingPage, requireSignedInMember } from '../auth/session'
 
 // Every page under this layout is for signed-in Members with Discord
-// connected who are in TOLC. Without Discord, the Connect Discord step is all
-// they see; outside TOLC, only the Members-only notice.
+// connected who are in TOLC. Everyone else is sent to their `landingPage`.
 export const Route = createFileRoute('/_member')({
   beforeLoad: async () => {
     const member = await requireSignedInMember()
+    const page = landingPage(member)
     const { discordHandle } = member
-    if (!discordHandle) throw redirect({ to: '/connect-discord' })
-    if (member.membership !== 'in-tolc') throw redirect({ to: '/members-only' })
+    if (page !== '/' || !discordHandle) throw redirect({ to: page })
     // Pages below can rely on the handle being present.
     return { member: { ...member, discordHandle } }
   },

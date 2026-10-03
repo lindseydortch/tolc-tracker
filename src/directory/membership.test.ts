@@ -120,8 +120,8 @@ describe('the TOLC membership gate', () => {
     expect(await refresh(after(30 * second))).toBe('in-tolc')
   })
 
-  it('stops trusting the last answer when Discord refuses to answer', async () => {
-    const { tolc, refresh, signInAgain, firstSignIn, after } =
+  it('hides a Member once Discord refuses to answer', async () => {
+    const { directory, tolc, authUserId, refresh, signInAgain, firstSignIn, after } =
       await connectedMember()
     tolc.join(octoDiscord.userId)
     await refresh(firstSignIn)
@@ -129,6 +129,7 @@ describe('the TOLC membership gate', () => {
     tolc.refuse()
 
     expect(await signInAgain(after(2 * hour))).toBe('unknown')
+    expect((await directory.memberForAuthUser(authUserId))?.hidden).toBe(true)
     expect(await refresh(after(3 * hour))).toBe('unknown')
   })
 
@@ -139,7 +140,7 @@ describe('the TOLC membership gate', () => {
     tolc.refuse()
     await refresh(firstSignIn)
 
-    tolc.accept()
+    tolc.comeBack()
     await directory.connectDiscord({ authUserId, discord: octoDiscord })
 
     expect(await refresh(after(second))).toBe('in-tolc')

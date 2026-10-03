@@ -2,11 +2,11 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import * as schema from '../db/schema'
+import { createDirectory } from './directory'
 import {
-  createDirectory,
   DiscordUnavailableError,
   type MembershipChecker,
-} from './directory'
+} from './membership-checker'
 
 // A Directory backed by a fresh in-memory Postgres with production migrations.
 export async function createTestDirectory() {
@@ -42,7 +42,7 @@ function createFakeTolc() {
   let failure: 'down' | 'refusing' | null = null
   let checks = 0
   const checker: MembershipChecker = {
-    async isInTolc(discordUserId) {
+    async isInTolc({ discordUserId }) {
       checks++
       if (failure === 'down') throw new DiscordUnavailableError('Discord is down')
       if (failure === 'refusing') throw new Error('Discord returned 401')
@@ -60,14 +60,12 @@ function createFakeTolc() {
     goDown() {
       failure = 'down'
     },
-    comeBack() {
-      failure = null
-    },
     // Like a revoked Discord link: Discord is up but won't answer.
     refuse() {
       failure = 'refusing'
     },
-    accept() {
+    // Undoes `goDown` or `refuse`.
+    comeBack() {
       failure = null
     },
     // How many times the Directory asked, including failed attempts.

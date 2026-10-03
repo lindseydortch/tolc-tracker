@@ -2,9 +2,10 @@ import { redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequestHeaders } from '@tanstack/react-start/server'
 import { auth } from './auth'
+import { findLinkedDiscordAccount } from './discord-api'
 import { syncDiscord } from './discord-sync'
 import { directory } from '../directory/app-directory'
-import type { Membership } from '../directory/directory'
+import { isDiscordSyncDue, type Membership } from '../directory/directory'
 
 export type SignedInVisitor = {
   name: string
@@ -29,16 +30,19 @@ export const getSignedInMember = createServerFn({ method: 'GET' }).handler(
         githubUsername: session.user.githubUsername ?? null,
       })
     let member = await signIn()
+    if (!member) return null
     let discordSyncFailed = false
-    // Syncs once per sign-in, and on the first page load after linking
-    // Discord (which doesn't start a new session). A failed sync leaves the
-    // sync time old, so the next page load retries.
+    const linked = await findLinkedDiscordAccount(session.user.id)
+    // A failed sync leaves the sync time old, so the next page load retries.
     if (
-      member &&
-      (!member.discordSyncedAt ||
-        member.discordSyncedAt < session.session.createdAt)
+      linked &&
+      isDiscordSyncDue({
+        syncedAt: member.discordSyncedAt,
+        sessionStartedAt: session.session.createdAt,
+        linkedAt: linked.updatedAt,
+      })
     ) {
-      discordSyncFailed = (await syncDiscord(session.user.id)) === 'failed'
+      discordSyncFailed = (await syncDiscord(linked)) === 'failed'
       member = await signIn()
     }
     if (!member) return null
@@ -54,6 +58,17 @@ export const getSignedInMember = createServerFn({ method: 'GET' }).handler(
     }
   },
 )
+
+// The only page a signed-in visitor may be on: Connect Discord until
+// Discord is connected, the Members-only notice unless they're in TOLC, and
+// the Directory otherwise.
+export function landingPage(
+  member: SignedInVisitor,
+): '/connect-discord' | '/members-only' | '/' {
+  if (!member.discordHandle) return '/connect-discord'
+  if (member.membership !== 'in-tolc') return '/members-only'
+  return '/'
+}
 
 // For a route's `beforeLoad`: sends a signed-out visitor to /sign-in.
 export async function requireSignedInMember(): Promise<SignedInVisitor> {

@@ -8,6 +8,10 @@ import {
   targetRoleAliases,
   targetRoles,
 } from '../db/schema'
+import {
+  DiscordUnavailableError,
+  type MembershipChecker,
+} from './membership-checker'
 import { normalizeName } from './normalize-name'
 
 export type StackLayer = (typeof skills.$inferSelect)['suggestedLayer'] & {}
@@ -66,16 +70,6 @@ export type SignedInMember = {
   // Null until Discord is first connected.
   discordSyncedAt: Date | null
 }
-
-// Answers whether a Discord user is in the TOLC server. Throws
-// `DiscordUnavailableError` when Discord is down or rate-limiting, and any
-// other error when Discord refuses to answer (such as a revoked link).
-export type MembershipChecker = {
-  isInTolc(discordUserId: string): Promise<boolean>
-}
-
-// Discord couldn't answer right now but may soon: the last answer stands.
-export class DiscordUnavailableError extends Error {}
 
 // 'unknown': no Discord connected yet, or no answer from Discord to trust.
 export type Membership = 'in-tolc' | 'not-in-tolc' | 'unknown'
@@ -169,7 +163,10 @@ export function createDirectory(
           discordHandle: discord.handle,
           discordSyncedAt: new Date(),
           // A different Discord account must pass the membership check anew.
-          membershipCheckedAt: sql`case when ${members.discordUserId} = ${discord.userId} then ${members.membershipCheckedAt} end`,
+          membershipCheckedAt: sql`
+            case when ${members.discordUserId} = ${discord.userId}
+              then ${members.membershipCheckedAt}
+            end`,
           // A fresh link is worth asking about right away.
           membershipAttemptedAt: null,
         })
@@ -185,7 +182,7 @@ export function createDirectory(
     // rejoin. A Hidden Member is asked on every call (at most twice a
     // minute), so joining TOLC soon lets them in. While Discord is
     // unavailable the last answer stands; once it refuses, the answer is
-    // dropped until it answers again.
+    // dropped and the Member hidden until it answers again.
     async refreshMembership({
       authUserId,
       sessionStartedAt,
@@ -213,11 +210,17 @@ export function createDirectory(
           throw new Error('This Directory has no membership checker')
         }
         try {
-          hidden = !(await membershipChecker.isInTolc(discordUserId))
+          hidden = !(await membershipChecker.isInTolc({
+            authUserId,
+            discordUserId,
+          }))
           checkedAt = now
         } catch (error) {
           console.error('Could not check TOLC membership', error)
-          if (!(error instanceof DiscordUnavailableError)) checkedAt = null
+          if (!(error instanceof DiscordUnavailableError)) {
+            checkedAt = null
+            hidden = true
+          }
         }
         await db
           .update(members)
@@ -345,6 +348,21 @@ export function createDirectory(
 }
 
 export type Directory = ReturnType<typeof createDirectory>
+
+// Discord is synced once per sign-in, and again after the Member connects
+// Discord in the middle of a session (which doesn't start a new one).
+export function isDiscordSyncDue({
+  syncedAt,
+  sessionStartedAt,
+  linkedAt,
+}: {
+  syncedAt: Date | null
+  sessionStartedAt: Date
+  // When the linked Discord account was last connected or refreshed.
+  linkedAt: Date
+}): boolean {
+  return !syncedAt || syncedAt < sessionStartedAt || syncedAt < linkedAt
+}
 
 function isMembershipCheckDue({
   hidden,

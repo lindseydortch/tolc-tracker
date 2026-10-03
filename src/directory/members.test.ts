@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { isDiscordSyncDue } from './directory'
 import { createTestSetup } from './test-directory'
 
 describe('signing in a Member with GitHub', () => {
@@ -165,5 +166,32 @@ describe('connecting Discord', () => {
     expect(after?.discordSyncedAt?.getTime()).toBeGreaterThanOrEqual(
       connectedAt.getTime(),
     )
+  })
+})
+
+describe('when to sync Discord', () => {
+  const sessionStartedAt = new Date('2026-10-01T09:00:00Z')
+  const minute = 60 * 1000
+  const at = (ms: number) => new Date(sessionStartedAt.getTime() + ms)
+
+  it('syncs when Discord was never synced', () => {
+    expect(
+      isDiscordSyncDue({ syncedAt: null, sessionStartedAt, linkedAt: at(0) }),
+    ).toBe(true)
+  })
+
+  it('syncs once per sign-in', () => {
+    expect(
+      isDiscordSyncDue({ syncedAt: at(-minute), sessionStartedAt, linkedAt: at(-2 * minute) }),
+    ).toBe(true)
+    expect(
+      isDiscordSyncDue({ syncedAt: at(minute), sessionStartedAt, linkedAt: at(-2 * minute) }),
+    ).toBe(false)
+  })
+
+  it('syncs again after Discord is connected again in the same session', () => {
+    expect(
+      isDiscordSyncDue({ syncedAt: at(minute), sessionStartedAt, linkedAt: at(2 * minute) }),
+    ).toBe(true)
   })
 })
