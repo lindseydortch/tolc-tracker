@@ -3,8 +3,7 @@
     "name": "Node.js",
     "suggestedLayer": "backendLanguage",
     "aliases": [
-      "Node",
-      "NodeJS"
+      "Node"
     ]
   },
   {
@@ -31,7 +30,6 @@
     "suggestedLayer": "backendLanguage",
     "aliases": [
       "CSharp",
-      "C Sharp",
       ".NET",
       "dotnet"
     ]
@@ -121,8 +119,7 @@
     "name": "Next.js",
     "suggestedLayer": "frontendFramework",
     "aliases": [
-      "Next",
-      "NextJS"
+      "Next"
     ]
   },
   {
@@ -221,8 +218,7 @@
     "name": "ASP.NET Core",
     "suggestedLayer": "backendFramework",
     "aliases": [
-      "ASP.NET",
-      "ASPNET Core"
+      "ASP.NET"
     ]
   },
   {
