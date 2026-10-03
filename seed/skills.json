@@ -1,0 +1,674 @@
+[
+  {
+    "name": "Node.js",
+    "suggestedLayer": "backendLanguage",
+    "aliases": [
+      "Node",
+      "NodeJS"
+    ]
+  },
+  {
+    "name": "Python",
+    "suggestedLayer": "backendLanguage",
+    "aliases": [
+      "py"
+    ]
+  },
+  {
+    "name": "Go",
+    "suggestedLayer": "backendLanguage",
+    "aliases": [
+      "Golang"
+    ]
+  },
+  {
+    "name": "Java",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "C#",
+    "suggestedLayer": "backendLanguage",
+    "aliases": [
+      "CSharp",
+      "C Sharp",
+      ".NET",
+      "dotnet"
+    ]
+  },
+  {
+    "name": "Ruby",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "PHP",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "Rust",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "Kotlin",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "Elixir",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "Scala",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "C++",
+    "suggestedLayer": "backendLanguage",
+    "aliases": [
+      "cpp",
+      "CPlusPlus"
+    ]
+  },
+  {
+    "name": "Bun",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "Deno",
+    "suggestedLayer": "backendLanguage",
+    "aliases": []
+  },
+  {
+    "name": "React",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "ReactJS"
+    ]
+  },
+  {
+    "name": "Vue",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "VueJS",
+      "Vue 3"
+    ]
+  },
+  {
+    "name": "Angular",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "AngularJS",
+      "Angular 2+"
+    ]
+  },
+  {
+    "name": "Svelte",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "SvelteKit",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Next.js",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "Next",
+      "NextJS"
+    ]
+  },
+  {
+    "name": "Nuxt",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "NuxtJS"
+    ]
+  },
+  {
+    "name": "Remix",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Astro",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "SolidJS",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "Solid"
+    ]
+  },
+  {
+    "name": "Qwik",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "TanStack Start",
+    "suggestedLayer": "frontendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Ember",
+    "suggestedLayer": "frontendFramework",
+    "aliases": [
+      "EmberJS"
+    ]
+  },
+  {
+    "name": "Express",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "ExpressJS"
+    ]
+  },
+  {
+    "name": "NestJS",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "Nest"
+    ]
+  },
+  {
+    "name": "Fastify",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Hono",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Koa",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Django",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Flask",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "FastAPI",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Spring Boot",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "Spring"
+    ]
+  },
+  {
+    "name": "ASP.NET Core",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "ASP.NET",
+      "ASPNET Core"
+    ]
+  },
+  {
+    "name": "Ruby on Rails",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "Rails",
+      "RoR"
+    ]
+  },
+  {
+    "name": "Laravel",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Phoenix",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Gin",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Fiber",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Actix Web",
+    "suggestedLayer": "backendFramework",
+    "aliases": [
+      "Actix"
+    ]
+  },
+  {
+    "name": "Axum",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "Ktor",
+    "suggestedLayer": "backendFramework",
+    "aliases": []
+  },
+  {
+    "name": "PostgreSQL",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Postgres",
+      "pg",
+      "psql"
+    ]
+  },
+  {
+    "name": "MySQL",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "MariaDB",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "SQLite",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "SQL Server",
+    "suggestedLayer": "database",
+    "aliases": [
+      "MSSQL",
+      "Microsoft SQL Server"
+    ]
+  },
+  {
+    "name": "Oracle Database",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Oracle"
+    ]
+  },
+  {
+    "name": "MongoDB",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Mongo"
+    ]
+  },
+  {
+    "name": "Redis",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "DynamoDB",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Dynamo"
+    ]
+  },
+  {
+    "name": "Cassandra",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Apache Cassandra"
+    ]
+  },
+  {
+    "name": "Firestore",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Firebase Firestore",
+      "Cloud Firestore"
+    ]
+  },
+  {
+    "name": "Supabase",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "CockroachDB",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "Neo4j",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "Snowflake",
+    "suggestedLayer": "database",
+    "aliases": []
+  },
+  {
+    "name": "BigQuery",
+    "suggestedLayer": "database",
+    "aliases": [
+      "Google BigQuery"
+    ]
+  },
+  {
+    "name": "TypeScript",
+    "aliases": [
+      "TS"
+    ]
+  },
+  {
+    "name": "JavaScript",
+    "aliases": [
+      "JS",
+      "ECMAScript",
+      "ES6"
+    ]
+  },
+  {
+    "name": "HTML",
+    "aliases": [
+      "HTML5"
+    ]
+  },
+  {
+    "name": "CSS",
+    "aliases": [
+      "CSS3"
+    ]
+  },
+  {
+    "name": "SQL",
+    "aliases": []
+  },
+  {
+    "name": "Swift",
+    "aliases": []
+  },
+  {
+    "name": "Dart",
+    "aliases": []
+  },
+  {
+    "name": "C",
+    "aliases": []
+  },
+  {
+    "name": "Bash",
+    "aliases": [
+      "Shell",
+      "Shell scripting"
+    ]
+  },
+  {
+    "name": "Tailwind CSS",
+    "aliases": [
+      "Tailwind"
+    ]
+  },
+  {
+    "name": "Sass",
+    "aliases": [
+      "SCSS"
+    ]
+  },
+  {
+    "name": "Redux",
+    "aliases": [
+      "Redux Toolkit",
+      "RTK"
+    ]
+  },
+  {
+    "name": "Zustand",
+    "aliases": []
+  },
+  {
+    "name": "TanStack Query",
+    "aliases": [
+      "React Query"
+    ]
+  },
+  {
+    "name": "React Router",
+    "aliases": [
+      "React Router DOM"
+    ]
+  },
+  {
+    "name": "GraphQL",
+    "aliases": []
+  },
+  {
+    "name": "tRPC",
+    "aliases": []
+  },
+  {
+    "name": "Vite",
+    "aliases": []
+  },
+  {
+    "name": "Webpack",
+    "aliases": []
+  },
+  {
+    "name": "Storybook",
+    "aliases": []
+  },
+  {
+    "name": "React Native",
+    "aliases": [
+      "RN"
+    ]
+  },
+  {
+    "name": "Expo",
+    "aliases": []
+  },
+  {
+    "name": "Flutter",
+    "aliases": []
+  },
+  {
+    "name": "SwiftUI",
+    "aliases": []
+  },
+  {
+    "name": "Jetpack Compose",
+    "aliases": [
+      "Compose"
+    ]
+  },
+  {
+    "name": "Prisma",
+    "aliases": []
+  },
+  {
+    "name": "Drizzle",
+    "aliases": [
+      "Drizzle ORM"
+    ]
+  },
+  {
+    "name": "Sequelize",
+    "aliases": []
+  },
+  {
+    "name": "SQLAlchemy",
+    "aliases": []
+  },
+  {
+    "name": "Hibernate",
+    "aliases": []
+  },
+  {
+    "name": "Jest",
+    "aliases": []
+  },
+  {
+    "name": "Vitest",
+    "aliases": []
+  },
+  {
+    "name": "Playwright",
+    "aliases": []
+  },
+  {
+    "name": "Cypress",
+    "aliases": []
+  },
+  {
+    "name": "Pytest",
+    "aliases": []
+  },
+  {
+    "name": "JUnit",
+    "aliases": []
+  },
+  {
+    "name": "AWS",
+    "aliases": [
+      "Amazon Web Services"
+    ]
+  },
+  {
+    "name": "Google Cloud",
+    "aliases": [
+      "GCP",
+      "Google Cloud Platform"
+    ]
+  },
+  {
+    "name": "Azure",
+    "aliases": [
+      "Microsoft Azure"
+    ]
+  },
+  {
+    "name": "Vercel",
+    "aliases": []
+  },
+  {
+    "name": "Netlify",
+    "aliases": []
+  },
+  {
+    "name": "Cloudflare Workers",
+    "aliases": [
+      "Cloudflare"
+    ]
+  },
+  {
+    "name": "Docker",
+    "aliases": []
+  },
+  {
+    "name": "Kubernetes",
+    "aliases": [
+      "K8s"
+    ]
+  },
+  {
+    "name": "Terraform",
+    "aliases": []
+  },
+  {
+    "name": "GitHub Actions",
+    "aliases": [
+      "GHA"
+    ]
+  },
+  {
+    "name": "Jenkins",
+    "aliases": []
+  },
+  {
+    "name": "Linux",
+    "aliases": []
+  },
+  {
+    "name": "Git",
+    "aliases": []
+  },
+  {
+    "name": "Datadog",
+    "aliases": []
+  },
+  {
+    "name": "Sentry",
+    "aliases": []
+  },
+  {
+    "name": "Kafka",
+    "aliases": [
+      "Apache Kafka"
+    ]
+  },
+  {
+    "name": "RabbitMQ",
+    "aliases": []
+  },
+  {
+    "name": "Elasticsearch",
+    "aliases": [
+      "Elastic",
+      "ES"
+    ]
+  },
+  {
+    "name": "Apache Spark",
+    "aliases": [
+      "Spark",
+      "PySpark"
+    ]
+  },
+  {
+    "name": "Airflow",
+    "aliases": [
+      "Apache Airflow"
+    ]
+  },
+  {
+    "name": "dbt",
+    "aliases": []
+  },
+  {
+    "name": "Pandas",
+    "aliases": []
+  },
+  {
+    "name": "PyTorch",
+    "aliases": []
+  },
+  {
+    "name": "TensorFlow",
+    "aliases": []
+  },
+  {
+    "name": "LangChain",
+    "aliases": []
+  },
+  {
+    "name": "Figma",
+    "aliases": []
+  }
+]

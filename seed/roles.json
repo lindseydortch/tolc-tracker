@@ -1,0 +1,108 @@
+[
+  {
+    "name": "Software Engineer",
+    "aliases": [
+      "SWE",
+      "Software Developer",
+      "Developer",
+      "SDE"
+    ]
+  },
+  {
+    "name": "Frontend Engineer",
+    "aliases": [
+      "Front-End Developer",
+      "Frontend Developer",
+      "UI Engineer"
+    ]
+  },
+  {
+    "name": "Backend Engineer",
+    "aliases": [
+      "Back-End Developer",
+      "Backend Developer"
+    ]
+  },
+  {
+    "name": "Full-Stack Engineer",
+    "aliases": [
+      "Full Stack Developer",
+      "Fullstack Engineer"
+    ]
+  },
+  {
+    "name": "Product Engineer",
+    "aliases": []
+  },
+  {
+    "name": "Mobile Engineer",
+    "aliases": [
+      "iOS Engineer",
+      "Android Engineer",
+      "Mobile Developer"
+    ]
+  },
+  {
+    "name": "DevOps Engineer",
+    "aliases": [
+      "Platform Engineer",
+      "Infrastructure Engineer"
+    ]
+  },
+  {
+    "name": "Site Reliability Engineer",
+    "aliases": [
+      "SRE"
+    ]
+  },
+  {
+    "name": "Data Engineer",
+    "aliases": []
+  },
+  {
+    "name": "Data Scientist",
+    "aliases": []
+  },
+  {
+    "name": "Machine Learning Engineer",
+    "aliases": [
+      "ML Engineer",
+      "MLE",
+      "AI Engineer"
+    ]
+  },
+  {
+    "name": "QA Engineer",
+    "aliases": [
+      "SDET",
+      "Test Engineer",
+      "Quality Engineer"
+    ]
+  },
+  {
+    "name": "Security Engineer",
+    "aliases": [
+      "AppSec Engineer"
+    ]
+  },
+  {
+    "name": "Engineering Manager",
+    "aliases": [
+      "EM"
+    ]
+  },
+  {
+    "name": "Developer Advocate",
+    "aliases": [
+      "DevRel",
+      "Developer Relations"
+    ]
+  },
+  {
+    "name": "Solutions Engineer",
+    "aliases": [
+      "Sales Engineer",
+      "Solutions Architect"
+    ]
+  }
+]

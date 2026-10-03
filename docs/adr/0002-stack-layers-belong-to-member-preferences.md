@@ -1,0 +1,3 @@
+# Stack Layers are a Member's preferences, not categories on Skills
+
+Skills in the Skill Catalog are not tagged as frontend, backend, etc. Instead each Member fills four Stack Layers (Frontend Framework, Backend Framework, Backend Language, Database) with the one Skill they'd prefer in their next role, and everything else they know is a Secondary Skill. Categorising Skills would need the Admin to classify every new Skill, and many Skills don't have one home. TypeScript is handled separately as a yes/no TypeScript Badge so that Backend Language still records the runtime (Node.js, Python, ...) rather than the language superset.
