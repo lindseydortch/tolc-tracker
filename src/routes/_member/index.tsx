@@ -7,24 +7,17 @@ import {
   emptySearch,
   isEmptySearch,
   searchFromUrl,
+  searchToUrl,
   type DirectorySearch,
 } from '../../directory/search'
 
 export const Route = createFileRoute('/_member/')({
-  // Only the filters in use go in the URL, so a plain "/" is the whole
-  // Directory and links to it need no search.
   validateSearch: (params): Partial<DirectorySearch> =>
-    withoutEmpty(searchFromUrl(params)),
+    searchToUrl(searchFromUrl(params)),
   loaderDeps: ({ search }) => ({ ...emptySearch, ...search }),
   loader: ({ deps }) => getDirectory({ data: deps }),
   component: QuickView,
 })
-
-function withoutEmpty(search: DirectorySearch): Partial<DirectorySearch> {
-  return Object.fromEntries(
-    Object.entries(search).filter(([, chosen]) => chosen.length > 0),
-  )
-}
 
 function QuickView() {
   const { member } = Route.useRouteContext()
@@ -50,7 +43,7 @@ function QuickView() {
         key={JSON.stringify(search)}
         search={search}
         catalogs={catalogs}
-        onSearch={(chosen) => navigate({ search: withoutEmpty(chosen) })}
+        onSearch={(chosen) => navigate({ search: searchToUrl(chosen) })}
       />
       <h2>{searching ? 'Search results' : 'Directory'}</h2>
       {searching && (

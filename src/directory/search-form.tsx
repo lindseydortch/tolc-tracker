@@ -37,6 +37,7 @@ export function SearchForm({
       <NamesField
         legend="Skills"
         noun="Skill"
+        catalogName="Skill Catalog"
         hint="Members must have every Skill chosen."
         catalog={catalogs.skills}
         chosen={draft.skills}
@@ -45,6 +46,7 @@ export function SearchForm({
       <NamesField
         legend="Target Roles"
         noun="Target Role"
+        catalogName="Role Catalog"
         hint="Members with any of these."
         catalog={catalogs.roles}
         chosen={draft.targetRoles}
@@ -84,6 +86,7 @@ export function SearchForm({
 function NamesField({
   legend,
   noun,
+  catalogName,
   hint,
   catalog,
   chosen,
@@ -92,6 +95,7 @@ function NamesField({
   legend: string
   // What one chosen name is, such as "Skill".
   noun: string
+  catalogName: 'Skill Catalog' | 'Role Catalog'
   hint: string
   catalog: { name: string; aliases: string[] }[]
   chosen: string[]
@@ -148,11 +152,13 @@ function NamesField({
       <button type="button" disabled={!entry} onClick={add}>
         Add
       </button>
-      {typed.trim() && !entry && <span> Not in the Catalog</span>}
+      {typed.trim() && !entry && <span> Not in the {catalogName}</span>}
     </fieldset>
   )
 }
 
+// A fixed set of choices, such as Seniorities, ticked in any combination.
+// Chosen values stay in the order `choices` lists them.
 function ChoicesField<T extends string>({
   legend,
   hint,

@@ -72,16 +72,14 @@ export function rankSearchResults<Profile extends Searchable>(
 ): Profile[] {
   const anyOf = <T>(chosen: T[], has: T[]) =>
     chosen.length === 0 || chosen.some((value) => has.includes(value))
-  const primarySkills = (profile: Profile): string[] =>
-    Object.values(profile.preferredStack)
+  const isPrimary = (profile: Profile, skill: string | null) =>
+    skill !== null && Object.values(profile.preferredStack).includes(skill)
+  const hasSkill = (profile: Profile, skill: string | null) =>
+    isPrimary(profile, skill) ||
+    (skill !== null && profile.secondarySkills.includes(skill))
   const matches = profiles.filter(
     (profile) =>
-      search.skills.every(
-        (skill) =>
-          skill !== null &&
-          (primarySkills(profile).includes(skill) ||
-            profile.secondarySkills.includes(skill)),
-      ) &&
+      search.skills.every((skill) => hasSkill(profile, skill)) &&
       anyOf(search.targetRoles, profile.targetRoles) &&
       anyOf(search.jobSearchStatuses, [profile.jobSearchStatus]) &&
       anyOf(search.seniorities, [
@@ -89,17 +87,29 @@ export function rankSearchResults<Profile extends Searchable>(
         ...profile.otherSeniorities,
       ]),
   )
-  const rank = (profile: Profile) => {
-    const allPrimary = search.skills.every(
-      (skill) => skill !== null && primarySkills(profile).includes(skill),
-    )
-    const preferredSeniority =
+  // In order of importance: a later rule only decides between Members the
+  // earlier ones rank equally. Members a rule holds for come first.
+  const rankingRules = [
+    (profile: Profile) => search.skills.every((skill) => isPrimary(profile, skill)),
+    (profile: Profile) =>
       search.seniorities.length === 0 ||
-      search.seniorities.includes(profile.preferredSeniority)
-    return (allPrimary ? 0 : 2) + (preferredSeniority ? 0 : 1)
-  }
-  // `sort` is stable, so equal ranks keep their order.
-  return matches.sort((a, b) => rank(a) - rank(b))
+      search.seniorities.includes(profile.preferredSeniority),
+  ]
+  // `sort` is stable, so Members every rule ranks equally keep their order.
+  return matches.sort((a, b) => {
+    for (const rule of rankingRules) {
+      if (rule(a) !== rule(b)) return rule(a) ? -1 : 1
+    }
+    return 0
+  })
+}
+
+// The search as the Quick View's URL holds it: only the filters in use, so
+// a plain "/" is the whole Directory and links to it need no search.
+export function searchToUrl(search: DirectorySearch): Partial<DirectorySearch> {
+  return Object.fromEntries(
+    Object.entries(search).filter(([, chosen]) => chosen.length > 0),
+  )
 }
 
 // Reads a search from the Quick View's URL, which anyone can edit, so

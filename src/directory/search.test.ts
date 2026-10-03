@@ -4,6 +4,7 @@ import {
   emptySearch,
   parseDirectorySearch,
   searchFromUrl,
+  searchToUrl,
   type DirectorySearch,
 } from './search'
 import { memberInTolc, octoForm, seededSetup, type TestSetup } from './test-profiles'
@@ -256,8 +257,8 @@ describe('a search sent to the server', () => {
   })
 })
 
-describe('a search read from the URL', () => {
-  it('keeps what it understands and drops the rest', () => {
+describe('a search in the URL', () => {
+  it('is read keeping what it understands and dropping the rest', () => {
     expect(
       searchFromUrl({
         skills: ['React', 3],
@@ -273,5 +274,13 @@ describe('a search read from the URL', () => {
       jobSearchStatuses: [],
     })
     expect(searchFromUrl({})).toEqual(emptySearch)
+  })
+
+  it('is written with only the filters in use', () => {
+    const search = { ...emptySearch, skills: ['React'], seniorities: ['senior' as const] }
+
+    expect(searchToUrl(search)).toEqual({ skills: ['React'], seniorities: ['senior'] })
+    expect(searchToUrl(emptySearch)).toEqual({})
+    expect(searchFromUrl(searchToUrl(search))).toEqual(search)
   })
 })
