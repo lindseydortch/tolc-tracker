@@ -475,7 +475,6 @@ describe('a Member profile page', () => {
       firstName: 'Octo',
       lastName: 'Cat',
       discordHandle: 'octocat_dc',
-      discordUserId: octo.discord.userId,
       jobSearchStatus: 'activelyLooking',
       targetRoles: ['Software Engineer'],
       preferredSeniority: 'senior',

@@ -99,13 +99,11 @@ export type DirectoryEntry = {
   typeScriptBadge: boolean
 }
 
-// Everything the profile page shows: the card plus the rest of the profile.
-export type MemberProfile = DirectoryEntry & {
-  // For the Message on Discord action.
-  discordUserId: string
-  secondarySkills: string[]
-  links: MemberLink[]
-}
+// A Directory entry plus the Secondary Skills its card leaves out.
+type CompleteProfile = DirectoryEntry & { secondarySkills: string[] }
+
+// Everything the profile page shows.
+export type MemberProfile = CompleteProfile & { links: MemberLink[] }
 
 // 'unknown': no Discord connected yet, or no answer from Discord to trust.
 export type Membership = 'in-tolc' | 'not-in-tolc' | 'unknown'
@@ -125,13 +123,12 @@ export function createDirectory(
   // Discord is connected, so a half-saved Member never shows up.
   async function completeProfiles(
     where: SQL | undefined,
-  ): Promise<Omit<MemberProfile, 'links'>[]> {
+  ): Promise<CompleteProfile[]> {
     const rows = await db
       .select({
         id: members.id,
         firstName: members.firstName,
         lastName: members.lastName,
-        discordUserId: members.discordUserId,
         discordHandle: members.discordHandle,
         jobSearchStatus: members.jobSearchStatus,
       })
@@ -145,7 +142,6 @@ export function createDirectory(
           where,
           isNotNull(members.firstName),
           isNotNull(members.lastName),
-          isNotNull(members.discordUserId),
           isNotNull(members.discordHandle),
           isNotNull(members.jobSearchStatus),
         ),
@@ -174,9 +170,9 @@ export function createDirectory(
       .where(inArray(memberSkills.memberId, ids))
       .orderBy(asc(skills.name))
 
-    const entries: Omit<MemberProfile, 'links'>[] = []
+    const entries: CompleteProfile[] = []
     for (const row of rows) {
-      const { firstName, lastName, discordUserId, discordHandle, jobSearchStatus } = row
+      const { firstName, lastName, discordHandle, jobSearchStatus } = row
       const own = <T extends { memberId: number }>(all: T[]) =>
         all.filter((item) => item.memberId === row.id)
       const preferred = own(seniorities).find((s) => s.preferred)
@@ -190,7 +186,6 @@ export function createDirectory(
       if (
         !firstName ||
         !lastName ||
-        !discordUserId ||
         !discordHandle ||
         !jobSearchStatus ||
         !preferred ||
@@ -203,7 +198,6 @@ export function createDirectory(
         id: row.id,
         firstName,
         lastName,
-        discordUserId,
         discordHandle,
         jobSearchStatus,
         targetRoles: targetRoleNames,
@@ -390,9 +384,7 @@ export function createDirectory(
     // Secondary Skills stay off the cards; they're on the profile page.
     async directoryEntries(): Promise<DirectoryEntry[]> {
       const profiles = await completeProfiles(eq(members.hidden, false))
-      return profiles.map(
-        ({ discordUserId: _, secondarySkills: __, ...entry }) => entry,
-      )
+      return profiles.map(({ secondarySkills: _, ...entry }) => entry)
     },
 
     // Null unless the Member is in the Directory, so a Hidden Member or an

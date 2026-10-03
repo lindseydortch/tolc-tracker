@@ -1,11 +1,5 @@
-import type { DirectoryEntry, StackLayer } from './directory'
-import {
-  jobSearchStatusLabels,
-  seniorityLabels,
-  stackLayerLabels,
-} from './profile'
-
-const stackLayers = Object.keys(stackLayerLabels) as StackLayer[]
+import type { DirectoryEntry } from './directory'
+import { jobSearchStatusLabels, seniorityLabels, stackLayers } from './profile'
 
 // What a Quick View card shows. The profile page repeats it at the top.
 export function MemberCardDetails({ entry }: { entry: DirectoryEntry }) {

@@ -25,12 +25,16 @@ export const getDirectory = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+// Takes the id straight from the URL. Null when it names no Member in the
+// Directory, including when it isn't a number at all.
 export const getMemberProfile = createServerFn({ method: 'GET' })
   .validator((memberId: unknown) => {
-    if (!Number.isSafeInteger(memberId)) throw new Error('Malformed Member id')
-    return memberId as number
+    if (typeof memberId !== 'string') throw new Error('Malformed Member id')
+    return memberId
   })
-  .handler(async ({ data: memberId }) => {
+  .handler(async ({ data }) => {
     await requireLandingPage('/')
+    const memberId = /^\d+$/.test(data) ? Number(data) : NaN
+    if (!Number.isSafeInteger(memberId)) return null
     return directory.memberProfile(memberId)
   })
