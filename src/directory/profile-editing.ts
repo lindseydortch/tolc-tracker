@@ -21,8 +21,9 @@ import {
   checkLinks,
   checkProfile,
   isTypeScript,
-  sameName,
+  optionalLinks,
   sortSeniorities,
+  typeScript,
   type Catalogs,
   type DetailsForm,
   type LinksForm,
@@ -30,6 +31,7 @@ import {
   type ProfileForm,
   type ProfileProblems,
   type ResolvedDetails,
+  type SaveResult,
 } from './profile'
 
 export type TechStackSkill = { name: string; stackLayer: StackLayer | null }
@@ -43,15 +45,15 @@ export type ProfileForEditing = {
   typeScriptBadge: boolean
 }
 
-export type FormResult = { ok: true } | { ok: false; problems: ProfileProblems }
+export type FormResult = SaveResult<{ problems: ProfileProblems }>
 
-export type LinksResult = { ok: true } | { ok: false; problems: LinksProblems }
+export type LinksResult = SaveResult<{ problems: LinksProblems }>
 
-export type EditResult = { ok: true } | { ok: false; problem: string }
+export type EditResult = SaveResult<{ problem: string }>
 
 // `occupiedBy`: the Stack Layer already holds that Skill, and the Member
 // should be asked whether to replace it.
-export type AddSkillResult = EditResult | { ok: false; occupiedBy: string }
+export type AddSkillResult = EditResult | SaveResult<{ occupiedBy: string }>
 
 // Edits to a Member's own profile. Every edit is keyed by the signed-in
 // Member's `authUserId`, so no one can edit someone else's profile.
@@ -310,7 +312,8 @@ export function createProfileEditing(
           .from(memberSkills)
           .innerJoin(skills, eq(memberSkills.skillId, skills.id))
           .where(eq(memberSkills.memberId, id))
-        const removed = memberTechStack.find((row) => sameName(row.name, skill))
+        const target = await findSkill(tx, skill)
+        const removed = memberTechStack.find((row) => row.skillId === target?.id)
         if (!removed) return { ok: true }
         const primaries = memberTechStack.filter((row) => row.stackLayer)
         if (removed.stackLayer && primaries.length === 1) {
@@ -339,23 +342,17 @@ export function createProfileEditing(
     }): Promise<LinksResult> {
       const check = checkLinks(form)
       if (!check.ok) return check
-      const { resume, portfolio, bluesky, custom } = check.links
+      const saved = check.links
       await db.transaction(async (tx) => {
         const id = await memberId(authUserId, tx)
         await tx
           .delete(links)
           .where(and(eq(links.memberId, id), inArray(links.kind, optionalLinkKinds)))
         const rows = [
-          ...(
-            [
-              ['resume', resume],
-              ['portfolio', portfolio],
-              ['bluesky', bluesky],
-            ] as const
-          )
-            .filter(([, url]) => url)
-            .map(([kind, url]) => ({ memberId: id, kind, url })),
-          ...custom.map(({ label, url }) => ({
+          ...optionalLinks
+            .filter(({ kind }) => saved[kind])
+            .map(({ kind }) => ({ memberId: id, kind, url: saved[kind] })),
+          ...saved.custom.map(({ label, url }) => ({
             memberId: id,
             kind: 'custom' as const,
             url,
@@ -383,7 +380,4 @@ export function createProfileEditing(
   return editing
 }
 
-// The Skill Catalog's name for TypeScript; Aliases such as "TS" resolve to it.
-const typeScript = 'TypeScript'
-
-const optionalLinkKinds: LinkKind[] = ['resume', 'portfolio', 'bluesky', 'custom']
+const optionalLinkKinds: LinkKind[] = [...optionalLinks.map(({ kind }) => kind), 'custom']

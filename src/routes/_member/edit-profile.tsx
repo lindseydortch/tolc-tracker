@@ -1,7 +1,8 @@
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import type { StackLayer } from '../../directory/directory'
+import type { EditResult } from '../../directory/profile-editing'
 import {
   addSkill,
   getProfileEditor,
@@ -14,12 +15,14 @@ import {
   detailsProblems,
   findInCatalog,
   linksProblems,
+  optionalLinks,
   skillsForLayer,
   stackLayerLabels,
   stackLayers,
   type CustomLinkForm,
 } from '../../directory/profile'
 import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
+import { SaveStatus, useSavedForm, useServerChange } from '../../directory/saved-form'
 
 // A Member edits their own profile here, and only their own: the server
 // functions always edit the signed-in Member.
@@ -75,28 +78,16 @@ function TechStackSection() {
   const router = useRouter()
   const remove = useServerFn(removeSkill)
   const setBadge = useServerFn(setTypeScriptBadge)
-  const [problem, setProblem] = useState<string>()
-  // One change at a time, so a double click can't send two.
-  const [busy, setBusy] = useState(false)
+  const { busy, problem, setProblem, run } = useServerChange()
   const primary = (layer: StackLayer) =>
     profile.techStack.find((skill) => skill.stackLayer === layer)?.name
   const secondary = profile.techStack.filter((skill) => !skill.stackLayer)
 
-  async function change(send: () => Promise<{ ok: true } | { ok: false; problem: string } | void>) {
-    if (busy) return
-    setBusy(true)
-    setProblem(undefined)
-    try {
-      const result = await send()
+  const change = (send: () => Promise<EditResult | void>) =>
+    run(send, async (result) => {
       if (result && !result.ok) setProblem(result.problem)
       await router.invalidate()
-    } catch (error) {
-      console.error(error)
-      setProblem(couldNotSave)
-    } finally {
-      setBusy(false)
-    }
-  }
+    })
 
   const onRemove = (skill: string) => change(() => remove({ data: { skill } }))
   const onBadgeChange = (on: boolean) => change(() => setBadge({ data: { on } }))
@@ -165,11 +156,10 @@ function AddSkillForm() {
   const [skill, setSkill] = useState('')
   const [inPreferredStack, setInPreferredStack] = useState(false)
   const [stackLayer, setStackLayer] = useState<StackLayer | null>(null)
-  const [problem, setProblem] = useState<string>()
+  const { busy, problem, setProblem, run } = useServerChange()
   // The Skill the chosen Stack Layer holds, while the Member decides
   // whether to replace it.
   const [occupiedBy, setOccupiedBy] = useState<string>()
-  const [saving, setSaving] = useState(false)
   const layer = inPreferredStack ? stackLayer : null
   const choices = layer
     ? skillsForLayer(catalogs.skills, layer)
@@ -181,32 +171,27 @@ function AddSkillForm() {
     setOccupiedBy(undefined)
   }
 
-  async function send(replace: boolean) {
-    if (saving) return
+  function send(replace: boolean) {
     if (inPreferredStack && !stackLayer) {
       setProblem('Choose a Stack Layer')
       return
     }
-    setSaving(true)
-    try {
-      const result = await add({ data: { skill, stackLayer: layer, replace } })
-      if (result.ok) {
-        setSkill('')
-        setInPreferredStack(false)
-        setStackLayer(null)
-        setOccupiedBy(undefined)
-        await router.invalidate()
-      } else if ('occupiedBy' in result) {
-        setOccupiedBy(result.occupiedBy)
-      } else {
-        setProblem(result.problem)
-      }
-    } catch (error) {
-      console.error(error)
-      setProblem(couldNotSave)
-    } finally {
-      setSaving(false)
-    }
+    return run(
+      () => add({ data: { skill, stackLayer: layer, replace } }),
+      async (result) => {
+        if (result.ok) {
+          setSkill('')
+          setInPreferredStack(false)
+          setStackLayer(null)
+          setOccupiedBy(undefined)
+          await router.invalidate()
+        } else if ('occupiedBy' in result) {
+          setOccupiedBy(result.occupiedBy)
+        } else {
+          setProblem(result.problem)
+        }
+      },
+    )
   }
 
   return (
@@ -276,7 +261,7 @@ function AddSkillForm() {
           Your {stackLayerLabels[layer]} is {occupiedBy}. Replace it with{' '}
           {findInCatalog(catalogs.skills, skill)?.name ?? skill.trim()}?{' '}
           {occupiedBy} will become a Secondary Skill.{' '}
-          <button type="button" disabled={saving} onClick={() => send(true)}>
+          <button type="button" disabled={busy} onClick={() => send(true)}>
             Replace {occupiedBy}
           </button>{' '}
           <button type="button" onClick={() => setOccupiedBy(undefined)}>
@@ -284,8 +269,8 @@ function AddSkillForm() {
           </button>
         </p>
       ) : (
-        <button type="submit" disabled={saving}>
-          {saving ? 'Adding…' : 'Add Skill'}
+        <button type="submit" disabled={busy}>
+          {busy ? 'Adding…' : 'Add Skill'}
         </button>
       )}
     </form>
@@ -305,29 +290,23 @@ function LinksSection() {
       custom: form.custom.map((link, i) => (i === index ? { ...link, ...changes } : link)),
     })
 
-  const optional = [
-    ['resume', 'Resume URL', 'https://example.com/resume.pdf'],
-    ['portfolio', 'Portfolio URL', 'https://example.com'],
-    ['bluesky', 'Bluesky profile URL', 'https://bsky.app/profile/you'],
-  ] as const
-
   return (
     <section>
       <h2>Links</h2>
       <form onSubmit={onSubmit} noValidate>
         <p>LinkedIn and GitHub are always on your profile. These are optional.</p>
-        {optional.map(([field, label, placeholder]) => (
-          <p key={field}>
+        {optionalLinks.map(({ kind, label, placeholder }) => (
+          <p key={kind}>
             <label>
               {label}{' '}
               <input
                 inputMode="url"
-                value={form[field]}
-                onChange={(e) => update({ [field]: e.target.value })}
+                value={form[kind]}
+                onChange={(e) => update({ [kind]: e.target.value })}
                 placeholder={placeholder}
               />
             </label>
-            <Problem text={problems[field]} />
+            <Problem text={problems[kind]} />
           </p>
         ))}
         <fieldset>
@@ -374,64 +353,4 @@ function LinksSection() {
       </form>
     </section>
   )
-}
-
-const couldNotSave = "Couldn't save. Try again."
-
-type SaveState = 'editing' | 'saving' | 'saved' | 'failed'
-
-// State for one section's form that saves on its own: problems show once
-// the Member first tries to save, then follow their edits.
-function useSavedForm<Form, Problems extends object>({
-  initial,
-  problemsOf,
-  save,
-}: {
-  initial: Form
-  problemsOf: (form: Form) => Problems
-  save: (form: Form) => Promise<{ ok: true } | { ok: false; problems: Problems }>
-}) {
-  const router = useRouter()
-  const [form, setForm] = useState(initial)
-  const [attempted, setAttempted] = useState(false)
-  const [serverProblems, setServerProblems] = useState<Partial<Problems>>({})
-  const [status, setStatus] = useState<SaveState>('editing')
-  const problems: Partial<Problems> = attempted
-    ? { ...serverProblems, ...problemsOf(form) }
-    : {}
-
-  const update = (changes: Partial<Form>) => {
-    setForm((current) => ({ ...current, ...changes }))
-    setServerProblems({})
-    setStatus('editing')
-  }
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (status === 'saving') return
-    setAttempted(true)
-    if (Object.keys(problemsOf(form)).length > 0) return
-    setStatus('saving')
-    try {
-      const result = await save(form)
-      if (!result.ok) {
-        setServerProblems(result.problems)
-        setStatus('editing')
-        return
-      }
-      setStatus('saved')
-      await router.invalidate()
-    } catch (error) {
-      console.error(error)
-      setStatus('failed')
-    }
-  }
-
-  return { form, update, problems, status, onSubmit }
-}
-
-function SaveStatus({ status }: { status: SaveState }) {
-  if (status === 'saved') return <span role="status"> Saved</span>
-  if (status === 'failed') return <span role="alert"> {couldNotSave}</span>
-  return null
 }

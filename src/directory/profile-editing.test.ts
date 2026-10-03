@@ -101,6 +101,17 @@ describe('adding a Skill to the Preferred Stack', () => {
 })
 
 describe('removing a Skill', () => {
+  it('accepts any name or Alias for the Skill', async () => {
+    const setup = await seededSetup()
+    const { authUserId } = await memberWithProfile(setup, 'octocat')
+    await setup.directory.setTypeScriptBadge({ authUserId, on: true })
+
+    expect(await setup.directory.removeSkill({ authUserId, skill: 'ts' })).toEqual({
+      ok: true,
+    })
+    expect((await setup.directory.profileForEditing(authUserId)).typeScriptBadge).toBe(false)
+  })
+
   it('keeps at least one Skill in the Preferred Stack', async () => {
     const setup = await seededSetup()
     const { authUserId } = await memberWithProfile(setup, 'octocat')
@@ -324,7 +335,7 @@ describe('Links', () => {
         links: {
           resume: 'my resume',
           portfolio: 'ftp://octo.dev',
-          bluesky: 'https://twitter.com/octo',
+          bluesky: 'octo',
           custom: [
             { label: 'Fine', url: 'https://octo.dev' },
             { label: '', url: 'https://octo.dev/blog' },
@@ -336,8 +347,8 @@ describe('Links', () => {
       ok: false,
       problems: {
         resume: 'Enter your resume as a URL',
-        portfolio: 'Enter a URL',
-        bluesky: 'Enter your Bluesky profile URL',
+        portfolio: 'Enter your portfolio as a URL',
+        bluesky: 'Enter your Bluesky profile as a URL',
         custom: [undefined, 'Enter a label', 'Enter a URL'],
       },
     })

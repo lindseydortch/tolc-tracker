@@ -169,18 +169,42 @@ export function checkProfile(form: ProfileForm, catalogs: Catalogs): ProfileChec
   return { ok: true, profile: { ...details.details, preferredStack } }
 }
 
+// What a save returns: success, or what blocked it.
+export type SaveResult<Failure> = { ok: true } | ({ ok: false } & Failure)
+
+// The optional Links other than Custom Links, one of each per Member.
+export const optionalLinks = [
+  {
+    kind: 'resume',
+    label: 'Resume URL',
+    placeholder: 'https://example.com/resume.pdf',
+    problem: 'Enter your resume as a URL',
+  },
+  {
+    kind: 'portfolio',
+    label: 'Portfolio URL',
+    placeholder: 'https://example.com',
+    problem: 'Enter your portfolio as a URL',
+  },
+  {
+    kind: 'bluesky',
+    label: 'Bluesky profile URL',
+    placeholder: 'https://bsky.app/profile/you',
+    problem: 'Enter your Bluesky profile as a URL',
+  },
+] as const
+
+export type OptionalLinkKind = (typeof optionalLinks)[number]['kind']
+
 // The optional Links. A blank URL means the Member has no such Link.
-export type LinksForm = {
-  resume: string
-  portfolio: string
-  bluesky: string
+export type LinksForm = Record<OptionalLinkKind, string> & {
   custom: CustomLinkForm[]
 }
 
 export type CustomLinkForm = { label: string; url: string }
 
 export type LinksProblems = Partial<
-  Record<Exclude<keyof LinksForm, 'custom'>, string> & {
+  Record<OptionalLinkKind, string> & {
     // One entry per Custom Link, undefined where it is fine.
     custom: (string | undefined)[]
   }
@@ -190,23 +214,15 @@ export type LinksCheck =
   | { ok: true; links: LinksForm }
   | { ok: false; problems: LinksProblems }
 
-export const emptyLinks: LinksForm = { resume: '', portfolio: '', bluesky: '', custom: [] }
-
 export function checkLinks(form: LinksForm): LinksCheck {
   const problems: LinksProblems = {}
-  const optional = (
-    field: Exclude<keyof LinksForm, 'custom'>,
-    site: string | undefined,
-    problem: string,
-  ): string => {
-    if (!form[field].trim()) return ''
-    const url = toUrl(form[field], site)
-    if (!url) problems[field] = problem
-    return url ?? ''
+  const links: LinksForm = { resume: '', portfolio: '', bluesky: '', custom: [] }
+  for (const { kind, problem } of optionalLinks) {
+    if (!form[kind].trim()) continue
+    const url = toUrl(form[kind])
+    if (url) links[kind] = url
+    else problems[kind] = problem
   }
-  const resume = optional('resume', undefined, 'Enter your resume as a URL')
-  const portfolio = optional('portfolio', undefined, 'Enter a URL')
-  const bluesky = optional('bluesky', 'bsky.app', 'Enter your Bluesky profile URL')
 
   const custom = form.custom.map((link) => ({
     label: link.label.trim(),
@@ -218,17 +234,10 @@ export function checkLinks(form: LinksForm): LinksCheck {
     return undefined
   })
   if (customProblems.some(Boolean)) problems.custom = customProblems
+  links.custom = custom.map(({ label, url }) => ({ label, url: url ?? '' }))
 
   if (Object.keys(problems).length > 0) return { ok: false, problems }
-  return {
-    ok: true,
-    links: {
-      resume,
-      portfolio,
-      bluesky,
-      custom: custom.map(({ label, url }) => ({ label, url: url ?? '' })),
-    },
-  }
+  return { ok: true, links }
 }
 
 export function linksProblems(form: LinksForm): LinksProblems {
@@ -296,7 +305,8 @@ export function sortSeniorities(chosen: Seniority[]): Seniority[] {
   return seniorities.filter((seniority) => chosen.includes(seniority))
 }
 
-const typeScript = 'TypeScript'
+// The Skill Catalog's name for TypeScript; Aliases such as "TS" resolve to it.
+export const typeScript = 'TypeScript'
 
 // True when two names match once case, spaces, dots, hyphens and
 // underscores are ignored.
@@ -363,15 +373,17 @@ export function parseDetailsForm(input: unknown): DetailsForm {
 
 export function parseLinksForm(input: unknown): LinksForm {
   const read = formReader(input, 'Links')
-  return {
-    resume: read.text('resume'),
-    portfolio: read.text('portfolio'),
-    bluesky: read.text('bluesky'),
+  const links: LinksForm = {
+    resume: '',
+    portfolio: '',
+    bluesky: '',
     custom: read.list('custom').map((link) => {
       const custom = formReader(link, 'Custom Link')
       return { label: custom.text('label'), url: custom.text('url') }
     }),
   }
+  for (const { kind } of optionalLinks) links[kind] = read.text(kind)
+  return links
 }
 
 export type AddSkillForm = {

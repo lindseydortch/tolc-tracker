@@ -1,6 +1,5 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
-import { useState, type FormEvent } from 'react'
 import { landingPage, requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
 import { getSignupCatalogs, submitProfile } from '../directory/directory-fns'
@@ -11,10 +10,9 @@ import {
   skillsForLayer,
   stackLayerLabels,
   stackLayers,
-  type ProfileForm,
-  type ProfileProblems,
 } from '../directory/profile'
 import { DetailsFields, Problem, Resolved } from '../directory/profile-fields'
+import { SaveStatus, useSavedForm } from '../directory/saved-form'
 
 // The required profile form a Member fills once they're in TOLC. They stay
 // here until it's complete, and only then reach the Directory.
@@ -34,44 +32,12 @@ function Signup() {
   const signOut = useSignOut()
   // Follows the redirect if the Member no longer belongs on this page.
   const saveProfile = useServerFn(submitProfile)
-  const [form, setForm] = useState(emptyForm)
-  // Problems show once the Member first tries to save, then follow their
-  // edits, so a fixed field stops showing its message right away.
-  const [attempted, setAttempted] = useState(false)
-  const [serverProblems, setServerProblems] = useState<ProfileProblems>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [saveFailed, setSaveFailed] = useState(false)
-  const problems = attempted
-    ? { ...serverProblems, ...profileProblems(form, catalogs) }
-    : {}
-
-  const update = (changes: Partial<ProfileForm>) => {
-    setForm((current) => ({ ...current, ...changes }))
-    setServerProblems({})
-  }
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    // Enter pressed twice before the button disables sends only once.
-    if (submitting) return
-    setAttempted(true)
-    setSaveFailed(false)
-    if (Object.keys(profileProblems(form, catalogs)).length > 0) return
-    setSubmitting(true)
-    try {
-      const result = await saveProfile({ data: form })
-      if (!result.ok) {
-        setServerProblems(result.problems)
-        return
-      }
-      await router.navigate({ to: '/' })
-    } catch (error) {
-      console.error(error)
-      setSaveFailed(true)
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const { form, update, problems, status, onSubmit } = useSavedForm({
+    initial: emptyForm,
+    problemsOf: (profile) => profileProblems(profile, catalogs),
+    save: (profile) => saveProfile({ data: profile }),
+    onSaved: () => router.navigate({ to: '/' }),
+  })
 
   return (
     <main>
@@ -131,10 +97,10 @@ function Signup() {
         {Object.keys(problems).length > 0 && (
           <p role="alert">Fix the fields above to continue.</p>
         )}
-        {saveFailed && <p role="alert">Couldn't save your profile. Try again.</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Saving…' : 'Save profile'}
+        <button type="submit" disabled={status === 'saving'}>
+          {status === 'saving' ? 'Saving…' : 'Save profile'}
         </button>
+        <SaveStatus status={status} />
       </form>
       <button type="button" onClick={signOut}>
         Sign out
