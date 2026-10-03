@@ -449,7 +449,7 @@ function readDetails(read: FormReader): DetailsForm {
 
 type FormReader = ReturnType<typeof formReader>
 
-function formReader(input: unknown, formName: string) {
+export function formReader(input: unknown, formName: string) {
   const fail = (field: string): never => {
     throw new Error(`Malformed ${formName}: ${field}`)
   }

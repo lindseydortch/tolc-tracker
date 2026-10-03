@@ -22,6 +22,10 @@ export function findSkill(db: Db, typed: string): Promise<CatalogEntryRef | null
   return findEntry(skillStore(db, null), typed)
 }
 
+export function findTargetRole(db: Db, typed: string): Promise<CatalogEntryRef | null> {
+  return findEntry(targetRoleStore(db), typed)
+}
+
 // The Skill a typed name stands for, created in the Skill Catalog if it
 // isn't there yet. A new Skill takes `suggestedLayer` as its hint.
 export function findOrCreateSkill(
