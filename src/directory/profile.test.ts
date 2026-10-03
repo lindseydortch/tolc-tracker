@@ -1,62 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
+  emptyForm,
+  parseAddSkillForm,
+  parseLinksForm,
+  parseProfileForm,
   profileProblems,
   skillsForLayer,
-  type ProfileForm,
-} from './directory'
-import { parseProfileForm } from './profile'
-import { starterCatalogs } from './starter-catalogs'
-import { createTestSetup } from './test-directory'
+} from './profile'
+import { memberInTolc, octoForm, seededSetup } from './test-profiles'
 
 const second = 1000
-let discordIds = 80351110224678912n
-
-// A Member who is in TOLC and has not filled the signup form yet.
-async function memberInTolc(
-  setup: Awaited<ReturnType<typeof createTestSetup>>,
-  githubUsername: string,
-) {
-  const { directory, tolc, signUpWithGitHub } = setup
-  const authUserId = await signUpWithGitHub(githubUsername)
-  await directory.signIn({ authUserId, githubUsername })
-  const discord = { userId: String(discordIds++), handle: `${githubUsername}_dc` }
-  await directory.connectDiscord({ authUserId, discord })
-  tolc.join(discord.userId)
-  const now = new Date()
-  await directory.refreshMembership({ authUserId, sessionStartedAt: now, now })
-  return { authUserId, discord, now }
-}
-
-async function seededSetup() {
-  const setup = await createTestSetup()
-  await setup.directory.seedCatalogs(starterCatalogs)
-  return setup
-}
 
 async function seededCatalogs() {
   return (await seededSetup()).directory.catalogs()
-}
-
-const octoForm: ProfileForm = {
-  firstName: 'Octo',
-  lastName: 'Cat',
-  linkedinUrl: 'https://www.linkedin.com/in/octocat',
-  jobSearchStatus: 'activelyLooking',
-  targetRoles: ['Software Engineer'],
-  preferredSeniority: 'senior',
-  otherSeniorities: ['mid'],
-  preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
-}
-
-const emptyForm: ProfileForm = {
-  firstName: '',
-  lastName: '',
-  linkedinUrl: '',
-  jobSearchStatus: null,
-  targetRoles: [],
-  preferredSeniority: null,
-  otherSeniorities: [],
-  preferredStack: {},
 }
 
 describe('the signup form', () => {
@@ -142,6 +98,34 @@ describe('a signup form sent to the server', () => {
     expect(() =>
       parseProfileForm({ ...octoForm, preferredStack: { hasOwnProperty: 'React' } }),
     ).toThrow('preferredStack')
+  })
+})
+
+describe('profile edits sent to the server', () => {
+  it('passes well-formed Links and Skills through', () => {
+    const links = {
+      resume: 'https://octo.dev/cv',
+      portfolio: '',
+      bluesky: '',
+      custom: [{ label: 'Talk', url: 'https://youtu.be/talk' }],
+    }
+    expect(parseLinksForm(links)).toEqual(links)
+    const skill = { skill: 'Vue', stackLayer: 'frontendFramework', replace: true }
+    expect(parseAddSkillForm(skill)).toEqual(skill)
+  })
+
+  it('rejects malformed Links and Skills', () => {
+    const links = { resume: '', portfolio: '', bluesky: '', custom: [] }
+    expect(() => parseLinksForm({ ...links, resume: null })).toThrow('Malformed Links: resume')
+    expect(() => parseLinksForm({ ...links, custom: [{ label: 'x' }] })).toThrow(
+      'Malformed Custom Link: url',
+    )
+    expect(() =>
+      parseAddSkillForm({ skill: 'Vue', stackLayer: 'cloud', replace: false }),
+    ).toThrow('stackLayer')
+    expect(() =>
+      parseAddSkillForm({ skill: 'Vue', stackLayer: null, replace: 'yes' }),
+    ).toThrow('replace')
   })
 })
 
@@ -232,7 +216,7 @@ describe('completing a profile', () => {
     expect(entry.targetRoles).toEqual(['Software Engineer'])
   })
 
-  it('rejects names that are not in the Catalogs', async () => {
+  it('creates Target Roles and Skills that are not in the Catalogs', async () => {
     const setup = await seededSetup()
     const { authUserId } = await memberInTolc(setup, 'octocat')
 
@@ -240,19 +224,24 @@ describe('completing a profile', () => {
       authUserId,
       form: {
         ...octoForm,
-        targetRoles: ['Wizard'],
+        targetRoles: ['Wizard', 'Software Engineer'],
         preferredStack: { database: 'Clay Tablets' },
       },
     })
 
-    expect(result).toEqual({
-      ok: false,
-      problems: {
-        targetRoles: 'Pick "Wizard" from the Role Catalog',
-        preferredStack: 'Pick "Clay Tablets" from the Skill Catalog',
-      },
+    expect(result).toEqual({ ok: true })
+    const [entry] = await setup.directory.listDirectory()
+    expect(entry.targetRoles).toEqual(['Software Engineer', 'Wizard'])
+    expect(entry.preferredStack).toEqual({ database: 'Clay Tablets' })
+    expect(await setup.directory.roleCatalog()).toContainEqual({
+      name: 'Wizard',
+      aliases: [],
     })
-    expect(await setup.directory.listDirectory()).toEqual([])
+    expect(await setup.directory.skillCatalog()).toContainEqual({
+      name: 'Clay Tablets',
+      suggestedLayer: 'database',
+      aliases: [],
+    })
   })
 
   it('rejects one Skill in two Stack Layers', async () => {

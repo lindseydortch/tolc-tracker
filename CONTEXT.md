@@ -59,7 +59,7 @@ One slot in the Preferred Stack: Frontend Framework, Backend Framework, Backend 
 _Avoid_: category, section
 
 **Primary Skill**:
-A Skill in a Member's Preferred Stack.
+A Skill in a Member's Preferred Stack. A Member always has at least one, so their last Primary Skill can't be removed until another takes its place.
 _Avoid_: main skill, preferred skill
 
 **Secondary Skill**:

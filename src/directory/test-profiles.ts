@@ -1,0 +1,49 @@
+import type { ProfileForm } from './profile'
+import { starterCatalogs } from './starter-catalogs'
+import { createTestSetup } from './test-directory'
+
+export type TestSetup = Awaited<ReturnType<typeof createTestSetup>>
+
+let discordIds = 80351110224678912n
+
+// A test Directory with the starter Catalogs loaded.
+export async function seededSetup(): Promise<TestSetup> {
+  const setup = await createTestSetup()
+  await setup.directory.seedCatalogs(starterCatalogs)
+  return setup
+}
+
+// A Member who is in TOLC and has not filled the signup form yet.
+export async function memberInTolc(setup: TestSetup, githubUsername: string) {
+  const { directory, tolc, signUpWithGitHub } = setup
+  const authUserId = await signUpWithGitHub(githubUsername)
+  await directory.signIn({ authUserId, githubUsername })
+  const discord = { userId: String(discordIds++), handle: `${githubUsername}_dc` }
+  await directory.connectDiscord({ authUserId, discord })
+  tolc.join(discord.userId)
+  const now = new Date()
+  await directory.refreshMembership({ authUserId, sessionStartedAt: now, now })
+  return { authUserId, discord, now }
+}
+
+export const octoForm: ProfileForm = {
+  firstName: 'Octo',
+  lastName: 'Cat',
+  linkedinUrl: 'https://www.linkedin.com/in/octocat',
+  jobSearchStatus: 'activelyLooking',
+  targetRoles: ['Software Engineer'],
+  preferredSeniority: 'senior',
+  otherSeniorities: ['mid'],
+  preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
+}
+
+// A Member in TOLC who has completed the signup form with `octoForm`.
+export async function memberWithProfile(setup: TestSetup, githubUsername: string) {
+  const member = await memberInTolc(setup, githubUsername)
+  const result = await setup.directory.completeProfile({
+    authUserId: member.authUserId,
+    form: octoForm,
+  })
+  if (!result.ok) throw new Error('octoForm should complete a profile')
+  return member
+}

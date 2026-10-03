@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useSignOut } from '../../auth/use-sign-out'
 import type { StackLayer } from '../../directory/directory'
 import { getDirectory } from '../../directory/directory-fns'
@@ -25,6 +25,7 @@ function DirectoryList() {
       <h1>TOLC Tracker</h1>
       <p>
         Signed in as {member.name} ({member.discordHandle}).{' '}
+        <Link to="/edit-profile">Edit your profile</Link>{' '}
         <button type="button" onClick={signOut}>
           Sign out
         </button>
