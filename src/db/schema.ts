@@ -4,6 +4,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   serial,
   text,
   timestamp,
@@ -54,13 +55,28 @@ export const targetRoleAliases = pgTable('target_role_aliases', {
   normalizedName: text('normalized_name').notNull().unique(),
 })
 
+export const jobSearchStatus = pgEnum('job_search_status', [
+  'activelyLooking',
+  'employedAndLooking',
+  'employedOpenToOffers',
+  'notLooking',
+])
+
+export const seniority = pgEnum('seniority', [
+  'junior',
+  'mid',
+  'senior',
+  'staffPlus',
+])
+
 // A Member is created on first GitHub sign-in. `authUserId` points at Better
 // Auth's own user row, which holds the sign-in identity. The Discord columns
 // stay null until the Member connects Discord. `hidden` marks a Hidden
 // Member: kept, but out of the Directory until they rejoin TOLC.
 // `membershipCheckedAt` is when Discord last answered whether they are in
 // TOLC (null until it has, or once the answer can't be trusted);
-// `membershipAttemptedAt` is when it was last asked, answer or not.
+// `membershipAttemptedAt` is when it was last asked, answer or not. The
+// profile columns stay null until the Member fills the signup form.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
@@ -73,6 +89,9 @@ export const members = pgTable('members', {
   hidden: boolean('hidden').default(false).notNull(),
   membershipCheckedAt: timestamp('membership_checked_at'),
   membershipAttemptedAt: timestamp('membership_attempted_at'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  jobSearchStatus: jobSearchStatus('job_search_status'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -101,5 +120,57 @@ export const links = pgTable(
     uniqueIndex('links_member_kind_unique')
       .on(table.memberId, table.kind)
       .where(sql`${table.kind} <> 'custom'`),
+  ],
+)
+
+export const memberTargetRoles = pgTable(
+  'member_target_roles',
+  {
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    targetRoleId: integer('target_role_id')
+      .notNull()
+      .references(() => targetRoles.id, { onDelete: 'cascade' }),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.targetRoleId] })],
+)
+
+// Every Seniority a Member would accept; exactly one is Preferred.
+export const memberSeniorities = pgTable(
+  'member_seniorities',
+  {
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    seniority: seniority('seniority').notNull(),
+    preferred: boolean('preferred').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.memberId, table.seniority] }),
+    uniqueIndex('member_seniorities_one_preferred')
+      .on(table.memberId)
+      .where(sql`${table.preferred}`),
+  ],
+)
+
+// A Member's Tech Stack. A Skill with a `stackLayer` is a Primary Skill in
+// that Layer of the Preferred Stack; one without is a Secondary Skill.
+export const memberSkills = pgTable(
+  'member_skills',
+  {
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    skillId: integer('skill_id')
+      .notNull()
+      .references(() => skills.id, { onDelete: 'cascade' }),
+    stackLayer: stackLayer('stack_layer'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.memberId, table.skillId] }),
+    uniqueIndex('member_skills_one_per_layer')
+      .on(table.memberId, table.stackLayer)
+      .where(sql`${table.stackLayer} is not null`),
   ],
 )

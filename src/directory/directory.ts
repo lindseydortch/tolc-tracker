@@ -1,7 +1,10 @@
-import { and, asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
+  memberSeniorities,
+  memberSkills,
+  memberTargetRoles,
   members,
   skillAliases,
   skills,
@@ -13,8 +16,26 @@ import {
   type MembershipChecker,
 } from './membership-checker'
 import { normalizeName } from './normalize-name'
+import {
+  checkProfile,
+  sortSeniorities,
+  type Catalogs,
+  type ProfileForm,
+  type ProfileProblems,
+} from './profile'
+
+export {
+  profileProblems,
+  skillsForLayer,
+  type ProfileForm,
+  type ProfileProblems,
+} from './profile'
 
 export type StackLayer = (typeof skills.$inferSelect)['suggestedLayer'] & {}
+
+export type JobSearchStatus = (typeof members.$inferSelect)['jobSearchStatus'] & {}
+
+export type Seniority = (typeof memberSeniorities.$inferSelect)['seniority']
 
 export type SkillSeed = {
   name: string
@@ -71,6 +92,23 @@ export type SignedInMember = {
   discordSyncedAt: Date | null
 }
 
+// A complete, non-hidden Member as the Directory lists them.
+export type DirectoryEntry = {
+  id: number
+  firstName: string
+  lastName: string
+  discordHandle: string
+  jobSearchStatus: JobSearchStatus
+  targetRoles: string[]
+  preferredSeniority: Seniority
+  otherSeniorities: Seniority[]
+  preferredStack: Partial<Record<StackLayer, string>>
+}
+
+export type CompleteProfileResult =
+  | { ok: true }
+  | { ok: false; problems: ProfileProblems }
+
 // 'unknown': no Discord connected yet, or no answer from Discord to trust.
 export type Membership = 'in-tolc' | 'not-in-tolc' | 'unknown'
 
@@ -84,7 +122,102 @@ export function createDirectory(
   db: Db,
   { membershipChecker }: { membershipChecker?: MembershipChecker } = {},
 ) {
-  return {
+  // Members with every required profile field filled, matching `where`.
+  // A profile is complete only once the signup form has been sent and
+  // Discord is connected, so a half-saved Member never shows up.
+  async function completeProfiles(where: SQL | undefined): Promise<DirectoryEntry[]> {
+    const rows = await db
+      .select({
+        id: members.id,
+        firstName: members.firstName,
+        lastName: members.lastName,
+        discordHandle: members.discordHandle,
+        jobSearchStatus: members.jobSearchStatus,
+      })
+      .from(members)
+      .innerJoin(
+        links,
+        and(eq(links.memberId, members.id), eq(links.kind, 'linkedin')),
+      )
+      .where(
+        and(
+          where,
+          isNotNull(members.firstName),
+          isNotNull(members.lastName),
+          isNotNull(members.discordHandle),
+          isNotNull(members.jobSearchStatus),
+        ),
+      )
+      .orderBy(asc(members.firstName), asc(members.lastName), asc(members.id))
+    if (rows.length === 0) return []
+    const ids = rows.map((row) => row.id)
+    const roles = await db
+      .select({ memberId: memberTargetRoles.memberId, name: targetRoles.name })
+      .from(memberTargetRoles)
+      .innerJoin(targetRoles, eq(memberTargetRoles.targetRoleId, targetRoles.id))
+      .where(inArray(memberTargetRoles.memberId, ids))
+      .orderBy(asc(targetRoles.name))
+    const seniorities = await db
+      .select()
+      .from(memberSeniorities)
+      .where(inArray(memberSeniorities.memberId, ids))
+    const primarySkills = await db
+      .select({
+        memberId: memberSkills.memberId,
+        layer: memberSkills.stackLayer,
+        name: skills.name,
+      })
+      .from(memberSkills)
+      .innerJoin(skills, eq(memberSkills.skillId, skills.id))
+      .where(
+        and(
+          inArray(memberSkills.memberId, ids),
+          isNotNull(memberSkills.stackLayer),
+        ),
+      )
+
+    const entries: DirectoryEntry[] = []
+    for (const row of rows) {
+      const { firstName, lastName, discordHandle, jobSearchStatus } = row
+      const own = <T extends { memberId: number }>(all: T[]) =>
+        all.filter((item) => item.memberId === row.id)
+      const preferred = own(seniorities).find((s) => s.preferred)
+      const preferredStack: DirectoryEntry['preferredStack'] = {}
+      for (const skill of own(primarySkills)) {
+        if (skill.layer) preferredStack[skill.layer] = skill.name
+      }
+      const targetRoleNames = own(roles).map((role) => role.name)
+      if (
+        !firstName ||
+        !lastName ||
+        !discordHandle ||
+        !jobSearchStatus ||
+        !preferred ||
+        targetRoleNames.length === 0 ||
+        Object.keys(preferredStack).length === 0
+      ) {
+        continue
+      }
+      entries.push({
+        id: row.id,
+        firstName,
+        lastName,
+        discordHandle,
+        jobSearchStatus,
+        targetRoles: targetRoleNames,
+        preferredSeniority: preferred.seniority,
+        otherSeniorities: sortSeniorities(
+          own(seniorities)
+            .filter((s) => !s.preferred)
+            .map((s) => s.seniority),
+        ),
+        preferredStack,
+      })
+    }
+    return entries
+  }
+
+  const directory = {
     // Called on every signed-in page load. Creates the Member on first use
     // and keeps the GitHub Link in step with renames, writing only on change.
     // Returns null without a GitHub username, so the visitor is treated as
@@ -241,6 +374,101 @@ export function createDirectory(
       return hidden ? 'not-in-tolc' : 'in-tolc'
     },
 
+    // Saves the signup form, or returns what blocks it. Sending it again
+    // replaces the profile; Skills dropped from the Preferred Stack stay on
+    // as Secondary Skills.
+    async completeProfile({
+      authUserId,
+      form,
+    }: {
+      authUserId: string
+      form: ProfileForm
+    }): Promise<CompleteProfileResult> {
+      const [member] = await db
+        .select({ id: members.id })
+        .from(members)
+        .where(eq(members.authUserId, authUserId))
+      if (!member) throw new Error(`No Member for auth user "${authUserId}"`)
+      const check = checkProfile(form, await directory.catalogs())
+      if (!check.ok) return check
+      const { profile } = check
+      const memberId = member.id
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(members)
+          .set({
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            jobSearchStatus: profile.jobSearchStatus,
+          })
+          .where(eq(members.id, memberId))
+
+        await tx
+          .delete(links)
+          .where(and(eq(links.memberId, memberId), eq(links.kind, 'linkedin')))
+        await tx
+          .insert(links)
+          .values({ memberId, kind: 'linkedin', url: profile.linkedinUrl })
+
+        const roleIds = await tx
+          .select({ id: targetRoles.id })
+          .from(targetRoles)
+          .where(inArray(targetRoles.normalizedName, profile.targetRoles.map(normalizeName)))
+        await tx.delete(memberTargetRoles).where(eq(memberTargetRoles.memberId, memberId))
+        await tx
+          .insert(memberTargetRoles)
+          .values(roleIds.map(({ id }) => ({ memberId, targetRoleId: id })))
+
+        await tx.delete(memberSeniorities).where(eq(memberSeniorities.memberId, memberId))
+        await tx.insert(memberSeniorities).values([
+          { memberId, seniority: profile.preferredSeniority, preferred: true },
+          ...profile.otherSeniorities.map((seniority) => ({
+            memberId,
+            seniority,
+            preferred: false,
+          })),
+        ])
+
+        await tx
+          .update(memberSkills)
+          .set({ stackLayer: null })
+          .where(eq(memberSkills.memberId, memberId))
+        const stack = Object.entries(profile.preferredStack) as [StackLayer, string][]
+        const skillIds = await tx
+          .select({ id: skills.id, name: skills.name })
+          .from(skills)
+          .where(
+            inArray(
+              skills.normalizedName,
+              stack.map(([, name]) => normalizeName(name)),
+            ),
+          )
+        for (const [stackLayer, name] of stack) {
+          const skill = skillIds.find((row) => row.name === name)
+          if (!skill) throw new Error(`Skill "${name}" vanished from the Catalog`)
+          await tx
+            .insert(memberSkills)
+            .values({ memberId, skillId: skill.id, stackLayer })
+            .onConflictDoUpdate({
+              target: [memberSkills.memberId, memberSkills.skillId],
+              set: { stackLayer },
+            })
+        }
+      })
+      return { ok: true }
+    },
+
+    async isProfileComplete(authUserId: string): Promise<boolean> {
+      const found = await completeProfiles(eq(members.authUserId, authUserId))
+      return found.length > 0
+    },
+
+    // Every complete, non-hidden Member, whatever their Job Search Status.
+    async listDirectory(): Promise<DirectoryEntry[]> {
+      return completeProfiles(eq(members.hidden, false))
+    },
+
     async memberForAuthUser(authUserId: string): Promise<Member | null> {
       const [member] = await db
         .select({ id: members.id, hidden: members.hidden })
@@ -328,6 +556,13 @@ export function createDirectory(
       }))
     },
 
+    async catalogs(): Promise<Catalogs> {
+      return {
+        skills: await directory.skillCatalog(),
+        roles: await directory.roleCatalog(),
+      }
+    },
+
     async roleCatalog(): Promise<CatalogTargetRole[]> {
       const rows = await db
         .select()
@@ -345,6 +580,7 @@ export function createDirectory(
       }))
     },
   }
+  return directory
 }
 
 export type Directory = ReturnType<typeof createDirectory>

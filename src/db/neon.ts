@@ -5,5 +5,13 @@ import type { Db } from './client'
 
 // The websocket driver, because the Directory module relies on transactions.
 export function createNeonDb(databaseUrl: string): Db {
-  return drizzle(new Pool({ connectionString: databaseUrl }), { schema })
+  const pool = new Pool({ connectionString: databaseUrl })
+  // Neon drops idle connections (after its idle timeout, or when the laptop
+  // sleeps). The pool then emits 'error' for that idle client, and without a
+  // listener Node treats it as unhandled and exits. The pool already throws
+  // the dead client away and opens a fresh one on the next query.
+  pool.on('error', (error: Error) => {
+    console.error('An idle database connection was closed', error.message)
+  })
+  return drizzle(pool, { schema })
 }
