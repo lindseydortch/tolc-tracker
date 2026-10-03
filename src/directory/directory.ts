@@ -1,6 +1,8 @@
 import { asc, eq } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
+  links,
+  members,
   skillAliases,
   skills,
   targetRoleAliases,
@@ -37,8 +39,58 @@ export type CatalogTargetRole = {
   aliases: string[]
 }
 
+export type LinkKind = (typeof links.$inferSelect)['kind']
+
+export type MemberLink = {
+  kind: LinkKind
+  url: string
+  label: string | null
+}
+
+export type Member = {
+  id: number
+  links: MemberLink[]
+}
+
 export function createDirectory(db: Db) {
   return {
+    // Runs on a first GitHub sign-in. Safe to call again: it never duplicates.
+    async registerMember({
+      userId,
+      githubUsername,
+    }: {
+      userId: string
+      githubUsername: string
+    }): Promise<void> {
+      await db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(members)
+          .values({ userId })
+          .onConflictDoNothing()
+          .returning({ id: members.id })
+        if (!created) return
+        await tx.insert(links).values({
+          memberId: created.id,
+          kind: 'github',
+          url: `https://github.com/${githubUsername}`,
+        })
+      })
+    },
+
+    async memberForUser(userId: string): Promise<Member | null> {
+      const [member] = await db
+        .select({ id: members.id })
+        .from(members)
+        .where(eq(members.userId, userId))
+      if (!member) return null
+      const memberLinks = await db
+        .select({ kind: links.kind, url: links.url, label: links.label })
+        .from(links)
+        .where(eq(links.memberId, member.id))
+        .orderBy(asc(links.id))
+      return { id: member.id, links: memberLinks }
+    },
+
     // Safe to run repeatedly: an entry already present by name or Alias is
     // left untouched, so Member-added entries and Admin merges survive.
     async seedCatalogs(seed: CatalogSeed): Promise<void> {
