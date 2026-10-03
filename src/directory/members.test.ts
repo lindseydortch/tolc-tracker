@@ -61,11 +61,16 @@ describe('signing in a Member with GitHub', () => {
 })
 
 describe('connecting Discord', () => {
+  const octoDiscord = { userId: '80351110224678912', handle: 'octo_discord' }
+
   it('has no Discord connection right after GitHub sign-in', async () => {
     const { directory, signUpWithGitHub } = await createTestSetup()
     const authUserId = await signUpWithGitHub('octocat')
 
-    const signedIn = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    const signedIn = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
 
     expect(signedIn?.discord).toBeNull()
   })
@@ -73,14 +78,20 @@ describe('connecting Discord', () => {
   it('links Discord to the existing Member', async () => {
     const { directory, signUpWithGitHub } = await createTestSetup()
     const authUserId = await signUpWithGitHub('octocat')
-    const before = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    const before = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
 
     await directory.connectDiscord({
       authUserId,
-      discord: { userId: '80351110224678912', handle: 'octo_discord' },
+      discord: octoDiscord,
     })
 
-    const after = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    const after = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
     expect(after?.id).toBe(before?.id)
     expect(after?.discord).toEqual({
       userId: '80351110224678912',
@@ -94,15 +105,18 @@ describe('connecting Discord', () => {
     await directory.signIn({ authUserId, githubUsername: 'octocat' })
     await directory.connectDiscord({
       authUserId,
-      discord: { userId: '80351110224678912', handle: 'octo_discord' },
+      discord: octoDiscord,
     })
 
     await directory.connectDiscord({
       authUserId,
-      discord: { userId: '80351110224678912', handle: 'octo_renamed' },
+      discord: { ...octoDiscord, handle: 'octo_renamed' },
     })
 
-    const signedIn = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    const signedIn = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
     expect(signedIn?.discord?.handle).toBe('octo_renamed')
   })
 
@@ -112,12 +126,44 @@ describe('connecting Discord', () => {
     const second = await signUpWithGitHub('hubot')
     await directory.signIn({ authUserId: first, githubUsername: 'octocat' })
     await directory.signIn({ authUserId: second, githubUsername: 'hubot' })
-    const discord = { userId: '80351110224678912', handle: 'octo_discord' }
-    await directory.connectDiscord({ authUserId: first, discord })
+    await directory.connectDiscord({ authUserId: first, discord: octoDiscord })
 
     await expect(
-      directory.connectDiscord({ authUserId: second, discord }),
+      directory.connectDiscord({ authUserId: second, discord: octoDiscord }),
     ).rejects.toThrow()
-    expect((await directory.signIn({ authUserId: second, githubUsername: 'hubot' }))?.discord).toBeNull()
+    const hubot = await directory.signIn({
+      authUserId: second,
+      githubUsername: 'hubot',
+    })
+    expect(hubot?.discord).toBeNull()
+  })
+
+  it('refuses to connect Discord for someone who never signed in', async () => {
+    const { directory } = await createTestSetup()
+
+    await expect(
+      directory.connectDiscord({ authUserId: 'nobody', discord: octoDiscord }),
+    ).rejects.toThrow('No Member for auth user "nobody"')
+  })
+
+  it('records when Discord was last synced', async () => {
+    const { directory, signUpWithGitHub } = await createTestSetup()
+    const authUserId = await signUpWithGitHub('octocat')
+    const before = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
+    const connectedAt = new Date()
+
+    await directory.connectDiscord({ authUserId, discord: octoDiscord })
+
+    const after = await directory.signIn({
+      authUserId,
+      githubUsername: 'octocat',
+    })
+    expect(before?.discordSyncedAt).toBeNull()
+    expect(after?.discordSyncedAt?.getTime()).toBeGreaterThanOrEqual(
+      connectedAt.getTime(),
+    )
   })
 })

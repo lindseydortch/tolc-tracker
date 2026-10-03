@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '../auth/auth-client'
+import { discordProviderId } from '../auth/discord-provider'
 import { requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
 
@@ -28,7 +29,8 @@ function ConnectDiscord() {
   const message = error
     ? (linkErrors[error] ?? 'Discord could not be connected. Try again.')
     : discordSyncFailed
-      ? 'Your Discord account is linked, but its details could not be read. Connect again to retry.'
+      ? 'Your Discord account is linked, but its details could not be ' +
+        'read. Connect again to retry.'
       : null
 
   return (
@@ -43,7 +45,7 @@ function ConnectDiscord() {
         type="button"
         onClick={() =>
           authClient.linkSocial({
-            provider: 'discord',
+            provider: discordProviderId,
             callbackURL: '/',
             errorCallbackURL: '/connect-discord',
           })

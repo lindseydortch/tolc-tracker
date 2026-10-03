@@ -1,23 +1,23 @@
-import { and, eq } from 'drizzle-orm'
-import { db } from '../db/db'
-import { account } from '../db/schema'
 import { directory } from '../directory/app-directory'
 import { discordHandle, type DiscordProfile } from '../directory/discord-handle'
 import { auth } from './auth'
+import { discordProviderId } from './discord-provider'
+
+export type DiscordSyncResult = 'synced' | 'not-linked' | 'failed'
 
 // Copies the linked Discord account's user ID and current handle onto the
-// Member. Returns false if that failed, true otherwise (including for a
-// Member without Discord). Never throws: a Discord outage must not block
-// sign-in, and the next sign-in or page load tries again.
-export async function syncDiscord(authUserId: string): Promise<boolean> {
+// Member. Never throws: a Discord outage must not block the page, and the
+// next page load tries again because the sync time stays old.
+export async function syncDiscord(
+  authUserId: string,
+): Promise<DiscordSyncResult> {
   try {
-    const [discordAccount] = await db
-      .select({ id: account.id })
-      .from(account)
-      .where(
-        and(eq(account.userId, authUserId), eq(account.providerId, 'discord')),
-      )
-    if (!discordAccount) return true
+    const { internalAdapter } = await auth.$context
+    const linkedAccounts = await internalAdapter.findAccounts(authUserId)
+    const discordAccount = linkedAccounts.find(
+      (linked) => linked.providerId === discordProviderId,
+    )
+    if (!discordAccount) return 'not-linked'
     // Refreshes the access token first if it has expired.
     const { accessToken } = await auth.api.getAccessToken({
       body: { accountId: discordAccount.id, userId: authUserId },
@@ -33,9 +33,9 @@ export async function syncDiscord(authUserId: string): Promise<boolean> {
       authUserId,
       discord: { userId: profile.id, handle: discordHandle(profile) },
     })
-    return true
+    return 'synced'
   } catch (error) {
     console.error('Could not sync the Discord connection', error)
-    return false
+    return 'failed'
   }
 }

@@ -27,10 +27,15 @@ export const getSignedInMember = createServerFn({ method: 'GET' }).handler(
       })
     let member = await signIn()
     let discordSyncFailed = false
-    // Linking Discord doesn't start a new session, so the first page load
-    // after the Discord redirect records it here.
-    if (member && !member.discord) {
-      discordSyncFailed = !(await syncDiscord(session.user.id))
+    // Syncs once per sign-in, and on the first page load after linking
+    // Discord (which doesn't start a new session). A failed sync leaves the
+    // sync time old, so the next page load retries.
+    if (
+      member &&
+      (!member.discordSyncedAt ||
+        member.discordSyncedAt < session.session.createdAt)
+    ) {
+      discordSyncFailed = (await syncDiscord(session.user.id)) === 'failed'
       member = await signIn()
     }
     return (

@@ -64,6 +64,7 @@ export const members = pgTable('members', {
     .references(() => user.id, { onDelete: 'cascade' }),
   discordUserId: text('discord_user_id').unique(),
   discordHandle: text('discord_handle'),
+  discordSyncedAt: timestamp('discord_synced_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 

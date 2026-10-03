@@ -1,9 +1,10 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { db } from '../db/db'
 import * as schema from '../db/schema'
-import { syncDiscord } from './discord-sync'
+import { discordProviderId } from './discord-provider'
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'pg', schema }),
@@ -17,7 +18,7 @@ export const auth = betterAuth({
       overrideUserInfoOnSignIn: true,
     },
     // Discord is only ever linked to a Member who signed in with GitHub,
-    // never a way to create one.
+    // never a way to create one or to sign in (see `hooks` below).
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
@@ -32,22 +33,26 @@ export const auth = betterAuth({
       // A Member's Discord email rarely matches their GitHub one, and an
       // unverified Discord email must not block linking.
       allowDifferentEmails: true,
-      trustedProviders: ['discord'],
+      trustedProviders: [discordProviderId],
       // Trusting Discord would otherwise let a Discord sign-in whose email
       // matches a Member's attach itself to that Member. Discord is linked
       // only through the explicit Connect Discord step.
       disableImplicitLinking: true,
     },
   },
-  databaseHooks: {
-    session: {
-      create: {
-        // Every sign-in refreshes the Discord handle.
-        after: async (session) => {
-          await syncDiscord(session.userId)
-        },
-      },
-    },
+  hooks: {
+    // GitHub is the only login (ADR 0001). A Member who linked Discord could
+    // otherwise sign in with it alone.
+    before: createAuthMiddleware(async (ctx) => {
+      if (
+        ctx.path === '/sign-in/social' &&
+        ctx.body?.provider === discordProviderId
+      ) {
+        throw new APIError('FORBIDDEN', {
+          message: 'Sign in with GitHub, then connect Discord.',
+        })
+      }
+    }),
   },
   user: {
     additionalFields: {

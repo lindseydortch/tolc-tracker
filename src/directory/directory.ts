@@ -61,6 +61,8 @@ export type SignedInMember = {
   id: number
   githubUrl: string
   discord: DiscordConnection | null
+  // Null until Discord is first connected.
+  discordSyncedAt: Date | null
 }
 
 export function createDirectory(db: Db) {
@@ -84,6 +86,7 @@ export function createDirectory(db: Db) {
             id: members.id,
             discordUserId: members.discordUserId,
             discordHandle: members.discordHandle,
+            discordSyncedAt: members.discordSyncedAt,
             githubUrl: links.url,
             linkId: links.id,
           })
@@ -117,12 +120,17 @@ export function createDirectory(db: Db) {
           existing?.discordUserId && existing.discordHandle
             ? { userId: existing.discordUserId, handle: existing.discordHandle }
             : null
-        return { id: memberId, githubUrl, discord }
+        return {
+          id: memberId,
+          githubUrl,
+          discord,
+          discordSyncedAt: existing?.discordSyncedAt ?? null,
+        }
       })
     },
 
-    // Called when the Member links Discord and again on each sign-in, so the
-    // handle follows Discord renames. The Discord user ID never changes.
+    // Called when the Member links Discord and again after each sign-in, so
+    // the handle follows Discord renames. The Discord user ID never changes.
     async connectDiscord({
       authUserId,
       discord,
@@ -130,10 +138,18 @@ export function createDirectory(db: Db) {
       authUserId: string
       discord: DiscordConnection
     }): Promise<void> {
-      await db
+      const updated = await db
         .update(members)
-        .set({ discordUserId: discord.userId, discordHandle: discord.handle })
+        .set({
+          discordUserId: discord.userId,
+          discordHandle: discord.handle,
+          discordSyncedAt: new Date(),
+        })
         .where(eq(members.authUserId, authUserId))
+        .returning({ id: members.id })
+      if (updated.length === 0) {
+        throw new Error(`No Member for auth user "${authUserId}"`)
+      }
     },
 
     async memberForAuthUser(authUserId: string): Promise<Member | null> {
