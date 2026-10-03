@@ -7,6 +7,8 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // `/members/1/extra` gets the root's not-found page, not the profile's.
+    notFoundMode: 'root',
   })
 
   return router

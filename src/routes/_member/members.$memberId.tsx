@@ -1,6 +1,7 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { getMemberProfile } from '../../directory/directory-fns'
 import { MemberCardDetails } from '../../directory/member-card'
+import { NotFoundPage } from '../../not-found-page'
 import {
   linkKindLabels,
   stackLayerLabels,
@@ -15,12 +16,7 @@ export const Route = createFileRoute('/_member/members/$memberId')({
     return profile
   },
   component: MemberProfilePage,
-  notFoundComponent: () => (
-    <main>
-      <p>No Member here.</p>
-      <Link to="/">Back to the Directory</Link>
-    </main>
-  ),
+  notFoundComponent: () => <NotFoundPage message="No Member here." />,
 })
 
 function MemberProfilePage() {

@@ -1,4 +1,5 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { NotFoundPage } from '../not-found-page'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -16,6 +17,7 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: () => <NotFoundPage message="Page not found." />,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
