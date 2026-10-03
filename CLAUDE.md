@@ -44,6 +44,7 @@ End every commit message and PR description with its own body text. Leave out al
 2. **Review**: `/code-review` against `main`. Fix the findings the Admin accepts.
 3. **Commit and open a PR**: commit to the ticket branch, push, and open a PR to `main` whose body says `Closes #<n>`. Stop there: the agent never merges.
 4. **Approve and merge**: the Admin reviews the PR on GitHub and squash-merges it into `main`, which closes the issue and deletes the branch.
-5. **Next ticket**: every new ticket branch starts from the freshly pulled `main`.
+5. **Clean up**: once the ticket branch is deleted, stop everything the ticket started: dev servers, test runs and watchers, and browser tabs used for live testing. Confirm port 3000 is free.
+6. **Next ticket**: every new ticket branch starts from the freshly pulled `main`.
 
 Don't start a ticket until every ticket that blocks it is merged into `main`. Never branch from another ticket's unmerged branch. Tickets that unblock at the same time (such as #7 and #8 after #6) can run in parallel, each on its own branch from `main`.
