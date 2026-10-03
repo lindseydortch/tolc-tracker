@@ -54,13 +54,16 @@ export const targetRoleAliases = pgTable('target_role_aliases', {
 })
 
 // A Member is created on first GitHub sign-in. `authUserId` points at Better
-// Auth's own user row, which holds the sign-in identity.
+// Auth's own user row, which holds the sign-in identity. The Discord columns
+// stay null until the Member connects Discord.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: 'cascade' }),
+  discordUserId: text('discord_user_id').unique(),
+  discordHandle: text('discord_handle'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 

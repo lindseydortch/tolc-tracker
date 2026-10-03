@@ -52,9 +52,15 @@ export type Member = {
   links: MemberLink[]
 }
 
+export type DiscordConnection = {
+  userId: string
+  handle: string
+}
+
 export type SignedInMember = {
   id: number
   githubUrl: string
+  discord: DiscordConnection | null
 }
 
 export function createDirectory(db: Db) {
@@ -74,7 +80,13 @@ export function createDirectory(db: Db) {
       const githubUrl = `https://github.com/${githubUsername}`
       return db.transaction(async (tx) => {
         const [existing] = await tx
-          .select({ id: members.id, githubUrl: links.url, linkId: links.id })
+          .select({
+            id: members.id,
+            discordUserId: members.discordUserId,
+            discordHandle: members.discordHandle,
+            githubUrl: links.url,
+            linkId: links.id,
+          })
           .from(members)
           .leftJoin(
             links,
@@ -101,8 +113,27 @@ export function createDirectory(db: Db) {
             .set({ url: githubUrl })
             .where(eq(links.id, existing.linkId))
         }
-        return { id: memberId, githubUrl }
+        const discord =
+          existing?.discordUserId && existing.discordHandle
+            ? { userId: existing.discordUserId, handle: existing.discordHandle }
+            : null
+        return { id: memberId, githubUrl, discord }
       })
+    },
+
+    // Called when the Member links Discord and again on each sign-in, so the
+    // handle follows Discord renames. The Discord user ID never changes.
+    async connectDiscord({
+      authUserId,
+      discord,
+    }: {
+      authUserId: string
+      discord: DiscordConnection
+    }): Promise<void> {
+      await db
+        .update(members)
+        .set({ discordUserId: discord.userId, discordHandle: discord.handle })
+        .where(eq(members.authUserId, authUserId))
     },
 
     async memberForAuthUser(authUserId: string): Promise<Member | null> {

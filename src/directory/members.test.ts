@@ -59,3 +59,65 @@ describe('signing in a Member with GitHub', () => {
     expect(await directory.memberForAuthUser('nobody')).toBeNull()
   })
 })
+
+describe('connecting Discord', () => {
+  it('has no Discord connection right after GitHub sign-in', async () => {
+    const { directory, signUpWithGitHub } = await createTestSetup()
+    const authUserId = await signUpWithGitHub('octocat')
+
+    const signedIn = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+
+    expect(signedIn?.discord).toBeNull()
+  })
+
+  it('links Discord to the existing Member', async () => {
+    const { directory, signUpWithGitHub } = await createTestSetup()
+    const authUserId = await signUpWithGitHub('octocat')
+    const before = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+
+    await directory.connectDiscord({
+      authUserId,
+      discord: { userId: '80351110224678912', handle: 'octo_discord' },
+    })
+
+    const after = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    expect(after?.id).toBe(before?.id)
+    expect(after?.discord).toEqual({
+      userId: '80351110224678912',
+      handle: 'octo_discord',
+    })
+  })
+
+  it('refreshes the handle after a Discord rename', async () => {
+    const { directory, signUpWithGitHub } = await createTestSetup()
+    const authUserId = await signUpWithGitHub('octocat')
+    await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    await directory.connectDiscord({
+      authUserId,
+      discord: { userId: '80351110224678912', handle: 'octo_discord' },
+    })
+
+    await directory.connectDiscord({
+      authUserId,
+      discord: { userId: '80351110224678912', handle: 'octo_renamed' },
+    })
+
+    const signedIn = await directory.signIn({ authUserId, githubUsername: 'octocat' })
+    expect(signedIn?.discord?.handle).toBe('octo_renamed')
+  })
+
+  it('refuses a Discord account already connected to another Member', async () => {
+    const { directory, signUpWithGitHub } = await createTestSetup()
+    const first = await signUpWithGitHub('octocat')
+    const second = await signUpWithGitHub('hubot')
+    await directory.signIn({ authUserId: first, githubUsername: 'octocat' })
+    await directory.signIn({ authUserId: second, githubUsername: 'hubot' })
+    const discord = { userId: '80351110224678912', handle: 'octo_discord' }
+    await directory.connectDiscord({ authUserId: first, discord })
+
+    await expect(
+      directory.connectDiscord({ authUserId: second, discord }),
+    ).rejects.toThrow()
+    expect((await directory.signIn({ authUserId: second, githubUsername: 'hubot' }))?.discord).toBeNull()
+  })
+})
