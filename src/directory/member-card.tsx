@@ -21,7 +21,7 @@ export function MemberCardDetails({ entry }: { entry: DirectoryEntry }) {
           .flatMap((layer) => entry.preferredStack[layer] ?? [])
           .join(', ')}
       </p>
-      {entry.typeScriptBadge && <p>TypeScript</p>}
+      {entry.typeScriptBadge && <p>TypeScript Badge</p>}
     </>
   )
 }
