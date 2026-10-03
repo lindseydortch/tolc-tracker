@@ -1,21 +1,14 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useSignOut } from '../../auth/use-sign-out'
-import type { StackLayer } from '../../directory/directory'
 import { getDirectory } from '../../directory/directory-fns'
-import {
-  jobSearchStatusLabels,
-  seniorityLabels,
-  stackLayerLabels,
-} from '../../directory/profile'
+import { MemberCardDetails } from '../../directory/member-card'
 
 export const Route = createFileRoute('/_member/')({
   loader: () => getDirectory(),
-  component: DirectoryList,
+  component: QuickView,
 })
 
-const stackLayers = Object.keys(stackLayerLabels) as StackLayer[]
-
-function DirectoryList() {
+function QuickView() {
   const { member } = Route.useRouteContext()
   const entries = Route.useLoaderData()
   const signOut = useSignOut()
@@ -34,22 +27,12 @@ function DirectoryList() {
       <ul>
         {entries.map((entry) => (
           <li key={entry.id}>
-            <h3>
-              {entry.firstName} {entry.lastName}
-            </h3>
-            <p>Discord: {entry.discordHandle}</p>
-            <p>{jobSearchStatusLabels[entry.jobSearchStatus]}</p>
-            <p>Target Roles: {entry.targetRoles.join(', ')}</p>
-            <p>
-              Seniority: {seniorityLabels[entry.preferredSeniority]} (preferred)
-              {entry.otherSeniorities.map((s) => `, ${seniorityLabels[s]}`)}
-            </p>
-            <p>
-              Primary Skills:{' '}
-              {stackLayers
-                .flatMap((layer) => entry.preferredStack[layer] ?? [])
-                .join(', ')}
-            </p>
+            <Link
+              to="/members/$memberId"
+              params={{ memberId: String(entry.id) }}
+            >
+              <MemberCardDetails entry={entry} />
+            </Link>
           </li>
         ))}
       </ul>
