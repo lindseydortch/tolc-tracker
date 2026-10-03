@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  boolean,
   integer,
   pgEnum,
   pgTable,
@@ -55,7 +56,11 @@ export const targetRoleAliases = pgTable('target_role_aliases', {
 
 // A Member is created on first GitHub sign-in. `authUserId` points at Better
 // Auth's own user row, which holds the sign-in identity. The Discord columns
-// stay null until the Member connects Discord.
+// stay null until the Member connects Discord. `hidden` marks a Hidden
+// Member: kept, but out of the Directory until they rejoin TOLC.
+// `membershipCheckedAt` is when Discord last answered whether they are in
+// TOLC (null until it has, or once the answer can't be trusted);
+// `membershipAttemptedAt` is when it was last asked, answer or not.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
@@ -65,6 +70,9 @@ export const members = pgTable('members', {
   discordUserId: text('discord_user_id').unique(),
   discordHandle: text('discord_handle'),
   discordSyncedAt: timestamp('discord_synced_at'),
+  hidden: boolean('hidden').default(false).notNull(),
+  membershipCheckedAt: timestamp('membership_checked_at'),
+  membershipAttemptedAt: timestamp('membership_attempted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 

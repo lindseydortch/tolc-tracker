@@ -29,6 +29,13 @@
       "when": 1791000943191,
       "tag": "0003_members_discord_synced_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791002082548,
+      "tag": "0004_members_membership",
+      "breakpoints": true
     }
   ]
 }
