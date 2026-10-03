@@ -424,7 +424,7 @@ describe('the Quick View', () => {
       authUserId: mona.authUserId,
       form: { ...octoForm, firstName: 'Mona' },
     })
-    await setup.addSecondarySkill(octo.authUserId, 'TypeScript')
+    await setup.directory.setTypeScriptBadge({ authUserId: octo.authUserId, on: true })
 
     const entries = await setup.directory.directoryEntries()
 
@@ -438,7 +438,7 @@ describe('the Quick View', () => {
     const setup = await seededSetup()
     const { authUserId } = await memberInTolc(setup, 'octocat')
     await setup.directory.completeProfile({ authUserId, form: octoForm })
-    await setup.addSecondarySkill(authUserId, 'Docker')
+    await setup.directory.addSkill({ authUserId, skill: 'Docker' })
 
     const [entry] = await setup.directory.directoryEntries()
 
@@ -457,17 +457,16 @@ describe('a Member profile page', () => {
 
   it('shows the Preferred Stack by Stack Layer, Secondary Skills, and all Links', async () => {
     const { setup, octo, id } = await octoWithFullProfile()
-    await setup.addSecondarySkill(octo.authUserId, 'TypeScript')
-    await setup.addSecondarySkill(octo.authUserId, 'Docker')
-    await setup.addLink(octo.authUserId, {
-      kind: 'custom',
-      url: 'https://example.com/talk',
-      label: 'My talk',
-    })
-    await setup.addLink(octo.authUserId, {
-      kind: 'resume',
-      url: 'https://example.com/cv.pdf',
-      label: null,
+    await setup.directory.setTypeScriptBadge({ authUserId: octo.authUserId, on: true })
+    await setup.directory.addSkill({ authUserId: octo.authUserId, skill: 'Docker' })
+    await setup.directory.saveLinks({
+      authUserId: octo.authUserId,
+      links: {
+        resume: 'https://example.com/cv.pdf',
+        portfolio: '',
+        bluesky: '',
+        custom: [{ label: 'My talk', url: 'https://example.com/talk' }],
+      },
     })
 
     expect(await setup.directory.memberProfile(id)).toEqual({

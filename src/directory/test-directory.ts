@@ -1,9 +1,8 @@
 import { PGlite } from '@electric-sql/pglite'
-import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import * as schema from '../db/schema'
-import { createDirectory, type MemberLink } from './directory'
+import { createDirectory } from './directory'
 import {
   DiscordUnavailableError,
   type MembershipChecker,
@@ -17,8 +16,6 @@ export async function createTestDirectory() {
 // Also exposes `tolc`, a fake TOLC server the Directory's membership checks
 // ask, and `signUpWithGitHub`, standing in for Better Auth creating its
 // user row on a first GitHub sign-in. Returns that row's id (`authUserId`).
-// `addSecondarySkill` and `addLink` write straight to the database, standing
-// in for profile editing (#7).
 export async function createTestSetup() {
   const db = drizzle(new PGlite(), { schema })
   await migrate(db, { migrationsFolder: 'drizzle' })
@@ -37,26 +34,6 @@ export async function createTestSetup() {
       })
       return id
     },
-    async addSecondarySkill(authUserId: string, skillName: string) {
-      const memberId = await memberIdFor(authUserId)
-      const [skill] = await db
-        .select({ id: schema.skills.id })
-        .from(schema.skills)
-        .where(eq(schema.skills.name, skillName))
-      await db.insert(schema.memberSkills).values({ memberId, skillId: skill.id })
-    },
-    async addLink(authUserId: string, link: MemberLink) {
-      const memberId = await memberIdFor(authUserId)
-      await db.insert(schema.links).values({ memberId, ...link })
-    },
-  }
-
-  async function memberIdFor(authUserId: string) {
-    const [member] = await db
-      .select({ id: schema.members.id })
-      .from(schema.members)
-      .where(eq(schema.members.authUserId, authUserId))
-    return member.id
   }
 }
 
