@@ -7,6 +7,9 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // An unknown URL always gets the root's "Page not found", even under a
+    // route with its own not-found page (`/members/1/extra`).
+    notFoundMode: 'root',
   })
 
   return router
