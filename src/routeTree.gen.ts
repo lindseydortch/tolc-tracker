@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MemberRouteImport } from './routes/_member'
 import { Route as ConnectDiscordRouteImport } from './routes/connect-discord'
+import { Route as MembersOnlyRouteImport } from './routes/members-only'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as MemberIndexRouteImport } from './routes/_member/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -22,6 +23,11 @@ const MemberRoute = MemberRouteImport.update({
 const ConnectDiscordRoute = ConnectDiscordRouteImport.update({
   id: '/connect-discord',
   path: '/connect-discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersOnlyRoute = MembersOnlyRouteImport.update({
+  id: '/members-only',
+  path: '/members-only',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignInRoute = SignInRouteImport.update({
@@ -43,11 +49,13 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof MemberIndexRoute
   '/connect-discord': typeof ConnectDiscordRoute
+  '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/connect-discord': typeof ConnectDiscordRoute
+  '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/': typeof MemberIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -56,19 +64,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_member': typeof MemberRouteWithChildren
   '/connect-discord': typeof ConnectDiscordRoute
+  '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/_member/': typeof MemberIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/connect-discord' | '/sign-in' | '/api/auth/$'
+  fullPaths:
+    '/' | '/connect-discord' | '/members-only' | '/sign-in' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/connect-discord' | '/sign-in' | '/' | '/api/auth/$'
+  to: '/connect-discord' | '/members-only' | '/sign-in' | '/' | '/api/auth/$'
   id:
     | '__root__'
     | '/_member'
     | '/connect-discord'
+    | '/members-only'
     | '/sign-in'
     | '/_member/'
     | '/api/auth/$'
@@ -77,6 +88,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   MemberRoute: typeof MemberRouteWithChildren
   ConnectDiscordRoute: typeof ConnectDiscordRoute
+  MembersOnlyRoute: typeof MembersOnlyRoute
   SignInRoute: typeof SignInRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -95,6 +107,13 @@ declare module '@tanstack/react-router' {
       path: '/connect-discord'
       fullPath: '/connect-discord'
       preLoaderRoute: typeof ConnectDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members-only': {
+      id: '/members-only'
+      path: '/members-only'
+      fullPath: '/members-only'
+      preLoaderRoute: typeof MembersOnlyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign-in': {
@@ -135,6 +154,7 @@ const MemberRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   MemberRoute: MemberRouteWithChildren,
   ConnectDiscordRoute: ConnectDiscordRoute,
+  MembersOnlyRoute: MembersOnlyRoute,
   SignInRoute: SignInRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

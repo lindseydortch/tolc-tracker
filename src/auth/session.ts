@@ -4,6 +4,7 @@ import { getRequestHeaders } from '@tanstack/react-start/server'
 import { auth } from './auth'
 import { syncDiscord } from './discord-sync'
 import { directory } from '../directory/app-directory'
+import type { Membership } from '../directory/directory'
 
 export type SignedInVisitor = {
   name: string
@@ -13,6 +14,8 @@ export type SignedInVisitor = {
   // Discord is linked but its handle couldn't be read, so the Member is
   // asked to connect again.
   discordSyncFailed: boolean
+  // Only someone 'in-tolc' may see Directory data (ADR 0001).
+  membership: Membership
 }
 
 // The signed-in Member, or null for a signed-out visitor.
@@ -38,14 +41,17 @@ export const getSignedInMember = createServerFn({ method: 'GET' }).handler(
       discordSyncFailed = (await syncDiscord(session.user.id)) === 'failed'
       member = await signIn()
     }
-    return (
-      member && {
-        name: session.user.name,
-        githubUrl: member.githubUrl,
-        discordHandle: member.discord?.handle ?? null,
-        discordSyncFailed,
-      }
-    )
+    if (!member) return null
+    return {
+      name: session.user.name,
+      githubUrl: member.githubUrl,
+      discordHandle: member.discord?.handle ?? null,
+      discordSyncFailed,
+      membership: await directory.refreshMembership({
+        authUserId: session.user.id,
+        sessionStartedAt: session.session.createdAt,
+      }),
+    }
   },
 )
 

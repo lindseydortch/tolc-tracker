@@ -12,6 +12,10 @@ _Avoid_: the server, the group
 A person in the TOLC Discord server who has a profile in the tracker, identified by both their GitHub account and their Discord account.
 _Avoid_: user, account
 
+**Hidden Member**:
+A Member who has left TOLC. Their profile is kept but left out of the Directory, and they can't see it, until they rejoin TOLC.
+_Avoid_: inactive member, deleted member, ex-member
+
 **Directory**:
 The list of all Members' profiles, visible only to logged-in Members. Every Member is listed regardless of Job Search Status.
 _Avoid_: roster, list

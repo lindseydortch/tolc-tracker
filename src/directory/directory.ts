@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
@@ -49,6 +49,8 @@ export type MemberLink = {
 
 export type Member = {
   id: number
+  // True for a Hidden Member.
+  hidden: boolean
   links: MemberLink[]
 }
 
@@ -65,7 +67,29 @@ export type SignedInMember = {
   discordSyncedAt: Date | null
 }
 
-export function createDirectory(db: Db) {
+// Answers whether a Discord user is in the TOLC server. Throws
+// `DiscordUnavailableError` when Discord is down or rate-limiting, and any
+// other error when Discord refuses to answer (such as a revoked link).
+export type MembershipChecker = {
+  isInTolc(discordUserId: string): Promise<boolean>
+}
+
+// Discord couldn't answer right now but may soon: the last answer stands.
+export class DiscordUnavailableError extends Error {}
+
+// 'unknown': no Discord connected yet, or no answer from Discord to trust.
+export type Membership = 'in-tolc' | 'not-in-tolc' | 'unknown'
+
+// How long an answer lasts within one session (ADR 0001).
+const membershipCheckLifetimeMs = 24 * 60 * 60 * 1000
+// Discord rate-limits each user's token, so never ask more often than this.
+const membershipRetryMs = 30 * 1000
+
+// `membershipChecker` is only needed by `refreshMembership`.
+export function createDirectory(
+  db: Db,
+  { membershipChecker }: { membershipChecker?: MembershipChecker } = {},
+) {
   return {
     // Called on every signed-in page load. Creates the Member on first use
     // and keeps the GitHub Link in step with renames, writing only on change.
@@ -144,6 +168,10 @@ export function createDirectory(db: Db) {
           discordUserId: discord.userId,
           discordHandle: discord.handle,
           discordSyncedAt: new Date(),
+          // A different Discord account must pass the membership check anew.
+          membershipCheckedAt: sql`case when ${members.discordUserId} = ${discord.userId} then ${members.membershipCheckedAt} end`,
+          // A fresh link is worth asking about right away.
+          membershipAttemptedAt: null,
         })
         .where(eq(members.authUserId, authUserId))
         .returning({ id: members.id })
@@ -152,9 +180,67 @@ export function createDirectory(db: Db) {
       }
     },
 
+    // Asks Discord whether the Member is still in TOLC, once per sign-in and
+    // once a day, hiding them when they've left and unhiding them when they
+    // rejoin. A Hidden Member is asked on every call (at most twice a
+    // minute), so joining TOLC soon lets them in. While Discord is
+    // unavailable the last answer stands; once it refuses, the answer is
+    // dropped until it answers again.
+    async refreshMembership({
+      authUserId,
+      sessionStartedAt,
+      now = new Date(),
+    }: {
+      authUserId: string
+      sessionStartedAt: Date
+      now?: Date
+    }): Promise<Membership> {
+      const [member] = await db
+        .select({
+          discordUserId: members.discordUserId,
+          hidden: members.hidden,
+          checkedAt: members.membershipCheckedAt,
+          attemptedAt: members.membershipAttemptedAt,
+        })
+        .from(members)
+        .where(eq(members.authUserId, authUserId))
+      if (!member?.discordUserId) return 'unknown'
+      const { discordUserId } = member
+      let { hidden, checkedAt } = member
+
+      if (isMembershipCheckDue({ ...member, sessionStartedAt, now })) {
+        if (!membershipChecker) {
+          throw new Error('This Directory has no membership checker')
+        }
+        try {
+          hidden = !(await membershipChecker.isInTolc(discordUserId))
+          checkedAt = now
+        } catch (error) {
+          console.error('Could not check TOLC membership', error)
+          if (!(error instanceof DiscordUnavailableError)) checkedAt = null
+        }
+        await db
+          .update(members)
+          .set({
+            hidden,
+            membershipCheckedAt: checkedAt,
+            membershipAttemptedAt: now,
+          })
+          .where(
+            and(
+              eq(members.authUserId, authUserId),
+              // Skip if a different Discord account was connected meanwhile.
+              eq(members.discordUserId, discordUserId),
+            ),
+          )
+      }
+      if (!checkedAt) return 'unknown'
+      return hidden ? 'not-in-tolc' : 'in-tolc'
+    },
+
     async memberForAuthUser(authUserId: string): Promise<Member | null> {
       const [member] = await db
-        .select({ id: members.id })
+        .select({ id: members.id, hidden: members.hidden })
         .from(members)
         .where(eq(members.authUserId, authUserId))
       if (!member) return null
@@ -163,7 +249,7 @@ export function createDirectory(db: Db) {
         .from(links)
         .where(eq(links.memberId, member.id))
         .orderBy(asc(links.id))
-      return { id: member.id, links: memberLinks }
+      return { ...member, links: memberLinks }
     },
 
     // Safe to run repeatedly: an entry already present by name or Alias is
@@ -259,6 +345,30 @@ export function createDirectory(db: Db) {
 }
 
 export type Directory = ReturnType<typeof createDirectory>
+
+function isMembershipCheckDue({
+  hidden,
+  checkedAt,
+  attemptedAt,
+  sessionStartedAt,
+  now,
+}: {
+  hidden: boolean
+  checkedAt: Date | null
+  attemptedAt: Date | null
+  sessionStartedAt: Date
+  now: Date
+}): boolean {
+  if (attemptedAt && now.getTime() - attemptedAt.getTime() < membershipRetryMs) {
+    return false
+  }
+  return (
+    !checkedAt ||
+    hidden ||
+    checkedAt < sessionStartedAt ||
+    now.getTime() - checkedAt.getTime() >= membershipCheckLifetimeMs
+  )
+}
 
 type CatalogEntryRef = { id: number; name: string }
 

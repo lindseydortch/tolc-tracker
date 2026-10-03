@@ -1,6 +1,7 @@
 import { directory } from '../directory/app-directory'
 import { discordHandle, type DiscordProfile } from '../directory/discord-handle'
 import { auth } from './auth'
+import { discordGet } from './discord-api'
 import { discordProviderId } from './discord-provider'
 
 export type DiscordSyncResult = 'synced' | 'not-linked' | 'failed'
@@ -18,17 +19,10 @@ export async function syncDiscord(
       (linked) => linked.providerId === discordProviderId,
     )
     if (!discordAccount) return 'not-linked'
-    // Refreshes the access token first if it has expired.
-    const { accessToken } = await auth.api.getAccessToken({
-      body: { accountId: discordAccount.id, userId: authUserId },
-    })
-    const response = await fetch('https://discord.com/api/users/@me', {
-      headers: { authorization: `Bearer ${accessToken}` },
-    })
-    if (!response.ok) {
-      throw new Error(`Discord /users/@me returned ${response.status}`)
-    }
-    const profile = (await response.json()) as DiscordProfile
+    const profile = await discordGet<DiscordProfile>(
+      { id: discordAccount.id, userId: authUserId },
+      '/users/@me',
+    )
     await directory.connectDiscord({
       authUserId,
       discord: { userId: profile.id, handle: discordHandle(profile) },
