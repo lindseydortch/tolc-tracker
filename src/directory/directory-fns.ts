@@ -21,6 +21,16 @@ export const submitProfile = createServerFn({ method: 'POST' })
 export const getDirectory = createServerFn({ method: 'GET' }).handler(
   async () => {
     await requireLandingPage('/')
-    return directory.listDirectory()
+    return directory.directoryEntries()
   },
 )
+
+export const getMemberProfile = createServerFn({ method: 'GET' })
+  .validator((memberId: unknown) => {
+    if (!Number.isSafeInteger(memberId)) throw new Error('Malformed Member id')
+    return memberId as number
+  })
+  .handler(async ({ data: memberId }) => {
+    await requireLandingPage('/')
+    return directory.memberProfile(memberId)
+  })

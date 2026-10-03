@@ -4,6 +4,7 @@ import type {
   CatalogSkill,
   CatalogTargetRole,
   JobSearchStatus,
+  LinkKind,
   Seniority,
   StackLayer,
 } from './directory'
@@ -28,6 +29,16 @@ export const stackLayerLabels: Record<StackLayer, string> = {
   backendFramework: 'Backend Framework',
   backendLanguage: 'Backend Language',
   database: 'Database',
+}
+
+// Custom Links show their own label instead.
+export const linkKindLabels: Record<LinkKind, string> = {
+  linkedin: 'LinkedIn',
+  github: 'GitHub',
+  resume: 'Resume',
+  portfolio: 'Portfolio',
+  bluesky: 'Bluesky',
+  custom: 'Custom',
 }
 
 export type Catalogs = {

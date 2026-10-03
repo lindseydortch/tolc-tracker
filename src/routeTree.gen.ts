@@ -16,6 +16,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MemberIndexRouteImport } from './routes/_member/index'
 import { Route as MemberEditProfileRouteImport } from './routes/_member/edit-profile'
+import { Route as MemberMembersMemberIdRouteImport } from './routes/_member/members.$memberId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const MemberRoute = MemberRouteImport.update({
@@ -52,6 +53,11 @@ const MemberEditProfileRoute = MemberEditProfileRouteImport.update({
   path: '/edit-profile',
   getParentRoute: () => MemberRoute,
 } as any)
+const MemberMembersMemberIdRoute = MemberMembersMemberIdRouteImport.update({
+  id: '/members/$memberId',
+  path: '/members/$memberId',
+  getParentRoute: () => MemberRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/signup': typeof SignupRoute
   '/edit-profile': typeof MemberEditProfileRoute
+  '/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/edit-profile': typeof MemberEditProfileRoute
   '/': typeof MemberIndexRoute
+  '/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_member/edit-profile': typeof MemberEditProfileRoute
   '/_member/': typeof MemberIndexRoute
+  '/_member/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/signup'
     | '/edit-profile'
+    | '/members/$memberId'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/edit-profile'
     | '/'
+    | '/members/$memberId'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_member/edit-profile'
     | '/_member/'
+    | '/_member/members/$memberId'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MemberEditProfileRouteImport
       parentRoute: typeof MemberRoute
     }
+    '/_member/members/$memberId': {
+      id: '/_member/members/$memberId'
+      path: '/members/$memberId'
+      fullPath: '/members/$memberId'
+      preLoaderRoute: typeof MemberMembersMemberIdRouteImport
+      parentRoute: typeof MemberRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -191,11 +210,13 @@ declare module '@tanstack/react-router' {
 interface MemberRouteChildren {
   MemberEditProfileRoute: typeof MemberEditProfileRoute
   MemberIndexRoute: typeof MemberIndexRoute
+  MemberMembersMemberIdRoute: typeof MemberMembersMemberIdRoute
 }
 
 const MemberRouteChildren: MemberRouteChildren = {
   MemberEditProfileRoute: MemberEditProfileRoute,
   MemberIndexRoute: MemberIndexRoute,
+  MemberMembersMemberIdRoute: MemberMembersMemberIdRoute,
 }
 
 const MemberRouteWithChildren =
@@ -212,12 +233,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

@@ -17,7 +17,12 @@ import {
 } from './membership-checker'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
-import { sortSeniorities, type Catalogs, type PreferredStack } from './profile'
+import {
+  isTypeScript,
+  sortSeniorities,
+  type Catalogs,
+  type PreferredStack,
+} from './profile'
 
 export type StackLayer = (typeof skills.$inferSelect)['suggestedLayer'] & {}
 
@@ -91,6 +96,15 @@ export type DirectoryEntry = {
   preferredSeniority: Seniority
   otherSeniorities: Seniority[]
   preferredStack: PreferredStack
+  typeScriptBadge: boolean
+}
+
+// Everything the profile page shows: the card plus the rest of the profile.
+export type MemberProfile = DirectoryEntry & {
+  // For the Message on Discord action.
+  discordUserId: string
+  secondarySkills: string[]
+  links: MemberLink[]
 }
 
 // 'unknown': no Discord connected yet, or no answer from Discord to trust.
@@ -109,12 +123,15 @@ export function createDirectory(
   // Members with every required profile field filled, matching `where`.
   // A profile is complete only once the signup form has been sent and
   // Discord is connected, so a half-saved Member never shows up.
-  async function completeProfiles(where: SQL | undefined): Promise<DirectoryEntry[]> {
+  async function completeProfiles(
+    where: SQL | undefined,
+  ): Promise<Omit<MemberProfile, 'links'>[]> {
     const rows = await db
       .select({
         id: members.id,
         firstName: members.firstName,
         lastName: members.lastName,
+        discordUserId: members.discordUserId,
         discordHandle: members.discordHandle,
         jobSearchStatus: members.jobSearchStatus,
       })
@@ -128,6 +145,7 @@ export function createDirectory(
           where,
           isNotNull(members.firstName),
           isNotNull(members.lastName),
+          isNotNull(members.discordUserId),
           isNotNull(members.discordHandle),
           isNotNull(members.jobSearchStatus),
         ),
@@ -145,7 +163,7 @@ export function createDirectory(
       .select()
       .from(memberSeniorities)
       .where(inArray(memberSeniorities.memberId, ids))
-    const primarySkills = await db
+    const techStack = await db
       .select({
         memberId: memberSkills.memberId,
         layer: memberSkills.stackLayer,
@@ -153,27 +171,26 @@ export function createDirectory(
       })
       .from(memberSkills)
       .innerJoin(skills, eq(memberSkills.skillId, skills.id))
-      .where(
-        and(
-          inArray(memberSkills.memberId, ids),
-          isNotNull(memberSkills.stackLayer),
-        ),
-      )
+      .where(inArray(memberSkills.memberId, ids))
+      .orderBy(asc(skills.name))
 
-    const entries: DirectoryEntry[] = []
+    const entries: Omit<MemberProfile, 'links'>[] = []
     for (const row of rows) {
-      const { firstName, lastName, discordHandle, jobSearchStatus } = row
+      const { firstName, lastName, discordUserId, discordHandle, jobSearchStatus } = row
       const own = <T extends { memberId: number }>(all: T[]) =>
         all.filter((item) => item.memberId === row.id)
       const preferred = own(seniorities).find((s) => s.preferred)
       const preferredStack: DirectoryEntry['preferredStack'] = {}
-      for (const skill of own(primarySkills)) {
+      const secondarySkills: string[] = []
+      for (const skill of own(techStack)) {
         if (skill.layer) preferredStack[skill.layer] = skill.name
+        else secondarySkills.push(skill.name)
       }
       const targetRoleNames = own(roles).map((role) => role.name)
       if (
         !firstName ||
         !lastName ||
+        !discordUserId ||
         !discordHandle ||
         !jobSearchStatus ||
         !preferred ||
@@ -186,6 +203,7 @@ export function createDirectory(
         id: row.id,
         firstName,
         lastName,
+        discordUserId,
         discordHandle,
         jobSearchStatus,
         targetRoles: targetRoleNames,
@@ -196,6 +214,9 @@ export function createDirectory(
             .map((s) => s.seniority),
         ),
         preferredStack,
+        // Turning the Badge on adds TypeScript to the Tech Stack.
+        typeScriptBadge: own(techStack).some((skill) => isTypeScript(skill.name)),
+        secondarySkills,
       })
     }
     return entries
@@ -366,8 +387,28 @@ export function createDirectory(
     },
 
     // Every complete, non-hidden Member, whatever their Job Search Status.
-    async listDirectory(): Promise<DirectoryEntry[]> {
-      return completeProfiles(eq(members.hidden, false))
+    // Secondary Skills stay off the cards; they're on the profile page.
+    async directoryEntries(): Promise<DirectoryEntry[]> {
+      const profiles = await completeProfiles(eq(members.hidden, false))
+      return profiles.map(
+        ({ discordUserId: _, secondarySkills: __, ...entry }) => entry,
+      )
+    },
+
+    // Null unless the Member is in the Directory, so a Hidden Member or an
+    // incomplete profile can't be reached by its id.
+    async memberProfile(memberId: number): Promise<MemberProfile | null> {
+      const [profile] = await completeProfiles(
+        and(eq(members.id, memberId), eq(members.hidden, false)),
+      )
+      if (!profile) return null
+      const memberLinks = await db
+        .select({ kind: links.kind, url: links.url, label: links.label })
+        .from(links)
+        .where(eq(links.memberId, memberId))
+        // Link kinds sort in the order the `link_kind` enum declares them.
+        .orderBy(asc(links.kind), asc(links.id))
+      return { ...profile, links: memberLinks }
     },
 
     async memberForAuthUser(authUserId: string): Promise<Member | null> {

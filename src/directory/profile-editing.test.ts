@@ -38,7 +38,7 @@ describe('adding a Skill to the Preferred Stack', () => {
       }),
     ).toEqual({ ok: true })
 
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.preferredStack).toEqual({
       frontendFramework: 'React',
       backendLanguage: 'Node.js',
@@ -125,7 +125,7 @@ describe('removing a Skill', () => {
       ok: false,
       problem: 'Your Preferred Stack needs at least one Skill. Add another before removing PostgreSQL.',
     })
-    expect(await setup.directory.listDirectory()).toHaveLength(1)
+    expect(await setup.directory.directoryEntries()).toHaveLength(1)
   })
 })
 
@@ -239,7 +239,7 @@ describe('editing the details', () => {
       }),
     ).toEqual({ ok: true })
 
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.lastName).toBe('Kitten')
     expect(entry.targetRoles).toEqual(['Prompt Whisperer', 'Software Engineer'])
     expect(entry.preferredStack).toEqual(preferredStack)
@@ -263,7 +263,7 @@ describe('editing the details', () => {
       ok: false,
       problems: { firstName: expect.any(String), targetRoles: expect.any(String) },
     })
-    expect((await setup.directory.listDirectory())[0].firstName).toBe('Octo')
+    expect((await setup.directory.directoryEntries())[0].firstName).toBe('Octo')
   })
 })
 

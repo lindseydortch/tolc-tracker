@@ -144,7 +144,7 @@ describe('completing a profile', () => {
       problems: { targetRoles: expect.any(String) },
     })
     expect(await setup.directory.isProfileComplete(authUserId)).toBe(false)
-    expect(await setup.directory.listDirectory()).toEqual([])
+    expect(await setup.directory.directoryEntries()).toEqual([])
   })
 
   it('lists a completed profile in the Directory', async () => {
@@ -156,7 +156,7 @@ describe('completing a profile', () => {
     ).toEqual({ ok: true })
 
     expect(await setup.directory.isProfileComplete(authUserId)).toBe(true)
-    expect(await setup.directory.listDirectory()).toEqual([
+    expect(await setup.directory.directoryEntries()).toEqual([
       {
         id: expect.any(Number),
         firstName: 'Octo',
@@ -167,6 +167,7 @@ describe('completing a profile', () => {
         preferredSeniority: 'senior',
         otherSeniorities: ['mid'],
         preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
+        typeScriptBadge: false,
       },
     ])
     const member = await setup.directory.memberForAuthUser(authUserId)
@@ -194,7 +195,7 @@ describe('completing a profile', () => {
       },
     })
 
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.targetRoles).toEqual(['Frontend Engineer', 'Software Engineer'])
     expect(entry.preferredStack).toEqual({
       frontendFramework: 'React',
@@ -212,7 +213,7 @@ describe('completing a profile', () => {
       form: { ...octoForm, targetRoles: ['SWE', 'Software Engineer'] },
     })
 
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.targetRoles).toEqual(['Software Engineer'])
   })
 
@@ -230,7 +231,7 @@ describe('completing a profile', () => {
     })
 
     expect(result).toEqual({ ok: true })
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.targetRoles).toEqual(['Software Engineer', 'Wizard'])
     expect(entry.preferredStack).toEqual({ database: 'Clay Tablets' })
     expect(await setup.directory.roleCatalog()).toContainEqual({
@@ -275,7 +276,7 @@ describe('completing a profile', () => {
       },
     })
 
-    const [entry] = await setup.directory.listDirectory()
+    const [entry] = await setup.directory.directoryEntries()
     expect(entry.preferredSeniority).toBe('senior')
     expect(entry.otherSeniorities).toEqual(['mid', 'staffPlus'])
   })
@@ -298,7 +299,7 @@ describe('completing a profile', () => {
       },
     })
 
-    expect(await setup.directory.listDirectory()).toEqual([
+    expect(await setup.directory.directoryEntries()).toEqual([
       expect.objectContaining({
         firstName: 'Mona',
         targetRoles: ['Backend Engineer'],
@@ -341,7 +342,7 @@ describe('the Directory', () => {
       },
     })
 
-    const entries = await setup.directory.listDirectory()
+    const entries = await setup.directory.directoryEntries()
     expect(entries.map((entry) => [entry.firstName, entry.jobSearchStatus])).toEqual([
       ['Mona', 'employedOpenToOffers'],
       ['Octo', 'notLooking'],
@@ -357,7 +358,7 @@ describe('the Directory', () => {
       form: octoForm,
     })
 
-    const entries = await setup.directory.listDirectory()
+    const entries = await setup.directory.directoryEntries()
     expect(entries.map((entry) => entry.firstName)).toEqual(['Octo'])
   })
 
@@ -370,11 +371,11 @@ describe('the Directory', () => {
 
     setup.tolc.leave(discord.userId)
     await signInAgain(new Date(now.getTime() + 60 * second))
-    expect(await setup.directory.listDirectory()).toEqual([])
+    expect(await setup.directory.directoryEntries()).toEqual([])
 
     setup.tolc.join(discord.userId)
     await signInAgain(new Date(now.getTime() + 120 * second))
-    expect(await setup.directory.listDirectory()).toHaveLength(1)
+    expect(await setup.directory.directoryEntries()).toHaveLength(1)
   })
 })
 
@@ -410,5 +411,113 @@ describe('Stack Layer suggestions', () => {
         'TypeScript',
       )
     }
+  })
+})
+
+describe('the Quick View', () => {
+  it('shows the TypeScript Badge for Members who know TypeScript', async () => {
+    const setup = await seededSetup()
+    const octo = await memberInTolc(setup, 'octocat')
+    const mona = await memberInTolc(setup, 'mona')
+    await setup.directory.completeProfile({ authUserId: octo.authUserId, form: octoForm })
+    await setup.directory.completeProfile({
+      authUserId: mona.authUserId,
+      form: { ...octoForm, firstName: 'Mona' },
+    })
+    await setup.addSecondarySkill(octo.authUserId, 'TypeScript')
+
+    const entries = await setup.directory.directoryEntries()
+
+    expect(entries.map((entry) => [entry.firstName, entry.typeScriptBadge])).toEqual([
+      ['Mona', false],
+      ['Octo', true],
+    ])
+  })
+
+  it('leaves Secondary Skills off the cards', async () => {
+    const setup = await seededSetup()
+    const { authUserId } = await memberInTolc(setup, 'octocat')
+    await setup.directory.completeProfile({ authUserId, form: octoForm })
+    await setup.addSecondarySkill(authUserId, 'Docker')
+
+    const [entry] = await setup.directory.directoryEntries()
+
+    expect(JSON.stringify(entry)).not.toContain('Docker')
+  })
+})
+
+describe('a Member profile page', () => {
+  async function octoWithFullProfile() {
+    const setup = await seededSetup()
+    const octo = await memberInTolc(setup, 'octocat')
+    await setup.directory.completeProfile({ authUserId: octo.authUserId, form: octoForm })
+    const [{ id }] = await setup.directory.directoryEntries()
+    return { setup, octo, id }
+  }
+
+  it('shows the Preferred Stack by Stack Layer, Secondary Skills, and all Links', async () => {
+    const { setup, octo, id } = await octoWithFullProfile()
+    await setup.addSecondarySkill(octo.authUserId, 'TypeScript')
+    await setup.addSecondarySkill(octo.authUserId, 'Docker')
+    await setup.addLink(octo.authUserId, {
+      kind: 'custom',
+      url: 'https://example.com/talk',
+      label: 'My talk',
+    })
+    await setup.addLink(octo.authUserId, {
+      kind: 'resume',
+      url: 'https://example.com/cv.pdf',
+      label: null,
+    })
+
+    expect(await setup.directory.memberProfile(id)).toEqual({
+      id,
+      firstName: 'Octo',
+      lastName: 'Cat',
+      discordHandle: 'octocat_dc',
+      discordUserId: octo.discord.userId,
+      jobSearchStatus: 'activelyLooking',
+      targetRoles: ['Software Engineer'],
+      preferredSeniority: 'senior',
+      otherSeniorities: ['mid'],
+      preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
+      typeScriptBadge: true,
+      secondarySkills: ['Docker', 'TypeScript'],
+      links: [
+        { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat', label: null },
+        { kind: 'github', url: 'https://github.com/octocat', label: null },
+        { kind: 'resume', url: 'https://example.com/cv.pdf', label: null },
+        { kind: 'custom', url: 'https://example.com/talk', label: 'My talk' },
+      ],
+    })
+  })
+
+  it('is not reachable for a Hidden Member', async () => {
+    const { setup, octo, id } = await octoWithFullProfile()
+    const later = new Date(octo.now.getTime() + 60 * second)
+
+    setup.tolc.leave(octo.discord.userId)
+    await setup.directory.refreshMembership({
+      authUserId: octo.authUserId,
+      sessionStartedAt: later,
+      now: later,
+    })
+
+    expect(await setup.directory.memberProfile(id)).toBeNull()
+  })
+
+  it('is not reachable for an incomplete profile', async () => {
+    const setup = await seededSetup()
+    const { authUserId } = await memberInTolc(setup, 'octocat')
+
+    const member = await setup.directory.memberForAuthUser(authUserId)
+
+    expect(await setup.directory.memberProfile(member!.id)).toBeNull()
+  })
+
+  it('is not reachable for an unknown Member', async () => {
+    const { setup, id } = await octoWithFullProfile()
+
+    expect(await setup.directory.memberProfile(id + 1)).toBeNull()
   })
 })
