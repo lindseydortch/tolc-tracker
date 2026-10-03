@@ -1,72 +1,24 @@
 import { redirect } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
-import { auth } from './auth'
-import { findLinkedDiscordAccount } from './discord-api'
-import { syncDiscord } from './discord-sync'
-import { directory } from '../directory/app-directory'
-import { isDiscordSyncDue, type Membership } from '../directory/directory'
+import { createServerFn, createServerOnlyFn } from '@tanstack/react-start'
+import { loadSignedInVisitor, type SignedInVisitor } from './signed-in-visitor'
 
-export type SignedInVisitor = {
-  name: string
-  githubUrl: string
-  // Null until the Member connects Discord.
-  discordHandle: string | null
-  // Discord is linked but its handle couldn't be read, so the Member is
-  // asked to connect again.
-  discordSyncFailed: boolean
-  // Only someone 'in-tolc' may see Directory data (ADR 0001).
-  membership: Membership
-}
+export type { SignedInVisitor } from './signed-in-visitor'
+
+export type LandingPage = '/connect-discord' | '/members-only' | '/signup' | '/'
 
 // The signed-in Member, or null for a signed-out visitor.
 export const getSignedInMember = createServerFn({ method: 'GET' }).handler(
-  async (): Promise<SignedInVisitor | null> => {
-    const session = await auth.api.getSession({ headers: getRequestHeaders() })
-    if (!session) return null
-    const signIn = () =>
-      directory.signIn({
-        authUserId: session.user.id,
-        githubUsername: session.user.githubUsername ?? null,
-      })
-    let member = await signIn()
-    if (!member) return null
-    let discordSyncFailed = false
-    const linked = await findLinkedDiscordAccount(session.user.id)
-    // A failed sync leaves the sync time old, so the next page load retries.
-    if (
-      linked &&
-      isDiscordSyncDue({
-        syncedAt: member.discordSyncedAt,
-        sessionStartedAt: session.session.createdAt,
-        linkedAt: linked.updatedAt,
-      })
-    ) {
-      discordSyncFailed = (await syncDiscord(linked)) === 'failed'
-      member = await signIn()
-    }
-    if (!member) return null
-    return {
-      name: session.user.name,
-      githubUrl: member.githubUrl,
-      discordHandle: member.discord?.handle ?? null,
-      discordSyncFailed,
-      membership: await directory.refreshMembership({
-        authUserId: session.user.id,
-        sessionStartedAt: session.session.createdAt,
-      }),
-    }
-  },
+  async (): Promise<SignedInVisitor | null> =>
+    (await loadSignedInVisitor())?.visitor ?? null,
 )
 
 // The only page a signed-in visitor may be on: Connect Discord until
-// Discord is connected, the Members-only notice unless they're in TOLC, and
-// the Directory otherwise.
-export function landingPage(
-  member: SignedInVisitor,
-): '/connect-discord' | '/members-only' | '/' {
+// Discord is connected, the Members-only notice unless they're in TOLC, the
+// signup form until their profile is complete, and the Directory otherwise.
+export function landingPage(member: SignedInVisitor): LandingPage {
   if (!member.discordHandle) return '/connect-discord'
   if (member.membership !== 'in-tolc') return '/members-only'
+  if (!member.profileComplete) return '/signup'
   return '/'
 }
 
@@ -76,3 +28,18 @@ export async function requireSignedInMember(): Promise<SignedInVisitor> {
   if (!member) throw redirect({ to: '/sign-in' })
   return member
 }
+
+// For server function handlers: the signed-in Member's auth user ID, if
+// `page` is where they belong. Otherwise redirects them where they do
+// belong, so Directory data never reaches anyone the gate would send
+// elsewhere, even if their membership changed since the route's
+// `beforeLoad` ran.
+export const requireLandingPage = createServerOnlyFn(
+  async (page: LandingPage): Promise<string> => {
+    const signedIn = await loadSignedInVisitor()
+    if (!signedIn) throw redirect({ to: '/sign-in' })
+    const belongsOn = landingPage(signedIn.visitor)
+    if (belongsOn !== page) throw redirect({ to: belongsOn })
+    return signedIn.authUserId
+  },
+)
