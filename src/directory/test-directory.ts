@@ -8,6 +8,9 @@ import {
   type MembershipChecker,
 } from './membership-checker'
 
+// The Discord user ID test Directories treat as the Admin's.
+export const testAdminDiscordUserId = '1000000000000000001'
+
 // A Directory backed by a fresh in-memory Postgres with production migrations.
 export async function createTestDirectory() {
   return (await createTestSetup()).directory
@@ -16,13 +19,19 @@ export async function createTestDirectory() {
 // Also exposes `tolc`, a fake TOLC server the Directory's membership checks
 // ask, and `signUpWithGitHub`, standing in for Better Auth creating its
 // user row on a first GitHub sign-in. Returns that row's id (`authUserId`).
-export async function createTestSetup() {
+// Pass `adminDiscordUserId: null` for a Directory with no Admin configured.
+export async function createTestSetup({
+  adminDiscordUserId = testAdminDiscordUserId,
+}: { adminDiscordUserId?: string | null } = {}) {
   const db = drizzle(new PGlite(), { schema })
   await migrate(db, { migrationsFolder: 'drizzle' })
   let userCount = 0
   const tolc = createFakeTolc()
   return {
-    directory: createDirectory(db, { membershipChecker: tolc }),
+    directory: createDirectory(db, {
+      membershipChecker: tolc,
+      adminDiscordUserId,
+    }),
     tolc,
     async signUpWithGitHub(githubUsername: string): Promise<string> {
       const id = `user-${++userCount}`

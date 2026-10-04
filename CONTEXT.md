@@ -24,6 +24,10 @@ _Avoid_: roster, list
 The TOLC server owner, the only person who can merge entries in the Skill Catalog and Role Catalog. Profiles can be edited only by the Member who owns them, never by the Admin.
 _Avoid_: moderator, mod
 
+**Merge**:
+The Admin folding a duplicate Skill or Target Role (A) into another (B). A's name and Aliases become Aliases of B, every Member using A now uses B, and A is removed. A Member who had both keeps one entry: if both filled a Stack Layer, B keeps its own and A's Stack Layer is left empty. TypeScript can only be merged into, never from a Skill that fills a Stack Layer, so the TypeScript Badge keeps working.
+_Avoid_: combine, dedupe
+
 **Referral**:
 A Member passing a recruiter's role along to another Member whose Target Roles and Tech Stack fit it.
 _Avoid_: match, lead

@@ -33,6 +33,11 @@ function QuickView() {
       <p>
         Signed in as {member.name} ({member.discordHandle}).{' '}
         <Link to="/edit-profile">Edit your profile</Link>{' '}
+        {member.isAdmin && (
+          <>
+            <Link to="/merge">Merge Catalog entries</Link>{' '}
+          </>
+        )}
         <button type="button" onClick={signOut}>
           Sign out
         </button>

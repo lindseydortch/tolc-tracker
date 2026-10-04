@@ -22,6 +22,10 @@ export function findSkill(db: Db, typed: string): Promise<CatalogEntryRef | null
   return findEntry(skillStore(db, null), typed)
 }
 
+export function findTargetRole(db: Db, typed: string): Promise<CatalogEntryRef | null> {
+  return findEntry(targetRoleStore(db), typed)
+}
+
 // The canonical Skill Catalog name for each typed name or Alias, or null
 // where the Catalog has none. Blank names are dropped.
 export function canonicalSkillNames(db: Db, typed: string[]): Promise<(string | null)[]> {
