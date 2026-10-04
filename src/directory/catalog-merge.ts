@@ -1,8 +1,9 @@
-import { and, eq, inArray, isNotNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   memberSkills,
   memberTargetRoles,
+  members,
   skillAliases,
   skills,
   targetRoleAliases,
@@ -17,26 +18,49 @@ export type MergeResult = SaveResult<{ problem: string }>
 // Thrown when anyone but the Admin tries to merge.
 export class NotAdminError extends Error {
   constructor() {
-    super('Only the Admin can merge Catalog entries')
+    super('Only the Admin can merge Skills and Target Roles')
   }
 }
 
 type CatalogEntryRow = CatalogEntryRef & { normalizedName: string }
 
+// The tables behind one Catalog, so both Catalogs merge the same way.
+type CatalogTables =
+  | {
+      entries: typeof skills
+      aliases: typeof skillAliases
+      aliasOwner: typeof skillAliases.skillId
+      aliasOwnerKey: 'skillId'
+      memberEntries: typeof memberSkills
+      memberEntry: typeof memberSkills.skillId
+    }
+  | {
+      entries: typeof targetRoles
+      aliases: typeof targetRoleAliases
+      aliasOwner: typeof targetRoleAliases.targetRoleId
+      aliasOwnerKey: 'targetRoleId'
+      memberEntries: typeof memberTargetRoles
+      memberEntry: typeof memberTargetRoles.targetRoleId
+    }
+
 // How to merge entries in one Catalog. Every step runs in the merge's
 // transaction.
-type MergeStore = {
+export type MergeStore = {
   catalog: 'Skill Catalog' | 'Role Catalog'
   find: (typed: string) => Promise<CatalogEntryRef | null>
-  // Locks both entries until the merge ends, so no Member can start using
-  // either one halfway through it.
+  // Locks the Members using either entry, then both entries, until the
+  // merge ends. Profile edits lock the Member first too, so the two wait
+  // for each other instead of deadlocking, and no Member can start using
+  // either entry halfway through. Returns the entries still there.
   lock: (ids: number[]) => Promise<CatalogEntryRow[]>
+  // The entry an Alias already names, if any.
+  aliasOwner: (normalizedName: string) => Promise<CatalogEntryRef | null>
   // Why this merge must not happen, if it mustn't.
   refuse?: (from: CatalogEntryRef, into: CatalogEntryRef) => Promise<string | null>
   moveMembers: (from: CatalogEntryRef, into: CatalogEntryRef) => Promise<void>
-  moveAliases: (from: CatalogEntryRef, into: CatalogEntryRef) => Promise<void>
-  remove: (entry: CatalogEntryRef) => Promise<void>
-  addAlias: (into: CatalogEntryRef, alias: CatalogEntryRow) => Promise<void>
+  // Moves `from`'s Aliases to `into`, removes `from`, and makes its name
+  // an Alias of `into`.
+  absorb: (from: CatalogEntryRow, into: CatalogEntryRef) => Promise<void>
 }
 
 // Merges the Skill `from` names into the Skill `into` names: `from`'s name
@@ -50,14 +74,16 @@ export function mergeSkills(db: Db, form: MergeForm): Promise<MergeResult> {
     and(eq(memberSkills.memberId, memberId), eq(memberSkills.skillId, skillId))
 
   return mergeEntries(form, {
+    ...catalogSteps(db, {
+      entries: skills,
+      aliases: skillAliases,
+      aliasOwner: skillAliases.skillId,
+      aliasOwnerKey: 'skillId',
+      memberEntries: memberSkills,
+      memberEntry: memberSkills.skillId,
+    }),
     catalog: 'Skill Catalog',
     find: (typed) => findSkill(db, typed),
-    lock: (ids) =>
-      db
-        .select({ id: skills.id, name: skills.name, normalizedName: skills.normalizedName })
-        .from(skills)
-        .where(inArray(skills.id, ids))
-        .for('update'),
     refuse: async (from, into) => {
       if (isTypeScript(from.name)) {
         return `${typeScript} backs the TypeScript Badge, so it can only be merged into`
@@ -98,40 +124,22 @@ export function mergeSkills(db: Db, form: MergeForm): Promise<MergeResult> {
         }
       }
     },
-    moveAliases: async (from, into) => {
-      await db
-        .update(skillAliases)
-        .set({ skillId: into.id })
-        .where(eq(skillAliases.skillId, from.id))
-    },
-    remove: async (entry) => {
-      await db.delete(skills).where(eq(skills.id, entry.id))
-    },
-    addAlias: async (into, alias) => {
-      await db.insert(skillAliases).values({
-        skillId: into.id,
-        name: alias.name,
-        normalizedName: alias.normalizedName,
-      })
-    },
   })
 }
 
 // The same as `mergeSkills`, for the Role Catalog.
 export function mergeTargetRoles(db: Db, form: MergeForm): Promise<MergeResult> {
   return mergeEntries(form, {
+    ...catalogSteps(db, {
+      entries: targetRoles,
+      aliases: targetRoleAliases,
+      aliasOwner: targetRoleAliases.targetRoleId,
+      aliasOwnerKey: 'targetRoleId',
+      memberEntries: memberTargetRoles,
+      memberEntry: memberTargetRoles.targetRoleId,
+    }),
     catalog: 'Role Catalog',
     find: (typed) => findTargetRole(db, typed),
-    lock: (ids) =>
-      db
-        .select({
-          id: targetRoles.id,
-          name: targetRoles.name,
-          normalizedName: targetRoles.normalizedName,
-        })
-        .from(targetRoles)
-        .where(inArray(targetRoles.id, ids))
-        .for('update'),
     moveMembers: async (from, into) => {
       const alreadyInto = db
         .select({ memberId: memberTargetRoles.memberId })
@@ -150,27 +158,62 @@ export function mergeTargetRoles(db: Db, form: MergeForm): Promise<MergeResult> 
         .set({ targetRoleId: into.id })
         .where(eq(memberTargetRoles.targetRoleId, from.id))
     },
-    moveAliases: async (from, into) => {
-      await db
-        .update(targetRoleAliases)
-        .set({ targetRoleId: into.id })
-        .where(eq(targetRoleAliases.targetRoleId, from.id))
-    },
-    remove: async (entry) => {
-      await db.delete(targetRoles).where(eq(targetRoles.id, entry.id))
-    },
-    addAlias: async (into, alias) => {
-      await db.insert(targetRoleAliases).values({
-        targetRoleId: into.id,
-        name: alias.name,
-        normalizedName: alias.normalizedName,
-      })
-    },
   })
 }
 
-// The merge both Catalogs share.
-async function mergeEntries(
+// The steps that differ between the Catalogs only by table.
+function catalogSteps(
+  db: Db,
+  { entries, aliases, aliasOwner, aliasOwnerKey, memberEntries, memberEntry }: CatalogTables,
+): Pick<MergeStore, 'lock' | 'aliasOwner' | 'absorb'> {
+  return {
+    lock: async (ids) => {
+      await db
+        .select({ id: members.id })
+        .from(members)
+        .where(
+          inArray(
+            members.id,
+            db
+              .select({ memberId: memberEntries.memberId })
+              .from(memberEntries)
+              .where(inArray(memberEntry, ids)),
+          ),
+        )
+        .orderBy(asc(members.id))
+        .for('update')
+      return db
+        .select({ id: entries.id, name: entries.name, normalizedName: entries.normalizedName })
+        .from(entries)
+        .where(inArray(entries.id, ids))
+        .orderBy(asc(entries.id))
+        .for('update')
+    },
+    aliasOwner: async (normalizedName) => {
+      const [owner] = await db
+        .select({ id: entries.id, name: entries.name })
+        .from(aliases)
+        .innerJoin(entries, eq(aliasOwner, entries.id))
+        .where(eq(aliases.normalizedName, normalizedName))
+      return owner ?? null
+    },
+    absorb: async (from, into) => {
+      await db
+        .update(aliases)
+        .set({ [aliasOwnerKey]: into.id })
+        .where(eq(aliasOwner, from.id))
+      await db.delete(entries).where(eq(entries.id, from.id))
+      // Does nothing when `into` already has an Alias spelt like `from`.
+      await db
+        .insert(aliases)
+        .values({ [aliasOwnerKey]: into.id, name: from.name, normalizedName: from.normalizedName })
+        .onConflictDoNothing({ target: aliases.normalizedName })
+    },
+  }
+}
+
+// The merge both Catalogs share. Exported for tests only.
+export async function mergeEntries(
   { from: typedFrom, into: typedInto }: MergeForm,
   store: MergeStore,
 ): Promise<MergeResult> {
@@ -187,12 +230,14 @@ async function mergeEntries(
   if (!fromRow || locked.length !== 2) {
     return { ok: false, problem: `The ${store.catalog} just changed. Try again.` }
   }
+  const owner = await store.aliasOwner(fromRow.normalizedName)
+  if (owner && owner.id !== into.id) {
+    return { ok: false, problem: `"${from.name}" is already an Alias of ${owner.name}` }
+  }
   const refusal = await store.refuse?.(from, into)
   if (refusal) return { ok: false, problem: refusal }
 
   await store.moveMembers(from, into)
-  await store.moveAliases(from, into)
-  await store.remove(from)
-  await store.addAlias(into, fromRow)
+  await store.absorb(fromRow, into)
   return { ok: true }
 }

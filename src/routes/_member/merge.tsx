@@ -28,18 +28,20 @@ function MergePage() {
       <p>
         <Link to="/">Back to the Directory</Link>
       </p>
-      <h1>Merge Catalog entries</h1>
+      <h1>Merge Skills and Target Roles</h1>
       <p>
         Merging A into B makes A's name and Aliases into Aliases of B, moves
         every Member using A onto B, then removes A. It can't be undone.
       </p>
       <MergeSection
         kind="Skill"
+        listId="skill-catalog"
         entries={catalogs.skills}
         merge={(form) => mergeSkill({ data: form })}
       />
       <MergeSection
         kind="Target Role"
+        listId="role-catalog"
         entries={catalogs.roles}
         merge={(form) => mergeRole({ data: form })}
       />
@@ -49,10 +51,13 @@ function MergePage() {
 
 function MergeSection({
   kind,
+  listId,
   entries,
   merge,
 }: {
   kind: 'Skill' | 'Target Role'
+  // The id of this section's autocomplete list.
+  listId: string
   entries: { name: string; aliases: string[] }[]
   merge: (form: MergeForm) => Promise<MergeResult>
 }) {
@@ -60,7 +65,6 @@ function MergeSection({
   const [form, setForm] = useState<MergeForm>({ from: '', into: '' })
   const [status, setStatus] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const listId = `${kind.replace(' ', '-').toLowerCase()}-catalog`
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()

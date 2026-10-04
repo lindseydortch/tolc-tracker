@@ -16,7 +16,8 @@ export async function createTestDirectory() {
   return (await createTestSetup()).directory
 }
 
-// Also exposes `tolc`, a fake TOLC server the Directory's membership checks
+// Also exposes `db`, for setting up states the Directory itself never
+// creates, `tolc`, a fake TOLC server the Directory's membership checks
 // ask, and `signUpWithGitHub`, standing in for Better Auth creating its
 // user row on a first GitHub sign-in. Returns that row's id (`authUserId`).
 // Pass `adminDiscordUserId: null` for a Directory with no Admin configured.
@@ -28,6 +29,7 @@ export async function createTestSetup({
   let userCount = 0
   const tolc = createFakeTolc()
   return {
+    db,
     directory: createDirectory(db, {
       membershipChecker: tolc,
       adminDiscordUserId,

@@ -1,5 +1,8 @@
+import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { NotAdminError } from './catalog-merge'
+import { skillAliases } from '../db/schema'
+import { mergeEntries, NotAdminError } from './catalog-merge'
+import { normalizeName } from './normalize-name'
 import { emptySearch } from './search'
 import { starterCatalogs } from './starter-catalogs'
 import { createTestSetup, testAdminDiscordUserId } from './test-directory'
@@ -44,6 +47,22 @@ describe('recognising the Admin', () => {
     const { authUserId } = await memberInTolc(setup, 'tolc-owner', testAdminDiscordUserId)
 
     expect(await setup.directory.isAdmin(authUserId)).toBe(false)
+  })
+
+  it('is no one once the Admin has left TOLC', async () => {
+    const { setup, admin } = await adminAndSetup()
+    setup.tolc.leave(testAdminDiscordUserId)
+    const later = new Date(Date.now() + 60_000)
+    await setup.directory.refreshMembership({
+      authUserId: admin,
+      sessionStartedAt: later,
+      now: later,
+    })
+
+    expect(await setup.directory.isAdmin(admin)).toBe(false)
+    await expect(
+      setup.directory.mergeSkills({ authUserId: admin, from: 'Vue', into: 'React' }),
+    ).rejects.toThrow(NotAdminError)
   })
 
   it('is no one without Discord connected', async () => {
@@ -216,6 +235,67 @@ describe('merging Skills', () => {
       problem: 'Deno fills a Stack Layer for a Member, and TypeScript never can',
     })
     expect(await catalogSkill(setup, 'Deno')).toBeDefined()
+  })
+})
+
+describe('a merge that would make a name ambiguous', () => {
+  // The Directory never lets a Skill's name match another Skill's Alias,
+  // so older data has to set this up directly.
+  async function aliasFor(setup: TestSetup, owner: string, alias: string) {
+    const skill = (await setup.directory.skillCatalog()).find((s) => s.name === owner)
+    if (!skill) throw new Error(`No Skill ${owner}`)
+    const [{ id }] = await setup.db
+      .select({ id: skillAliases.skillId })
+      .from(skillAliases)
+      .where(eq(skillAliases.normalizedName, normalizeName(skill.aliases[0])))
+    await setup.db
+      .insert(skillAliases)
+      .values({ skillId: id, name: alias, normalizedName: normalizeName(alias) })
+  }
+
+  it("is refused when the merged Skill's name is another Skill's Alias", async () => {
+    const { setup, admin } = await adminAndSetup()
+    await setup.directory.addSkill({ authUserId: admin, skill: 'Reactish' })
+    await aliasFor(setup, 'Vue', 'reactish')
+
+    expect(
+      await setup.directory.mergeSkills({ authUserId: admin, from: 'Reactish', into: 'React' }),
+    ).toEqual({ ok: false, problem: '"Reactish" is already an Alias of Vue' })
+    expect(await catalogSkill(setup, 'Reactish')).toBeDefined()
+  })
+
+  it("goes ahead when the name is already an Alias of the Skill merged into", async () => {
+    const { setup, admin } = await adminAndSetup()
+    await setup.directory.addSkill({ authUserId: admin, skill: 'Reactish' })
+    await aliasFor(setup, 'React', 'reactish')
+
+    expect(
+      await setup.directory.mergeSkills({ authUserId: admin, from: 'Reactish', into: 'React' }),
+    ).toEqual({ ok: true })
+    expect((await catalogSkill(setup, 'React'))?.aliases).toEqual(['ReactJS', 'reactish'])
+  })
+})
+
+describe('a merge racing another merge', () => {
+  it('asks to try again when an entry vanished before it could be locked', async () => {
+    const entries = [
+      { id: 1, name: 'Vue', normalizedName: 'vue' },
+      { id: 2, name: 'React', normalizedName: 'react' },
+    ]
+    const result = await mergeEntries(
+      { from: 'Vue', into: 'React' },
+      {
+        catalog: 'Skill Catalog',
+        find: async (typed) => entries.find((e) => e.name === typed) ?? null,
+        // Another merge removed Vue in the meantime.
+        lock: async () => [entries[1]],
+        aliasOwner: async () => null,
+        moveMembers: async () => expect.fail('nothing should move'),
+        absorb: async () => expect.fail('nothing should move'),
+      },
+    )
+
+    expect(result).toEqual({ ok: false, problem: 'The Skill Catalog just changed. Try again.' })
   })
 })
 

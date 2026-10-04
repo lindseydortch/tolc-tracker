@@ -227,6 +227,14 @@ export function createDirectory(
     return entries
   }
 
+  async function asAdmin(
+    { authUserId, ...form }: AdminMerge,
+    merge: (tx: Db, form: MergeForm) => Promise<MergeResult>,
+  ): Promise<MergeResult> {
+    if (!(await directory.isAdmin(authUserId))) throw new NotAdminError()
+    return db.transaction((tx) => merge(tx, form))
+  }
+
   const directory = {
     ...createProfileEditing(db, (): Promise<Catalogs> => directory.catalogs()),
 
@@ -387,7 +395,7 @@ export function createDirectory(
     },
 
     // The Admin is the Member whose connected Discord account is the one
-    // configured as the Admin's.
+    // configured as the Admin's, while they're in TOLC.
     async isAdmin(authUserId: string): Promise<boolean> {
       if (!adminDiscordUserId) return false
       const [member] = await db
@@ -397,23 +405,16 @@ export function createDirectory(
           and(
             eq(members.authUserId, authUserId),
             eq(members.discordUserId, adminDiscordUserId),
+            eq(members.hidden, false),
           ),
         )
       return Boolean(member)
     },
 
-    // Only the Admin may merge: see `mergeSkills`. Throws `NotAdminError`
-    // for anyone else.
-    async mergeSkills({ authUserId, ...form }: AdminMerge): Promise<MergeResult> {
-      if (!(await directory.isAdmin(authUserId))) throw new NotAdminError()
-      return db.transaction((tx) => mergeSkills(tx, form))
-    },
-
-    // Only the Admin may merge: see `mergeTargetRoles`.
-    async mergeTargetRoles({ authUserId, ...form }: AdminMerge): Promise<MergeResult> {
-      if (!(await directory.isAdmin(authUserId))) throw new NotAdminError()
-      return db.transaction((tx) => mergeTargetRoles(tx, form))
-    },
+    // Only the Admin may merge, so both throw `NotAdminError` for anyone
+    // else. See `mergeSkills` and `mergeTargetRoles` for the rules.
+    mergeSkills: (merge: AdminMerge) => asAdmin(merge, mergeSkills),
+    mergeTargetRoles: (merge: AdminMerge) => asAdmin(merge, mergeTargetRoles),
 
     async isProfileComplete(authUserId: string): Promise<boolean> {
       const found = await completeProfiles(eq(members.authUserId, authUserId))

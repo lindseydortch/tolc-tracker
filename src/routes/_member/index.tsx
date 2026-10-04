@@ -35,7 +35,7 @@ function QuickView() {
         <Link to="/edit-profile">Edit your profile</Link>{' '}
         {member.isAdmin && (
           <>
-            <Link to="/merge">Merge Catalog entries</Link>{' '}
+            <Link to="/merge">Merge Skills and Target Roles</Link>{' '}
           </>
         )}
         <button type="button" onClick={signOut}>

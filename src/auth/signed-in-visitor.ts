@@ -18,7 +18,7 @@ export type SignedInVisitor = {
   // False until the Member has sent the signup form. Only worked out for
   // someone 'in-tolc', since no one else can reach the form.
   profileComplete: boolean
-  // Only the Admin can merge Catalog entries.
+  // Only the Admin can merge Skills and Target Roles.
   isAdmin: boolean
 }
 
