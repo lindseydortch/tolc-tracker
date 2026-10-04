@@ -1,55 +1,10 @@
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
+import { useRouter } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
-import type { MergeResult } from '../../directory/catalog-merge'
-import type { MergeForm } from '../../directory/merge-form'
-import {
-  getMergeCatalogs,
-  mergeSkills,
-  mergeTargetRoles,
-} from '../../directory/catalog-merge-fns'
-import { NotFoundPage } from '../../not-found-page'
+import type { MergeResult } from './catalog-merge'
+import type { MergeForm } from './merge-form'
 
-// The Admin merges duplicate Skills and Target Roles here. Everyone else
-// gets the not-found page.
-export const Route = createFileRoute('/_member/merge')({
-  loader: () => getMergeCatalogs(),
-  component: MergePage,
-  notFoundComponent: () => <NotFoundPage message="Nothing here." />,
-})
-
-function MergePage() {
-  const catalogs = Route.useLoaderData()
-  const mergeSkill = useServerFn(mergeSkills)
-  const mergeRole = useServerFn(mergeTargetRoles)
-
-  return (
-    <main>
-      <p>
-        <Link to="/">Back to the Directory</Link>
-      </p>
-      <h1>Merge Skills and Target Roles</h1>
-      <p>
-        Merging A into B makes A's name and Aliases into Aliases of B, moves
-        every Member using A onto B, then removes A. It can't be undone.
-      </p>
-      <MergeSection
-        kind="Skill"
-        listId="skill-catalog"
-        entries={catalogs.skills}
-        merge={(form) => mergeSkill({ data: form })}
-      />
-      <MergeSection
-        kind="Target Role"
-        listId="role-catalog"
-        entries={catalogs.roles}
-        merge={(form) => mergeRole({ data: form })}
-      />
-    </main>
-  )
-}
-
-function MergeSection({
+// One Catalog's merge form on the Admin page.
+export function MergeSection({
   kind,
   listId,
   entries,
@@ -90,7 +45,7 @@ function MergeSection({
 
   return (
     <section>
-      <h2>Merge {kind}s</h2>
+      <h3>Merge {kind}s</h3>
       <datalist id={listId}>
         {entries.map((entry) => (
           <option key={entry.name} value={entry.name}>

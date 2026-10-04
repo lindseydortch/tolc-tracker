@@ -7,8 +7,9 @@ import {
 import { landingPage, requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
 
-// Where a signed-in visitor lands when they aren't in TOLC, or when Discord
-// gave no answer to trust. Shows no Directory data.
+// Where a signed-in visitor lands when they aren't in TOLC, when the Admin
+// has hidden them, or when Discord gave no answer to trust. Shows no
+// Directory data.
 export const Route = createFileRoute('/members-only')({
   validateSearch: validateLinkSearch,
   beforeLoad: async () => {
@@ -40,10 +41,7 @@ function MembersOnly() {
           </ConnectDiscordButton>
         </>
       ) : (
-        <p>
-          The Directory is only for people in the TOLC Discord server. Join
-          TOLC, then reload this page.
-        </p>
+        <p>Please contact the Discord admin for the TOLC server.</p>
       )}
       <button type="button" onClick={signOut}>
         Sign out

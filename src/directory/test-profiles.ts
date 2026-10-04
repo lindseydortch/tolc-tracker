@@ -1,6 +1,6 @@
 import type { ProfileForm } from './profile'
 import { starterCatalogs } from './starter-catalogs'
-import { createTestSetup } from './test-directory'
+import { createTestSetup, testAdminDiscordUserId } from './test-directory'
 
 export type TestSetup = Awaited<ReturnType<typeof createTestSetup>>
 
@@ -26,9 +26,8 @@ export async function memberInTolc(
   const discord = { userId: discordUserId, handle: `${githubUsername}_dc` }
   await directory.connectDiscord({ authUserId, discord })
   tolc.join(discord.userId)
-  const now = new Date()
-  await directory.refreshMembership({ authUserId, sessionStartedAt: now, now })
-  return { authUserId, discord, now }
+  await directory.checkMembership({ authUserId })
+  return { authUserId, discord }
 }
 
 export const octoForm: ProfileForm = {
@@ -55,4 +54,26 @@ export async function memberWithProfile(
   })
   if (!result.ok) throw new Error('octoForm should complete a profile')
   return member
+}
+
+// Hides the Member signed in as `authUserId`, as the Admin would. Makes the
+// Admin a Member first if they aren't one yet.
+export async function hideAsAdmin(setup: TestSetup, authUserId: string) {
+  const admin = await adminOf(setup)
+  const member = await setup.directory.memberForAuthUser(authUserId)
+  if (!member) throw new Error(`No Member for auth user "${authUserId}"`)
+  await setup.directory.hideMember({ authUserId: admin, memberId: member.id })
+  return { admin, memberId: member.id }
+}
+
+const admins = new WeakMap<TestSetup, string>()
+
+async function adminOf(setup: TestSetup): Promise<string> {
+  let admin = admins.get(setup)
+  if (!admin) {
+    admin = (await memberInTolc(setup, 'tolc-owner', testAdminDiscordUserId))
+      .authUserId
+    admins.set(setup, admin)
+  }
+  return admin
 }

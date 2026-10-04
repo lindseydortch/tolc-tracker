@@ -13,12 +13,12 @@ export type SignedInVisitor = {
   // Discord is linked but its handle couldn't be read, so the Member is
   // asked to connect again.
   discordSyncFailed: boolean
-  // Only someone 'in-tolc' may see Directory data (ADR 0001).
+  // Only someone 'in-tolc' may see Directory data (ADR 0001, ADR 0003).
   membership: Membership
   // False until the Member has sent the signup form. Only worked out for
   // someone 'in-tolc', since no one else can reach the form.
   profileComplete: boolean
-  // Only the Admin can merge Skills and Target Roles.
+  // Only the Admin can merge Catalog entries and hide or delete Members.
   isAdmin: boolean
 }
 
@@ -53,10 +53,7 @@ export async function loadSignedInVisitor(): Promise<{
     member = await signIn()
   }
   if (!member) return null
-  const membership = await directory.refreshMembership({
-    authUserId,
-    sessionStartedAt: session.session.createdAt,
-  })
+  const membership = await directory.checkMembership({ authUserId })
   return {
     authUserId,
     visitor: {
