@@ -1,6 +1,6 @@
-import { useRouter } from '@tanstack/react-router'
 import { useRef, useState, type FormEvent } from 'react'
 import type { SaveResult } from './profile'
+import { useReloadAfterChange } from './reload-after-change'
 
 export const couldNotSave = "Couldn't save. Try again."
 
@@ -9,7 +9,7 @@ export type SaveState = 'editing' | 'saving' | 'saved' | 'failed'
 // State for a profile form that is checked in the browser and saved by the
 // server: problems show once the Member first tries to save, then follow
 // their edits. A second submit while one is saving is ignored. After a
-// save, `onSaved` runs; by default the page's data reloads.
+// save, `onSaved` runs; by default it calls `reloadAfterChange`.
 export function useSavedForm<Form, Problems extends object>({
   initial,
   problemsOf,
@@ -21,7 +21,7 @@ export function useSavedForm<Form, Problems extends object>({
   save: (form: Form) => Promise<SaveResult<{ problems: Problems }>>
   onSaved?: () => Promise<unknown>
 }) {
-  const router = useRouter()
+  const reload = useReloadAfterChange()
   const [form, setForm] = useState(initial)
   const [attempted, setAttempted] = useState(false)
   const [serverProblems, setServerProblems] = useState<Partial<Problems>>({})
@@ -53,7 +53,7 @@ export function useSavedForm<Form, Problems extends object>({
         return
       }
       setStatus('saved')
-      await (onSaved ? onSaved() : router.invalidate())
+      await (onSaved ? onSaved() : reload())
     } catch (error) {
       console.error(error)
       setStatus('failed')

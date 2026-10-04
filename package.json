@@ -34,6 +34,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^18.0.5",
     "drizzle-kit": "^0.31.11",
+    "happy-dom": "^20.14.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
