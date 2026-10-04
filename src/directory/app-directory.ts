@@ -5,4 +5,5 @@ import { createDirectory } from './directory'
 // The Directory the running app uses. Server-only.
 export const directory = createDirectory(db, {
   membershipChecker: discordMembershipChecker,
+  adminDiscordUserId: process.env.ADMIN_DISCORD_USER_ID,
 })

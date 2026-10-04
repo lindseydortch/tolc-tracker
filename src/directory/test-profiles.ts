@@ -13,12 +13,17 @@ export async function seededSetup(): Promise<TestSetup> {
   return setup
 }
 
-// A Member who is in TOLC and has not filled the signup form yet.
-export async function memberInTolc(setup: TestSetup, githubUsername: string) {
+// A Member who is in TOLC and has not filled the signup form yet. Pass
+// `discordUserId` to choose their Discord account, such as the Admin's.
+export async function memberInTolc(
+  setup: TestSetup,
+  githubUsername: string,
+  discordUserId = String(discordIds++),
+) {
   const { directory, tolc, signUpWithGitHub } = setup
   const authUserId = await signUpWithGitHub(githubUsername)
   await directory.signIn({ authUserId, githubUsername })
-  const discord = { userId: String(discordIds++), handle: `${githubUsername}_dc` }
+  const discord = { userId: discordUserId, handle: `${githubUsername}_dc` }
   await directory.connectDiscord({ authUserId, discord })
   tolc.join(discord.userId)
   const now = new Date()
@@ -38,8 +43,12 @@ export const octoForm: ProfileForm = {
 }
 
 // A Member in TOLC who has completed the signup form with `octoForm`.
-export async function memberWithProfile(setup: TestSetup, githubUsername: string) {
-  const member = await memberInTolc(setup, githubUsername)
+export async function memberWithProfile(
+  setup: TestSetup,
+  githubUsername: string,
+  discordUserId?: string,
+) {
+  const member = await memberInTolc(setup, githubUsername, discordUserId)
   const result = await setup.directory.completeProfile({
     authUserId: member.authUserId,
     form: octoForm,

@@ -18,6 +18,8 @@ export type SignedInVisitor = {
   // False until the Member has sent the signup form. Only worked out for
   // someone 'in-tolc', since no one else can reach the form.
   profileComplete: boolean
+  // Only the Admin can merge Skills and Target Roles.
+  isAdmin: boolean
 }
 
 // Server-only: reads the current request's session. Null for a signed-out
@@ -65,6 +67,7 @@ export async function loadSignedInVisitor(): Promise<{
       membership,
       profileComplete:
         membership === 'in-tolc' && (await directory.isProfileComplete(authUserId)),
+      isAdmin: membership === 'in-tolc' && (await directory.isAdmin(authUserId)),
     },
   }
 }

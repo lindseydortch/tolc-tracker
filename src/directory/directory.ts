@@ -15,7 +15,9 @@ import {
   DiscordUnavailableError,
   type MembershipChecker,
 } from './membership-checker'
+import { mergeSkills, mergeTargetRoles, NotAdminError, type MergeResult } from './catalog-merge'
 import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
+import type { MergeForm } from './merge-form'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
 import {
@@ -101,6 +103,9 @@ export type DirectoryEntry = {
   typeScriptBadge: boolean
 }
 
+// A merge the signed-in Member asks for; only the Admin's go through.
+export type AdminMerge = MergeForm & { authUserId: string }
+
 // A Directory entry plus the Secondary Skills its card leaves out.
 type CompleteProfile = DirectoryEntry & { secondarySkills: string[] }
 
@@ -116,9 +121,13 @@ const membershipCheckLifetimeMs = 24 * 60 * 60 * 1000
 const membershipRetryMs = 30 * 1000
 
 // `membershipChecker` is only needed by `refreshMembership`.
+// `adminDiscordUserId` names the Admin; without it, no one is.
 export function createDirectory(
   db: Db,
-  { membershipChecker }: { membershipChecker?: MembershipChecker } = {},
+  {
+    membershipChecker,
+    adminDiscordUserId,
+  }: { membershipChecker?: MembershipChecker; adminDiscordUserId?: string | null } = {},
 ) {
   // Members with every required profile field filled, matching `where`.
   // A profile is complete only once the signup form has been sent and
@@ -216,6 +225,14 @@ export function createDirectory(
       })
     }
     return entries
+  }
+
+  async function asAdmin(
+    { authUserId, ...form }: AdminMerge,
+    merge: (tx: Db, form: MergeForm) => Promise<MergeResult>,
+  ): Promise<MergeResult> {
+    if (!(await directory.isAdmin(authUserId))) throw new NotAdminError()
+    return db.transaction((tx) => merge(tx, form))
   }
 
   const directory = {
@@ -376,6 +393,28 @@ export function createDirectory(
       if (!checkedAt) return 'unknown'
       return hidden ? 'not-in-tolc' : 'in-tolc'
     },
+
+    // The Admin is the Member whose connected Discord account is the one
+    // configured as the Admin's, while they're in TOLC.
+    async isAdmin(authUserId: string): Promise<boolean> {
+      if (!adminDiscordUserId) return false
+      const [member] = await db
+        .select({ id: members.id })
+        .from(members)
+        .where(
+          and(
+            eq(members.authUserId, authUserId),
+            eq(members.discordUserId, adminDiscordUserId),
+            eq(members.hidden, false),
+          ),
+        )
+      return Boolean(member)
+    },
+
+    // Only the Admin may merge, so both throw `NotAdminError` for anyone
+    // else. See `mergeSkills` and `mergeTargetRoles` for the rules.
+    mergeSkills: (merge: AdminMerge) => asAdmin(merge, mergeSkills),
+    mergeTargetRoles: (merge: AdminMerge) => asAdmin(merge, mergeTargetRoles),
 
     async isProfileComplete(authUserId: string): Promise<boolean> {
       const found = await completeProfiles(eq(members.authUserId, authUserId))
