@@ -84,6 +84,17 @@ describe('hiding a Member', () => {
     expect(setup.tolc.checks).toBe(checks)
   })
 
+  it('tells a Hidden Member they are hidden even before Discord is connected', async () => {
+    const { setup, admin } = await adminAndOcto()
+    const authUserId = await setup.signUpWithGitHub('mona')
+    await setup.directory.signIn({ authUserId, githubUsername: 'mona' })
+    const memberId = (await setup.directory.memberForAuthUser(authUserId))!.id
+
+    await setup.directory.hideMember({ authUserId: admin, memberId })
+
+    expect(await setup.directory.checkMembership({ authUserId })).toBe('hidden')
+  })
+
   it('refuses to hide the Admin', async () => {
     const { setup, admin, adminId } = await adminAndOcto()
 
@@ -130,6 +141,24 @@ describe('reactivating a Hidden Member', () => {
     )
     expect(setup.tolc.checks).toBe(checks)
     expect(await directoryNames(setup)).toEqual(['tolc-owner_dc', 'octocat_dc'])
+  })
+
+  it('leaves a Member who never passed to be checked on their next page load', async () => {
+    const { setup, admin } = await adminAndOcto()
+    const authUserId = await setup.signUpWithGitHub('mona')
+    await setup.directory.signIn({ authUserId, githubUsername: 'mona' })
+    const discord = { userId: '41771983423143937', handle: 'mona_dc' }
+    await setup.directory.connectDiscord({ authUserId, discord })
+    const memberId = (await setup.directory.memberForAuthUser(authUserId))!.id
+    await setup.directory.hideMember({ authUserId: admin, memberId })
+    const checks = setup.tolc.checks
+
+    await setup.directory.reactivateMember({ authUserId: admin, memberId })
+    expect(setup.tolc.checks).toBe(checks)
+
+    setup.tolc.join(discord.userId)
+    expect(await setup.directory.checkMembership({ authUserId })).toBe('in-tolc')
+    expect(setup.tolc.checks).toBe(checks + 1)
   })
 
   it('is only for the Admin', async () => {

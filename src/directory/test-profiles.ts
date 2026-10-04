@@ -56,24 +56,16 @@ export async function memberWithProfile(
   return member
 }
 
-// Hides the Member signed in as `authUserId`, as the Admin would. Makes the
-// Admin a Member first if they aren't one yet.
+// Makes the Admin a Member, then hides the Member signed in as
+// `authUserId` as the Admin would. Call it at most once per setup.
 export async function hideAsAdmin(setup: TestSetup, authUserId: string) {
-  const admin = await adminOf(setup)
+  const { authUserId: admin } = await memberInTolc(
+    setup,
+    'tolc-owner',
+    testAdminDiscordUserId,
+  )
   const member = await setup.directory.memberForAuthUser(authUserId)
   if (!member) throw new Error(`No Member for auth user "${authUserId}"`)
   await setup.directory.hideMember({ authUserId: admin, memberId: member.id })
   return { admin, memberId: member.id }
-}
-
-const admins = new WeakMap<TestSetup, string>()
-
-async function adminOf(setup: TestSetup): Promise<string> {
-  let admin = admins.get(setup)
-  if (!admin) {
-    admin = (await memberInTolc(setup, 'tolc-owner', testAdminDiscordUserId))
-      .authUserId
-    admins.set(setup, admin)
-  }
-  return admin
 }

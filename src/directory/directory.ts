@@ -24,7 +24,7 @@ import {
   hideMember,
   managedMembers,
   reactivateMember,
-  type MemberAdminAction,
+  type AdminMemberAction,
 } from './member-admin'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
@@ -113,10 +113,6 @@ export type DirectoryEntry = {
 
 // A merge the signed-in Member asks for; only the Admin's go through.
 export type AdminMerge = MergeForm & { authUserId: string }
-
-// The signed-in Member asking to hide, reactivate, or delete Member
-// `memberId`; only the Admin's requests go through.
-export type AdminMemberAction = { authUserId: string; memberId: number }
 
 // A Directory entry plus the Secondary Skills its card leaves out.
 type CompleteProfile = DirectoryEntry & { secondarySkills: string[] }
@@ -248,13 +244,6 @@ export function createDirectory(
     return db.transaction(act)
   }
 
-  function adminAction({ authUserId, memberId }: AdminMemberAction) {
-    return {
-      authUserId,
-      action: { adminAuthUserId: authUserId, memberId } satisfies MemberAdminAction,
-    }
-  }
-
   const directory = {
     ...createProfileEditing(db, (): Promise<Catalogs> => directory.catalogs()),
 
@@ -376,8 +365,8 @@ export function createDirectory(
         })
         .from(members)
         .where(eq(members.authUserId, authUserId))
+      if (member?.hidden) return 'hidden'
       if (!member?.discordUserId) return 'unknown'
-      if (member.hidden) return 'hidden'
       if (member.passedAt) return 'in-tolc'
       const { discordUserId, attemptedAt } = member
       let { checkedAt } = member
@@ -447,18 +436,12 @@ export function createDirectory(
     // refuse to act on the Admin themselves. See `member-admin.ts`.
     managedMembers: (authUserId: string) =>
       asAdmin(authUserId, (tx) => managedMembers(tx, authUserId)),
-    hideMember(request: AdminMemberAction) {
-      const { authUserId, action } = adminAction(request)
-      return asAdmin(authUserId, (tx) => hideMember(tx, action))
-    },
-    reactivateMember(request: AdminMemberAction) {
-      const { authUserId, action } = adminAction(request)
-      return asAdmin(authUserId, (tx) => reactivateMember(tx, action))
-    },
-    deleteMember(request: AdminMemberAction) {
-      const { authUserId, action } = adminAction(request)
-      return asAdmin(authUserId, (tx) => deleteMember(tx, action))
-    },
+    hideMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => hideMember(tx, action)),
+    reactivateMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => reactivateMember(tx, action)),
+    deleteMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => deleteMember(tx, action)),
 
     async isProfileComplete(authUserId: string): Promise<boolean> {
       const found = await completeProfiles(eq(members.authUserId, authUserId))

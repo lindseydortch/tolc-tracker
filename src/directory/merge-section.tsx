@@ -1,7 +1,7 @@
-import { useRouter } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import type { MergeResult } from './catalog-merge'
 import type { MergeForm } from './merge-form'
+import { useAdminRequest } from './use-admin-request'
 
 // One Catalog's merge form on the Admin page.
 export function MergeSection({
@@ -16,31 +16,19 @@ export function MergeSection({
   entries: { name: string; aliases: string[] }[]
   merge: (form: MergeForm) => Promise<MergeResult>
 }) {
-  const router = useRouter()
   const [form, setForm] = useState<MergeForm>({ from: '', into: '' })
-  const [status, setStatus] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { status, busy, send } = useAdminRequest()
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!window.confirm(`Merge "${form.from}" into "${form.into}"? This can't be undone.`)) {
       return
     }
-    setSaving(true)
-    try {
-      const result = await merge(form)
-      if (result.ok) {
-        setStatus(`Merged "${form.from}" into "${form.into}".`)
-        setForm({ from: '', into: '' })
-        await router.invalidate()
-      } else {
-        setStatus(result.problem)
-      }
-    } catch {
-      setStatus('Could not merge. Try again.')
-    } finally {
-      setSaving(false)
-    }
+    const merged = await send(() => merge(form), {
+      done: `Merged "${form.from}" into "${form.into}".`,
+      failed: 'Could not merge. Try again.',
+    })
+    if (merged) setForm({ from: '', into: '' })
   }
 
   return (
@@ -73,7 +61,7 @@ export function MergeSection({
               required
             />
           </label>{' '}
-          <button type="submit" disabled={saving}>
+          <button type="submit" disabled={busy}>
             Merge
           </button>
         </p>

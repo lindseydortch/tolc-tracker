@@ -2,6 +2,7 @@ import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { requireLandingPage } from '../auth/session'
 import { directory } from './app-directory'
+import type { AdminMemberAction, MemberAdminResult } from './member-admin'
 import { parseMergeForm } from './merge-form'
 
 // Anyone but the Admin gets the not-found page, as if the Admin page didn't
@@ -18,6 +19,14 @@ function parseMemberId(input: unknown): number {
     throw new Error('Malformed Member id')
   }
   return input
+}
+
+// Runs one of the Directory's Member actions on `memberId` as the Admin.
+async function onMember(
+  memberId: number,
+  act: (action: AdminMemberAction) => Promise<MemberAdminResult>,
+): Promise<MemberAdminResult> {
+  return act({ authUserId: await requireAdmin(), memberId })
 }
 
 export const getAdminPage = createServerFn({ method: 'GET' }).handler(
@@ -46,21 +55,12 @@ export const mergeTargetRoles = createServerFn({ method: 'POST' })
 
 export const hideMember = createServerFn({ method: 'POST' })
   .validator(parseMemberId)
-  .handler(async ({ data }) => {
-    const authUserId = await requireAdmin()
-    return directory.hideMember({ authUserId, memberId: data })
-  })
+  .handler(({ data }) => onMember(data, directory.hideMember))
 
 export const reactivateMember = createServerFn({ method: 'POST' })
   .validator(parseMemberId)
-  .handler(async ({ data }) => {
-    const authUserId = await requireAdmin()
-    return directory.reactivateMember({ authUserId, memberId: data })
-  })
+  .handler(({ data }) => onMember(data, directory.reactivateMember))
 
 export const deleteMember = createServerFn({ method: 'POST' })
   .validator(parseMemberId)
-  .handler(async ({ data }) => {
-    const authUserId = await requireAdmin()
-    return directory.deleteMember({ authUserId, memberId: data })
-  })
+  .handler(({ data }) => onMember(data, directory.deleteMember))

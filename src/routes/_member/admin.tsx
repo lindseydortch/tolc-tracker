@@ -1,6 +1,5 @@
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
-import { useState, type ReactNode } from 'react'
 import {
   deleteMember,
   getAdminPage,
@@ -11,6 +10,7 @@ import {
 } from '../../directory/admin-fns'
 import type { ManagedMember, MemberAdminResult } from '../../directory/member-admin'
 import { MergeSection } from '../../directory/merge-section'
+import { useAdminRequest } from '../../directory/use-admin-request'
 import { NotFoundPage } from '../../not-found-page'
 
 // The Admin hides, reactivates, and deletes Members, and merges duplicate
@@ -21,45 +21,50 @@ export const Route = createFileRoute('/_member/admin')({
   notFoundComponent: () => <NotFoundPage message="Nothing here." />,
 })
 
+// A button the Admin page shows on a Member's row.
+type MemberAction = {
+  label: 'Hide' | 'Reactivate' | 'Delete'
+  // Past tense, for the status line: "Hid Ada Lovelace."
+  done: string
+  request: (memberId: number) => Promise<MemberAdminResult>
+  // Asked before sending, if set.
+  confirm?: (member: ManagedMember) => string
+}
+
 function AdminPage() {
   const { managed, catalogs } = Route.useLoaderData()
   const mergeSkill = useServerFn(mergeSkills)
   const mergeRole = useServerFn(mergeTargetRoles)
-  const hide = useServerFn(hideMember)
-  const reactivate = useServerFn(reactivateMember)
-  const remove = useServerFn(deleteMember)
-  const router = useRouter()
-  const [status, setStatus] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const hideFn = useServerFn(hideMember)
+  const reactivateFn = useServerFn(reactivateMember)
+  const deleteFn = useServerFn(deleteMember)
+  const { status, busy, send } = useAdminRequest()
 
-  async function act(
-    run: () => Promise<MemberAdminResult>,
-    done: string,
-    failed: string,
-  ) {
-    setBusy(true)
-    try {
-      const result = await run()
-      setStatus(result.ok ? done : result.problem)
-      await router.invalidate()
-    } catch {
-      setStatus(failed)
-    } finally {
-      setBusy(false)
-    }
+  const hide: MemberAction = {
+    label: 'Hide',
+    done: 'Hid',
+    request: (memberId) => hideFn({ data: memberId }),
+  }
+  const reactivate: MemberAction = {
+    label: 'Reactivate',
+    done: 'Reactivated',
+    request: (memberId) => reactivateFn({ data: memberId }),
+  }
+  const remove: MemberAction = {
+    label: 'Delete',
+    done: 'Deleted',
+    request: (memberId) => deleteFn({ data: memberId }),
+    confirm: (member) =>
+      `Delete ${member.name}? Their profile and sign-in are removed for good. ` +
+      "This can't be undone.",
   }
 
-  function onDelete(member: ManagedMember) {
-    const confirmed = window.confirm(
-      `Delete ${member.name}? Their profile and sign-in are removed for good. ` +
-        "This can't be undone.",
-    )
-    if (!confirmed) return
-    return act(
-      () => remove({ data: member.id }),
-      `Deleted ${member.name}.`,
-      `Could not delete ${member.name}. Try again.`,
-    )
+  function onAction(action: MemberAction, member: ManagedMember) {
+    if (action.confirm && !window.confirm(action.confirm(member))) return
+    return send(() => action.request(member.id), {
+      done: `${action.done} ${member.name}.`,
+      failed: `Could not ${action.label.toLowerCase()} ${member.name}. Try again.`,
+    })
   }
 
   return (
@@ -75,55 +80,23 @@ function AdminPage() {
         Hiding a Member keeps their profile but takes them out of the
         Directory, and they can't see it until you reactivate them.
       </p>
-      <MemberTable members={managed.members}>
-        {(member) => (
-          <>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                act(
-                  () => hide({ data: member.id }),
-                  `Hid ${member.name}.`,
-                  `Could not hide ${member.name}. Try again.`,
-                )
-              }
-            >
-              Hide
-            </button>{' '}
-            <button type="button" disabled={busy} onClick={() => onDelete(member)}>
-              Delete
-            </button>
-          </>
-        )}
-      </MemberTable>
+      <MemberTable
+        members={managed.members}
+        actions={[hide, remove]}
+        busy={busy}
+        onAction={onAction}
+      />
 
       <h2>Hidden Members</h2>
       {managed.hiddenMembers.length === 0 ? (
         <p>No Hidden Members.</p>
       ) : (
-        <MemberTable members={managed.hiddenMembers}>
-          {(member) => (
-            <>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  act(
-                    () => reactivate({ data: member.id }),
-                    `Reactivated ${member.name}.`,
-                    `Could not reactivate ${member.name}. Try again.`,
-                  )
-                }
-              >
-                Reactivate
-              </button>{' '}
-              <button type="button" disabled={busy} onClick={() => onDelete(member)}>
-                Delete
-              </button>
-            </>
-          )}
-        </MemberTable>
+        <MemberTable
+          members={managed.hiddenMembers}
+          actions={[reactivate, remove]}
+          busy={busy}
+          onAction={onAction}
+        />
       )}
 
       <h2>Merge Skills and Target Roles</h2>
@@ -147,13 +120,17 @@ function AdminPage() {
   )
 }
 
-// `actions` gives the buttons for each Member; the Admin's own row gets none.
+// The Admin's own row gets no buttons.
 function MemberTable({
   members,
-  children: actions,
+  actions,
+  busy,
+  onAction,
 }: {
   members: ManagedMember[]
-  children: (member: ManagedMember) => ReactNode
+  actions: MemberAction[]
+  busy: boolean
+  onAction: (action: MemberAction, member: ManagedMember) => void
 }) {
   return (
     <table>
@@ -171,7 +148,20 @@ function MemberTable({
             <td>{member.name}</td>
             <td>{member.discordHandle ?? 'Not connected'}</td>
             <td>{member.githubUrl && <a href={member.githubUrl}>{member.githubUrl}</a>}</td>
-            <td>{member.isYou ? 'You' : actions(member)}</td>
+            <td>
+              {member.isYou
+                ? 'You'
+                : actions.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onAction(action, member)}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+            </td>
           </tr>
         ))}
       </tbody>

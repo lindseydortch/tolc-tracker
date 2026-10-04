@@ -22,9 +22,9 @@ export type ManagedMembers = {
   hiddenMembers: ManagedMember[]
 }
 
-// What the Admin asks for. `adminAuthUserId` is already known to be the
-// Admin's; `memberId` is the Member to act on.
-export type MemberAdminAction = { adminAuthUserId: string; memberId: number }
+// The signed-in Member (`authUserId`) asking to act on Member `memberId`.
+// The Directory lets it through only for the Admin.
+export type AdminMemberAction = { authUserId: string; memberId: number }
 
 export async function managedMembers(
   db: Db,
@@ -45,7 +45,7 @@ export async function managedMembers(
     .from(members)
     .innerJoin(user, eq(members.authUserId, user.id))
     .leftJoin(links, and(eq(links.memberId, members.id), eq(links.kind, 'github')))
-  const all = rows
+  const managed = rows
     .map((row) => ({
       hidden: row.hidden,
       member: {
@@ -65,19 +65,19 @@ export async function managedMembers(
         a.member.id - b.member.id,
     )
   return {
-    members: all.filter((row) => !row.hidden).map((row) => row.member),
-    hiddenMembers: all.filter((row) => row.hidden).map((row) => row.member),
+    members: managed.filter((row) => !row.hidden).map((row) => row.member),
+    hiddenMembers: managed.filter((row) => row.hidden).map((row) => row.member),
   }
 }
 
 // Takes the Member out of the Directory, keeping their profile. They land on
 // the Members-only notice from their next page load.
-export function hideMember(db: Db, action: MemberAdminAction) {
+export function hideMember(db: Db, action: AdminMemberAction) {
   return setHidden(db, action, true)
 }
 
 // Puts a Hidden Member back in the Directory, without asking Discord.
-export function reactivateMember(db: Db, action: MemberAdminAction) {
+export function reactivateMember(db: Db, action: AdminMemberAction) {
   return setHidden(db, action, false)
 }
 
@@ -85,7 +85,7 @@ export function reactivateMember(db: Db, action: MemberAdminAction) {
 // sessions, and linked accounts with it. Catalog entries they added stay.
 export async function deleteMember(
   db: Db,
-  action: MemberAdminAction,
+  action: AdminMemberAction,
 ): Promise<MemberAdminResult> {
   const target = await findTarget(db, action, "You can't delete yourself.")
   if (!target.ok) return target
@@ -95,7 +95,7 @@ export async function deleteMember(
 
 async function setHidden(
   db: Db,
-  action: MemberAdminAction,
+  action: AdminMemberAction,
   hidden: boolean,
 ): Promise<MemberAdminResult> {
   const target = await findTarget(db, action, "You can't hide yourself.")
@@ -108,7 +108,7 @@ async function setHidden(
 // themselves or gone.
 async function findTarget(
   db: Db,
-  { adminAuthUserId, memberId }: MemberAdminAction,
+  { authUserId: adminAuthUserId, memberId }: AdminMemberAction,
   notYourself: string,
 ): Promise<{ ok: true; authUserId: string } | { ok: false; problem: string }> {
   const [target] = await db
