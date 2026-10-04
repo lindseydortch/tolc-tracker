@@ -13,7 +13,7 @@ A person in the TOLC Discord server who has a profile in the tracker, identified
 _Avoid_: user, account
 
 **Hidden Member**:
-A Member who has left TOLC. Their profile is kept but left out of the Directory, and they can't see it, until they rejoin TOLC.
+A Member the Admin has hidden, usually after removing them from TOLC. Their profile is kept but left out of the Directory, and they can't see it, until the Admin reactivates them.
 _Avoid_: inactive member, deleted member, ex-member
 
 **Directory**:
@@ -21,7 +21,7 @@ The list of all Members' profiles, visible only to logged-in Members. Every Memb
 _Avoid_: roster, list
 
 **Admin**:
-The TOLC server owner, the only person who can merge entries in the Skill Catalog and Role Catalog. Profiles can be edited only by the Member who owns them, never by the Admin.
+The TOLC server owner, the only person who can merge entries in the Skill Catalog and Role Catalog, and hide or delete Members. Profiles can be edited only by the Member who owns them, never by the Admin.
 _Avoid_: moderator, mod
 
 **Merge**:

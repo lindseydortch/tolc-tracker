@@ -15,8 +15,8 @@ import { Route as MembersOnlyRouteImport } from './routes/members-only'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MemberIndexRouteImport } from './routes/_member/index'
+import { Route as MemberAdminRouteImport } from './routes/_member/admin'
 import { Route as MemberEditProfileRouteImport } from './routes/_member/edit-profile'
-import { Route as MemberMergeRouteImport } from './routes/_member/merge'
 import { Route as MemberMembersMemberIdRouteImport } from './routes/_member/members.$memberId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -49,14 +49,14 @@ const MemberIndexRoute = MemberIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MemberRoute,
 } as any)
+const MemberAdminRoute = MemberAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => MemberRoute,
+} as any)
 const MemberEditProfileRoute = MemberEditProfileRouteImport.update({
   id: '/edit-profile',
   path: '/edit-profile',
-  getParentRoute: () => MemberRoute,
-} as any)
-const MemberMergeRoute = MemberMergeRouteImport.update({
-  id: '/merge',
-  path: '/merge',
   getParentRoute: () => MemberRoute,
 } as any)
 const MemberMembersMemberIdRoute = MemberMembersMemberIdRouteImport.update({
@@ -76,8 +76,8 @@ export interface FileRoutesByFullPath {
   '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/signup': typeof SignupRoute
+  '/admin': typeof MemberAdminRoute
   '/edit-profile': typeof MemberEditProfileRoute
-  '/merge': typeof MemberMergeRoute
   '/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -86,8 +86,8 @@ export interface FileRoutesByTo {
   '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/signup': typeof SignupRoute
+  '/admin': typeof MemberAdminRoute
   '/edit-profile': typeof MemberEditProfileRoute
-  '/merge': typeof MemberMergeRoute
   '/': typeof MemberIndexRoute
   '/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -99,8 +99,8 @@ export interface FileRoutesById {
   '/members-only': typeof MembersOnlyRoute
   '/sign-in': typeof SignInRoute
   '/signup': typeof SignupRoute
+  '/_member/admin': typeof MemberAdminRoute
   '/_member/edit-profile': typeof MemberEditProfileRoute
-  '/_member/merge': typeof MemberMergeRoute
   '/_member/': typeof MemberIndexRoute
   '/_member/members/$memberId': typeof MemberMembersMemberIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -113,8 +113,8 @@ export interface FileRouteTypes {
     | '/members-only'
     | '/sign-in'
     | '/signup'
+    | '/admin'
     | '/edit-profile'
-    | '/merge'
     | '/members/$memberId'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -123,8 +123,8 @@ export interface FileRouteTypes {
     | '/members-only'
     | '/sign-in'
     | '/signup'
+    | '/admin'
     | '/edit-profile'
-    | '/merge'
     | '/'
     | '/members/$memberId'
     | '/api/auth/$'
@@ -135,8 +135,8 @@ export interface FileRouteTypes {
     | '/members-only'
     | '/sign-in'
     | '/signup'
+    | '/_member/admin'
     | '/_member/edit-profile'
-    | '/_member/merge'
     | '/_member/'
     | '/_member/members/$memberId'
     | '/api/auth/$'
@@ -195,18 +195,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MemberIndexRouteImport
       parentRoute: typeof MemberRoute
     }
+    '/_member/admin': {
+      id: '/_member/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof MemberAdminRouteImport
+      parentRoute: typeof MemberRoute
+    }
     '/_member/edit-profile': {
       id: '/_member/edit-profile'
       path: '/edit-profile'
       fullPath: '/edit-profile'
       preLoaderRoute: typeof MemberEditProfileRouteImport
-      parentRoute: typeof MemberRoute
-    }
-    '/_member/merge': {
-      id: '/_member/merge'
-      path: '/merge'
-      fullPath: '/merge'
-      preLoaderRoute: typeof MemberMergeRouteImport
       parentRoute: typeof MemberRoute
     }
     '/_member/members/$memberId': {
@@ -227,15 +227,15 @@ declare module '@tanstack/react-router' {
 }
 
 interface MemberRouteChildren {
+  MemberAdminRoute: typeof MemberAdminRoute
   MemberEditProfileRoute: typeof MemberEditProfileRoute
-  MemberMergeRoute: typeof MemberMergeRoute
   MemberIndexRoute: typeof MemberIndexRoute
   MemberMembersMemberIdRoute: typeof MemberMembersMemberIdRoute
 }
 
 const MemberRouteChildren: MemberRouteChildren = {
+  MemberAdminRoute: MemberAdminRoute,
   MemberEditProfileRoute: MemberEditProfileRoute,
-  MemberMergeRoute: MemberMergeRoute,
   MemberIndexRoute: MemberIndexRoute,
   MemberMembersMemberIdRoute: MemberMembersMemberIdRoute,
 }

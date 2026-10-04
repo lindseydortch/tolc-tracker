@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import { skillAliases } from '../db/schema'
-import { mergeEntries, NotAdminError } from './catalog-merge'
+import { NotAdminError } from './admin'
+import { mergeEntries } from './catalog-merge'
 import { normalizeName } from './normalize-name'
 import { emptySearch } from './search'
 import { starterCatalogs } from './starter-catalogs'
@@ -49,19 +50,19 @@ describe('recognising the Admin', () => {
     expect(await setup.directory.isAdmin(authUserId)).toBe(false)
   })
 
-  it('is no one once the Admin has left TOLC', async () => {
-    const { setup, admin } = await adminAndSetup()
-    setup.tolc.leave(testAdminDiscordUserId)
-    const later = new Date(Date.now() + 60_000)
-    await setup.directory.refreshMembership({
-      authUserId: admin,
-      sessionStartedAt: later,
-      now: later,
+  it('is no one until the Admin has passed the TOLC membership check', async () => {
+    const setup = await seededSetup()
+    const authUserId = await setup.signUpWithGitHub('tolc-owner')
+    await setup.directory.signIn({ authUserId, githubUsername: 'tolc-owner' })
+    await setup.directory.connectDiscord({
+      authUserId,
+      discord: { userId: testAdminDiscordUserId, handle: 'tolc-owner_dc' },
     })
+    await setup.directory.checkMembership({ authUserId })
 
-    expect(await setup.directory.isAdmin(admin)).toBe(false)
+    expect(await setup.directory.isAdmin(authUserId)).toBe(false)
     await expect(
-      setup.directory.mergeSkills({ authUserId: admin, from: 'Vue', into: 'React' }),
+      setup.directory.mergeSkills({ authUserId, from: 'Vue', into: 'React' }),
     ).rejects.toThrow(NotAdminError)
   })
 

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
@@ -15,9 +15,17 @@ import {
   DiscordUnavailableError,
   type MembershipChecker,
 } from './membership-checker'
-import { mergeSkills, mergeTargetRoles, NotAdminError, type MergeResult } from './catalog-merge'
+import { NotAdminError } from './admin'
+import { mergeSkills, mergeTargetRoles } from './catalog-merge'
 import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
 import type { MergeForm } from './merge-form'
+import {
+  deleteMember,
+  hideMember,
+  managedMembers,
+  reactivateMember,
+  type AdminMemberAction,
+} from './member-admin'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
 import {
@@ -112,15 +120,14 @@ type CompleteProfile = DirectoryEntry & { secondarySkills: string[] }
 // Everything the profile page shows.
 export type MemberProfile = CompleteProfile & { links: MemberLink[] }
 
-// 'unknown': no Discord connected yet, or no answer from Discord to trust.
-export type Membership = 'in-tolc' | 'not-in-tolc' | 'unknown'
+// 'hidden': the Admin hid the Member. 'unknown': no Discord connected yet,
+// or no answer from Discord to trust.
+export type Membership = 'in-tolc' | 'not-in-tolc' | 'hidden' | 'unknown'
 
-// How long an answer lasts within one session (ADR 0001).
-const membershipCheckLifetimeMs = 24 * 60 * 60 * 1000
 // Discord rate-limits each user's token, so never ask more often than this.
 const membershipRetryMs = 30 * 1000
 
-// `membershipChecker` is only needed by `refreshMembership`.
+// `membershipChecker` is only needed by `checkMembership`.
 // `adminDiscordUserId` names the Admin; without it, no one is.
 export function createDirectory(
   db: Db,
@@ -227,12 +234,14 @@ export function createDirectory(
     return entries
   }
 
-  async function asAdmin(
-    { authUserId, ...form }: AdminMerge,
-    merge: (tx: Db, form: MergeForm) => Promise<MergeResult>,
-  ): Promise<MergeResult> {
+  // Runs `act` in a transaction if `authUserId` is the Admin's, else throws
+  // `NotAdminError`.
+  async function asAdmin<T>(
+    authUserId: string,
+    act: (tx: Db) => Promise<T>,
+  ): Promise<T> {
     if (!(await directory.isAdmin(authUserId))) throw new NotAdminError()
-    return db.transaction((tx) => merge(tx, form))
+    return db.transaction(act)
   }
 
   const directory = {
@@ -316,6 +325,10 @@ export function createDirectory(
           discordHandle: discord.handle,
           discordSyncedAt: new Date(),
           // A different Discord account must pass the membership check anew.
+          membershipPassedAt: sql`
+            case when ${members.discordUserId} = ${discord.userId}
+              then ${members.membershipPassedAt}
+            end`,
           membershipCheckedAt: sql`
             case when ${members.discordUserId} = ${discord.userId}
               then ${members.membershipCheckedAt}
@@ -330,72 +343,71 @@ export function createDirectory(
       }
     },
 
-    // Asks Discord whether the Member is still in TOLC, once per sign-in and
-    // once a day, hiding them when they've left and unhiding them when they
-    // rejoin. A Hidden Member is asked on every call (at most twice a
-    // minute), so joining TOLC soon lets them in. While Discord is
-    // unavailable the last answer stands; once it refuses, the answer is
-    // dropped and the Member hidden until it answers again.
-    async refreshMembership({
+    // Called on every signed-in page load. Asks Discord whether the
+    // Member's Discord account is in TOLC until it passes once (at most twice
+    // a minute while it hasn't), then never again (ADR 0003). A Hidden Member
+    // is never asked. While Discord is unavailable the last answer stands;
+    // once it refuses, the answer is dropped until it answers again.
+    async checkMembership({
       authUserId,
-      sessionStartedAt,
       now = new Date(),
     }: {
       authUserId: string
-      sessionStartedAt: Date
       now?: Date
     }): Promise<Membership> {
       const [member] = await db
         .select({
           discordUserId: members.discordUserId,
           hidden: members.hidden,
+          passedAt: members.membershipPassedAt,
           checkedAt: members.membershipCheckedAt,
           attemptedAt: members.membershipAttemptedAt,
         })
         .from(members)
         .where(eq(members.authUserId, authUserId))
+      if (member?.hidden) return 'hidden'
       if (!member?.discordUserId) return 'unknown'
-      const { discordUserId } = member
-      let { hidden, checkedAt } = member
+      if (member.passedAt) return 'in-tolc'
+      const { discordUserId, attemptedAt } = member
+      let { checkedAt } = member
 
-      if (isMembershipCheckDue({ ...member, sessionStartedAt, now })) {
-        if (!membershipChecker) {
-          throw new Error('This Directory has no membership checker')
-        }
-        try {
-          hidden = !(await membershipChecker.isInTolc({
-            authUserId,
-            discordUserId,
-          }))
-          checkedAt = now
-        } catch (error) {
-          console.error('Could not check TOLC membership', error)
-          if (!(error instanceof DiscordUnavailableError)) {
-            checkedAt = null
-            hidden = true
-          }
-        }
-        await db
-          .update(members)
-          .set({
-            hidden,
-            membershipCheckedAt: checkedAt,
-            membershipAttemptedAt: now,
-          })
-          .where(
-            and(
-              eq(members.authUserId, authUserId),
-              // Skip if a different Discord account was connected meanwhile.
-              eq(members.discordUserId, discordUserId),
-            ),
-          )
+      if (attemptedAt && now.getTime() - attemptedAt.getTime() < membershipRetryMs) {
+        return checkedAt ? 'not-in-tolc' : 'unknown'
       }
-      if (!checkedAt) return 'unknown'
-      return hidden ? 'not-in-tolc' : 'in-tolc'
+      if (!membershipChecker) {
+        throw new Error('This Directory has no membership checker')
+      }
+      let passedAt: Date | null = null
+      try {
+        const inTolc = await membershipChecker.isInTolc({ authUserId, discordUserId })
+        if (inTolc) passedAt = now
+        checkedAt = inTolc ? null : now
+      } catch (error) {
+        console.error('Could not check TOLC membership', error)
+        if (!(error instanceof DiscordUnavailableError)) checkedAt = null
+      }
+      await db
+        .update(members)
+        .set({
+          membershipPassedAt: passedAt,
+          membershipCheckedAt: checkedAt,
+          membershipAttemptedAt: now,
+        })
+        .where(
+          and(
+            eq(members.authUserId, authUserId),
+            // Skip if a different Discord account was connected meanwhile,
+            // or an overlapping page load already recorded a pass.
+            eq(members.discordUserId, discordUserId),
+            isNull(members.membershipPassedAt),
+          ),
+        )
+      if (passedAt) return 'in-tolc'
+      return checkedAt ? 'not-in-tolc' : 'unknown'
     },
 
     // The Admin is the Member whose connected Discord account is the one
-    // configured as the Admin's, while they're in TOLC.
+    // configured as the Admin's, once it has passed the membership check.
     async isAdmin(authUserId: string): Promise<boolean> {
       if (!adminDiscordUserId) return false
       const [member] = await db
@@ -405,6 +417,7 @@ export function createDirectory(
           and(
             eq(members.authUserId, authUserId),
             eq(members.discordUserId, adminDiscordUserId),
+            isNotNull(members.membershipPassedAt),
             eq(members.hidden, false),
           ),
         )
@@ -413,8 +426,22 @@ export function createDirectory(
 
     // Only the Admin may merge, so both throw `NotAdminError` for anyone
     // else. See `mergeSkills` and `mergeTargetRoles` for the rules.
-    mergeSkills: (merge: AdminMerge) => asAdmin(merge, mergeSkills),
-    mergeTargetRoles: (merge: AdminMerge) => asAdmin(merge, mergeTargetRoles),
+    mergeSkills: ({ authUserId, ...form }: AdminMerge) =>
+      asAdmin(authUserId, (tx) => mergeSkills(tx, form)),
+    mergeTargetRoles: ({ authUserId, ...form }: AdminMerge) =>
+      asAdmin(authUserId, (tx) => mergeTargetRoles(tx, form)),
+
+    // Every Member for the Admin page, hidden ones apart. Like the actions
+    // below, throws `NotAdminError` for anyone but the Admin, and those
+    // refuse to act on the Admin themselves. See `member-admin.ts`.
+    managedMembers: (authUserId: string) =>
+      asAdmin(authUserId, (tx) => managedMembers(tx, authUserId)),
+    hideMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => hideMember(tx, action)),
+    reactivateMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => reactivateMember(tx, action)),
+    deleteMember: (action: AdminMemberAction) =>
+      asAdmin(action.authUserId, (tx) => deleteMember(tx, action)),
 
     async isProfileComplete(authUserId: string): Promise<boolean> {
       const found = await completeProfiles(eq(members.authUserId, authUserId))
@@ -580,30 +607,6 @@ export function isDiscordSyncDue({
   linkedAt: Date
 }): boolean {
   return !syncedAt || syncedAt < sessionStartedAt || syncedAt < linkedAt
-}
-
-function isMembershipCheckDue({
-  hidden,
-  checkedAt,
-  attemptedAt,
-  sessionStartedAt,
-  now,
-}: {
-  hidden: boolean
-  checkedAt: Date | null
-  attemptedAt: Date | null
-  sessionStartedAt: Date
-  now: Date
-}): boolean {
-  if (attemptedAt && now.getTime() - attemptedAt.getTime() < membershipRetryMs) {
-    return false
-  }
-  return (
-    !checkedAt ||
-    hidden ||
-    checkedAt < sessionStartedAt ||
-    now.getTime() - checkedAt.getTime() >= membershipCheckLifetimeMs
-  )
 }
 
 type CatalogEntryRef = { id: number; name: string }

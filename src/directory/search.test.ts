@@ -7,7 +7,13 @@ import {
   searchToUrl,
   type DirectorySearch,
 } from './search'
-import { memberInTolc, octoForm, seededSetup, type TestSetup } from './test-profiles'
+import {
+  hideAsAdmin,
+  memberInTolc,
+  octoForm,
+  seededSetup,
+  type TestSetup,
+} from './test-profiles'
 
 // A complete Member named `firstName`, with `changes` made to `octoForm`.
 async function member(
@@ -155,16 +161,10 @@ describe('filtering the Directory', () => {
 
   it('leaves out Hidden Members', async () => {
     const setup = await seededSetup()
-    const { authUserId, discord, now } = await memberInTolc(setup, 'ada')
+    const { authUserId } = await memberInTolc(setup, 'ada')
     await setup.directory.completeProfile({ authUserId, form: octoForm })
-    const later = new Date(now.getTime() + 60_000)
 
-    setup.tolc.leave(discord.userId)
-    await setup.directory.refreshMembership({
-      authUserId,
-      sessionStartedAt: later,
-      now: later,
-    })
+    await hideAsAdmin(setup, authUserId)
 
     expect(await search(setup, { skills: ['React'] })).toEqual([])
   })

@@ -15,13 +15,6 @@ import { isTypeScript, typeScript, type SaveResult } from './profile'
 
 export type MergeResult = SaveResult<{ problem: string }>
 
-// Thrown when anyone but the Admin tries to merge.
-export class NotAdminError extends Error {
-  constructor() {
-    super('Only the Admin can merge Skills and Target Roles')
-  }
-}
-
 type CatalogEntryRow = CatalogEntryRef & { normalizedName: string }
 
 // The tables behind one Catalog, so both Catalogs merge the same way.

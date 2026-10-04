@@ -8,9 +8,7 @@ import {
   profileProblems,
   skillsForLayer,
 } from './profile'
-import { memberInTolc, octoForm, seededSetup } from './test-profiles'
-
-const second = 1000
+import { hideAsAdmin, memberInTolc, octoForm, seededSetup } from './test-profiles'
 
 async function seededCatalogs() {
   return (await seededSetup()).directory.catalogs()
@@ -363,19 +361,15 @@ describe('the Directory', () => {
     expect(entries.map((entry) => entry.firstName)).toEqual(['Octo'])
   })
 
-  it('leaves out Hidden Members until they rejoin TOLC', async () => {
+  it('leaves out Hidden Members until the Admin reactivates them', async () => {
     const setup = await seededSetup()
-    const { authUserId, discord, now } = await memberInTolc(setup, 'octocat')
+    const { authUserId } = await memberInTolc(setup, 'octocat')
     await setup.directory.completeProfile({ authUserId, form: octoForm })
-    const signInAgain = (at: Date) =>
-      setup.directory.refreshMembership({ authUserId, sessionStartedAt: at, now: at })
 
-    setup.tolc.leave(discord.userId)
-    await signInAgain(new Date(now.getTime() + 60 * second))
+    const { admin, memberId } = await hideAsAdmin(setup, authUserId)
     expect(await setup.directory.searchDirectory(emptySearch)).toEqual([])
 
-    setup.tolc.join(discord.userId)
-    await signInAgain(new Date(now.getTime() + 120 * second))
+    await setup.directory.reactivateMember({ authUserId: admin, memberId })
     expect(await setup.directory.searchDirectory(emptySearch)).toHaveLength(1)
   })
 })
@@ -493,14 +487,8 @@ describe('a Member profile page', () => {
 
   it('is not reachable for a Hidden Member', async () => {
     const { setup, octo, id } = await octoWithFullProfile()
-    const later = new Date(octo.now.getTime() + 60 * second)
 
-    setup.tolc.leave(octo.discord.userId)
-    await setup.directory.refreshMembership({
-      authUserId: octo.authUserId,
-      sessionStartedAt: later,
-      now: later,
-    })
+    await hideAsAdmin(setup, octo.authUserId)
 
     expect(await setup.directory.memberProfile(id)).toBeNull()
   })

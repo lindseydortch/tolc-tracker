@@ -72,11 +72,13 @@ export const seniority = pgEnum('seniority', [
 // A Member is created on first GitHub sign-in. `authUserId` points at Better
 // Auth's own user row, which holds the sign-in identity. The Discord columns
 // stay null until the Member connects Discord. `hidden` marks a Hidden
-// Member: kept, but out of the Directory until they rejoin TOLC.
-// `membershipCheckedAt` is when Discord last answered whether they are in
-// TOLC (null until it has, or once the answer can't be trusted);
-// `membershipAttemptedAt` is when it was last asked, answer or not. The
-// profile columns stay null until the Member fills the signup form.
+// Member, whom only the Admin hides and reactivates: kept, but out of the
+// Directory. The connected Discord account is checked against TOLC until it
+// passes once (ADR 0003): `membershipPassedAt` is when it passed, and
+// `membershipCheckedAt` when Discord last answered "not in TOLC" (null if it
+// never has, or since refused to answer). `membershipAttemptedAt` is when
+// Discord was last asked, answer or not. The profile columns stay null until
+// the Member fills the signup form.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
@@ -87,6 +89,7 @@ export const members = pgTable('members', {
   discordHandle: text('discord_handle'),
   discordSyncedAt: timestamp('discord_synced_at'),
   hidden: boolean('hidden').default(false).notNull(),
+  membershipPassedAt: timestamp('membership_passed_at'),
   membershipCheckedAt: timestamp('membership_checked_at'),
   membershipAttemptedAt: timestamp('membership_attempted_at'),
   firstName: text('first_name'),
