@@ -1,4 +1,4 @@
-import type { AnyRouter } from '@tanstack/react-router'
+import { useRouter, type AnyRouter } from '@tanstack/react-router'
 
 // Reloads the current page after a change on the server (a profile edit or
 // an Admin action), and drops every other page's cached data.
@@ -9,4 +9,9 @@ import type { AnyRouter } from '@tanstack/react-router'
 export async function reloadAfterChange(router: AnyRouter) {
   router.clearCache()
   await router.invalidate()
+}
+
+export function useReloadAfterChange() {
+  const router = useRouter()
+  return () => reloadAfterChange(router)
 }

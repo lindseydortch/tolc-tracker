@@ -1,4 +1,4 @@
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
 import type { StackLayer } from '../../directory/directory'
@@ -22,7 +22,7 @@ import {
   type CustomLinkForm,
 } from '../../directory/profile'
 import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
-import { reloadAfterChange } from '../../directory/reload-after-change'
+import { useReloadAfterChange } from '../../directory/reload-after-change'
 import { SaveStatus, useSavedForm, useServerChange } from '../../directory/saved-form'
 
 // A Member edits their own profile here, and only their own: the server
@@ -76,7 +76,7 @@ function DetailsSection() {
 
 function TechStackSection() {
   const { profile } = Route.useLoaderData()
-  const router = useRouter()
+  const reload = useReloadAfterChange()
   const remove = useServerFn(removeSkill)
   const setBadge = useServerFn(setTypeScriptBadge)
   const { busy, problem, setProblem, run } = useServerChange()
@@ -87,7 +87,7 @@ function TechStackSection() {
   const change = (send: () => Promise<EditResult | void>) =>
     run(send, async (result) => {
       if (result && !result.ok) setProblem(result.problem)
-      await reloadAfterChange(router)
+      await reload()
     })
 
   const onRemove = (skill: string) => change(() => remove({ data: { skill } }))
@@ -152,7 +152,7 @@ function TechStackSection() {
 
 function AddSkillForm() {
   const { catalogs } = Route.useLoaderData()
-  const router = useRouter()
+  const reload = useReloadAfterChange()
   const add = useServerFn(addSkill)
   const [skill, setSkill] = useState('')
   const [inPreferredStack, setInPreferredStack] = useState(false)
@@ -185,7 +185,7 @@ function AddSkillForm() {
           setInPreferredStack(false)
           setStackLayer(null)
           setOccupiedBy(undefined)
-          await reloadAfterChange(router)
+          await reload()
         } else if ('occupiedBy' in result) {
           setOccupiedBy(result.occupiedBy)
         } else {
