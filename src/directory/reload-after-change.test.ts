@@ -7,7 +7,7 @@ import {
   createRouter,
 } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
-import { refreshAfterEdit } from './refresh-after-edit'
+import { reloadAfterChange } from './reload-after-change'
 
 // A Directory whose loader reads `saved`, standing in for the database,
 // and an editor page that changes it.
@@ -36,14 +36,14 @@ function testApp() {
   return { db, router, shownOnDirectory }
 }
 
-describe('refreshAfterEdit', () => {
+describe('reloadAfterChange', () => {
   it('makes the Directory show the saved data on first render after an edit', async () => {
     const { db, router, shownOnDirectory } = testApp()
     await router.load()
     await router.navigate({ to: '/edit-profile' })
 
     db.saved = 'new'
-    await refreshAfterEdit(router)
+    await reloadAfterChange(router)
     await router.navigate({ to: '/' })
 
     expect(shownOnDirectory()).toBe('new')
@@ -56,7 +56,7 @@ describe('refreshAfterEdit', () => {
     await router.preloadRoute({ to: '/' })
 
     db.saved = 'new'
-    await refreshAfterEdit(router)
+    await reloadAfterChange(router)
     await router.navigate({ to: '/' })
 
     expect(shownOnDirectory()).toBe('new')

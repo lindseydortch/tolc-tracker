@@ -1,7 +1,7 @@
 import { useRouter } from '@tanstack/react-router'
 import { useRef, useState, type FormEvent } from 'react'
 import type { SaveResult } from './profile'
-import { refreshAfterEdit } from './refresh-after-edit'
+import { reloadAfterChange } from './reload-after-change'
 
 export const couldNotSave = "Couldn't save. Try again."
 
@@ -55,7 +55,7 @@ export function useSavedForm<Form, Problems extends object>({
         return
       }
       setStatus('saved')
-      await (onSaved ? onSaved() : refreshAfterEdit(router))
+      await (onSaved ? onSaved() : reloadAfterChange(router))
     } catch (error) {
       console.error(error)
       setStatus('failed')

@@ -22,7 +22,7 @@ import {
   type CustomLinkForm,
 } from '../../directory/profile'
 import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
-import { refreshAfterEdit } from '../../directory/refresh-after-edit'
+import { reloadAfterChange } from '../../directory/reload-after-change'
 import { SaveStatus, useSavedForm, useServerChange } from '../../directory/saved-form'
 
 // A Member edits their own profile here, and only their own: the server
@@ -87,7 +87,7 @@ function TechStackSection() {
   const change = (send: () => Promise<EditResult | void>) =>
     run(send, async (result) => {
       if (result && !result.ok) setProblem(result.problem)
-      await refreshAfterEdit(router)
+      await reloadAfterChange(router)
     })
 
   const onRemove = (skill: string) => change(() => remove({ data: { skill } }))
@@ -185,7 +185,7 @@ function AddSkillForm() {
           setInPreferredStack(false)
           setStackLayer(null)
           setOccupiedBy(undefined)
-          await refreshAfterEdit(router)
+          await reloadAfterChange(router)
         } else if ('occupiedBy' in result) {
           setOccupiedBy(result.occupiedBy)
         } else {
