@@ -2,16 +2,30 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useSignOut } from '../../auth/use-sign-out'
 import { getDirectory } from '../../directory/directory-fns'
 import { MemberCardDetails } from '../../directory/member-card'
+import { SearchForm } from '../../directory/search-form'
+import {
+  emptySearch,
+  isEmptySearch,
+  searchFromUrl,
+  searchToUrl,
+  type DirectorySearch,
+} from '../../directory/search'
 
 export const Route = createFileRoute('/_member/')({
-  loader: () => getDirectory(),
+  validateSearch: (params): Partial<DirectorySearch> =>
+    searchToUrl(searchFromUrl(params)),
+  loaderDeps: ({ search }) => ({ ...emptySearch, ...search }),
+  loader: ({ deps }) => getDirectory({ data: deps }),
   component: QuickView,
 })
 
 function QuickView() {
   const { member } = Route.useRouteContext()
-  const entries = Route.useLoaderData()
+  const { entries, catalogs } = Route.useLoaderData()
+  const search = Route.useLoaderDeps()
+  const navigate = Route.useNavigate()
   const signOut = useSignOut()
+  const searching = !isEmptySearch(search)
 
   return (
     <main>
@@ -23,7 +37,20 @@ function QuickView() {
           Sign out
         </button>
       </p>
-      <h2>Directory</h2>
+      <h2>Search the Directory</h2>
+      <SearchForm
+        // Starts the form afresh when the URL's search changes.
+        key={JSON.stringify(search)}
+        search={search}
+        catalogs={catalogs}
+        onSearch={(chosen) => navigate({ search: searchToUrl(chosen) })}
+      />
+      <h2>{searching ? 'Search results' : 'Directory'}</h2>
+      {searching && (
+        <p role="status">
+          {entries.length === 1 ? '1 Member' : `${entries.length} Members`} found.
+        </p>
+      )}
       <ul>
         {entries.map((entry) => (
           <li key={entry.id}>

@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { requireLandingPage } from '../auth/session'
 import { directory } from './app-directory'
 import { parseProfileForm } from './profile'
+import { parseDirectorySearch } from './search'
 
 // The Catalogs the signup form autocompletes from.
 export const getSignupCatalogs = createServerFn({ method: 'GET' }).handler(
@@ -18,12 +19,17 @@ export const submitProfile = createServerFn({ method: 'POST' })
     return directory.completeProfile({ authUserId, form: data })
   })
 
-export const getDirectory = createServerFn({ method: 'GET' }).handler(
-  async () => {
+// The Quick View's cards, narrowed and ranked by `search`, plus the
+// Catalogs its search form autocompletes from.
+export const getDirectory = createServerFn({ method: 'GET' })
+  .validator(parseDirectorySearch)
+  .handler(async ({ data }) => {
     await requireLandingPage('/')
-    return directory.directoryEntries()
-  },
-)
+    return {
+      entries: await directory.searchDirectory(data),
+      catalogs: await directory.catalogs(),
+    }
+  })
 
 // Takes the id straight from the URL. Null when it names no Member in the
 // Directory, including when it isn't a number at all.

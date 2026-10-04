@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { emptySearch } from './search'
 import {
   emptyForm,
   parseAddSkillForm,
@@ -144,7 +145,7 @@ describe('completing a profile', () => {
       problems: { targetRoles: expect.any(String) },
     })
     expect(await setup.directory.isProfileComplete(authUserId)).toBe(false)
-    expect(await setup.directory.directoryEntries()).toEqual([])
+    expect(await setup.directory.searchDirectory(emptySearch)).toEqual([])
   })
 
   it('lists a completed profile in the Directory', async () => {
@@ -156,7 +157,7 @@ describe('completing a profile', () => {
     ).toEqual({ ok: true })
 
     expect(await setup.directory.isProfileComplete(authUserId)).toBe(true)
-    expect(await setup.directory.directoryEntries()).toEqual([
+    expect(await setup.directory.searchDirectory(emptySearch)).toEqual([
       {
         id: expect.any(Number),
         firstName: 'Octo',
@@ -195,7 +196,7 @@ describe('completing a profile', () => {
       },
     })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.targetRoles).toEqual(['Frontend Engineer', 'Software Engineer'])
     expect(entry.preferredStack).toEqual({
       frontendFramework: 'React',
@@ -213,7 +214,7 @@ describe('completing a profile', () => {
       form: { ...octoForm, targetRoles: ['SWE', 'Software Engineer'] },
     })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.targetRoles).toEqual(['Software Engineer'])
   })
 
@@ -231,7 +232,7 @@ describe('completing a profile', () => {
     })
 
     expect(result).toEqual({ ok: true })
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.targetRoles).toEqual(['Software Engineer', 'Wizard'])
     expect(entry.preferredStack).toEqual({ database: 'Clay Tablets' })
     expect(await setup.directory.roleCatalog()).toContainEqual({
@@ -276,7 +277,7 @@ describe('completing a profile', () => {
       },
     })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.preferredSeniority).toBe('senior')
     expect(entry.otherSeniorities).toEqual(['mid', 'staffPlus'])
   })
@@ -299,7 +300,7 @@ describe('completing a profile', () => {
       },
     })
 
-    expect(await setup.directory.directoryEntries()).toEqual([
+    expect(await setup.directory.searchDirectory(emptySearch)).toEqual([
       expect.objectContaining({
         firstName: 'Mona',
         targetRoles: ['Backend Engineer'],
@@ -342,7 +343,7 @@ describe('the Directory', () => {
       },
     })
 
-    const entries = await setup.directory.directoryEntries()
+    const entries = await setup.directory.searchDirectory(emptySearch)
     expect(entries.map((entry) => [entry.firstName, entry.jobSearchStatus])).toEqual([
       ['Mona', 'employedOpenToOffers'],
       ['Octo', 'notLooking'],
@@ -358,7 +359,7 @@ describe('the Directory', () => {
       form: octoForm,
     })
 
-    const entries = await setup.directory.directoryEntries()
+    const entries = await setup.directory.searchDirectory(emptySearch)
     expect(entries.map((entry) => entry.firstName)).toEqual(['Octo'])
   })
 
@@ -371,11 +372,11 @@ describe('the Directory', () => {
 
     setup.tolc.leave(discord.userId)
     await signInAgain(new Date(now.getTime() + 60 * second))
-    expect(await setup.directory.directoryEntries()).toEqual([])
+    expect(await setup.directory.searchDirectory(emptySearch)).toEqual([])
 
     setup.tolc.join(discord.userId)
     await signInAgain(new Date(now.getTime() + 120 * second))
-    expect(await setup.directory.directoryEntries()).toHaveLength(1)
+    expect(await setup.directory.searchDirectory(emptySearch)).toHaveLength(1)
   })
 })
 
@@ -426,7 +427,7 @@ describe('the Quick View', () => {
     })
     await setup.directory.setTypeScriptBadge({ authUserId: octo.authUserId, on: true })
 
-    const entries = await setup.directory.directoryEntries()
+    const entries = await setup.directory.searchDirectory(emptySearch)
 
     expect(entries.map((entry) => [entry.firstName, entry.typeScriptBadge])).toEqual([
       ['Mona', false],
@@ -440,7 +441,7 @@ describe('the Quick View', () => {
     await setup.directory.completeProfile({ authUserId, form: octoForm })
     await setup.directory.addSkill({ authUserId, skill: 'Docker' })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
 
     expect(JSON.stringify(entry)).not.toContain('Docker')
   })
@@ -451,7 +452,7 @@ describe('a Member profile page', () => {
     const setup = await seededSetup()
     const octo = await memberInTolc(setup, 'octocat')
     await setup.directory.completeProfile({ authUserId: octo.authUserId, form: octoForm })
-    const [{ id }] = await setup.directory.directoryEntries()
+    const [{ id }] = await setup.directory.searchDirectory(emptySearch)
     return { setup, octo, id }
   }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { emptySearch } from './search'
 import { memberWithProfile, octoForm, seededSetup } from './test-profiles'
 
 describe('Secondary Skills', () => {
@@ -38,7 +39,7 @@ describe('adding a Skill to the Preferred Stack', () => {
       }),
     ).toEqual({ ok: true })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.preferredStack).toEqual({
       frontendFramework: 'React',
       backendLanguage: 'Node.js',
@@ -125,7 +126,7 @@ describe('removing a Skill', () => {
       ok: false,
       problem: 'Your Preferred Stack needs at least one Skill. Add another before removing PostgreSQL.',
     })
-    expect(await setup.directory.directoryEntries()).toHaveLength(1)
+    expect(await setup.directory.searchDirectory(emptySearch)).toHaveLength(1)
   })
 })
 
@@ -239,7 +240,7 @@ describe('editing the details', () => {
       }),
     ).toEqual({ ok: true })
 
-    const [entry] = await setup.directory.directoryEntries()
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
     expect(entry.lastName).toBe('Kitten')
     expect(entry.targetRoles).toEqual(['Prompt Whisperer', 'Software Engineer'])
     expect(entry.preferredStack).toEqual(preferredStack)
@@ -263,7 +264,7 @@ describe('editing the details', () => {
       ok: false,
       problems: { firstName: expect.any(String), targetRoles: expect.any(String) },
     })
-    expect((await setup.directory.directoryEntries())[0].firstName).toBe('Octo')
+    expect((await setup.directory.searchDirectory(emptySearch))[0].firstName).toBe('Octo')
   })
 })
 
