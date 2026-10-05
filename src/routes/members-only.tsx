@@ -1,10 +1,10 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import {
   ConnectDiscordButton,
   linkErrorMessage,
   validateLinkSearch,
 } from '../auth/connect-discord-button'
-import { landingPage, requireSignedInMember } from '../auth/session'
+import { requireOnPage } from '../auth/landing-page'
 import { useSignOut } from '../auth/use-sign-out'
 import { Gate } from '../ui/gate'
 import { Alert } from '../ui/alert'
@@ -14,10 +14,11 @@ import { Alert } from '../ui/alert'
 // Directory data.
 export const Route = createFileRoute('/members-only')({
   validateSearch: validateLinkSearch,
-  beforeLoad: async () => {
-    const member = await requireSignedInMember()
-    const page = landingPage(member)
-    if (page !== '/members-only') throw redirect({ to: page })
+  beforeLoad: async ({ context }) => {
+    const member = requireOnPage(
+      await context.signIn.checkNow(),
+      '/members-only',
+    )
     return { membership: member.membership }
   },
   component: MembersOnly,
