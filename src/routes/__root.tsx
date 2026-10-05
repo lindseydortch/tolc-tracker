@@ -1,5 +1,6 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { NotFoundPage } from '../not-found-page'
+import { NavigationProgress } from '../ui/navigation-progress'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -33,6 +34,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <NavigationProgress />
         {children}
 
         <Scripts />
