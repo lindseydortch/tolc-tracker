@@ -46,10 +46,10 @@ describe('reloadAfterChange', () => {
   it('makes the next Member page ask the server whether the Member is still signed in', async () => {
     const { db, router, signIn } = testRouter()
     await router.load()
-    await signIn.fresh()
+    await signIn.checkNow()
 
     await reloadAfterChange(router)
-    await signIn.recent()
+    await signIn.checkRecent()
 
     expect(db.signInChecks).toBe(2)
   })

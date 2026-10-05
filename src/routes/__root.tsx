@@ -1,5 +1,5 @@
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
-import type { RouterContext } from '../auth/sign-in-cache'
+import type { RouterContext } from '../router-context'
 import { NotFoundPage } from '../not-found-page'
 import { NavigationProgress } from '../ui/navigation-progress'
 import appCss from '../styles.css?url'

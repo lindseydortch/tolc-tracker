@@ -5,7 +5,7 @@ import { GitHubMark } from '../ui/marks'
 
 export const Route = createFileRoute('/sign-in')({
   beforeLoad: async ({ context }) => {
-    if (await context.signIn.fresh()) throw redirect({ to: '/' })
+    if (await context.signIn.checkNow()) throw redirect({ to: '/' })
   },
   component: SignIn,
 })

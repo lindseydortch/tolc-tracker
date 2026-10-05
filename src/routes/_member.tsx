@@ -1,7 +1,13 @@
-import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  Link,
+  Outlet,
+  createFileRoute,
+  redirect,
+  useRouter,
+} from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { LayoutGrid, LogOut, ShieldCheck, UserPen } from 'lucide-react'
-import { landingPage } from '../auth/landing-page'
-import { requireSignedInMember } from '../auth/session'
+import { requireOnPage } from '../auth/landing-page'
 import { useSignOut } from '../auth/use-sign-out'
 import { Wordmark } from '../ui/marks'
 
@@ -11,10 +17,9 @@ import { Wordmark } from '../ui/marks'
 // server; each page's server functions check access again.
 export const Route = createFileRoute('/_member')({
   beforeLoad: async ({ context }) => {
-    const member = requireSignedInMember(await context.signIn.recent())
-    const page = landingPage(member)
+    const member = requireOnPage(await context.signIn.checkRecent(), '/')
     const { discordHandle } = member
-    if (page !== '/' || !discordHandle) throw redirect({ to: page })
+    if (!discordHandle) throw redirect({ to: '/connect-discord' })
     // Pages below can rely on the handle being present.
     return { member: { ...member, discordHandle } }
   },
@@ -23,7 +28,15 @@ export const Route = createFileRoute('/_member')({
 
 function MemberLayout() {
   const { member } = Route.useRouteContext()
+  const router = useRouter()
   const signOut = useSignOut()
+
+  // A page loaded from the server comes with the server's `beforeLoad`
+  // result, and the browser doesn't run it again. Remember that check, so
+  // the first hover or click after the page loads doesn't ask again.
+  useEffect(() => {
+    router.options.context.signIn.remember(member)
+  }, [router, member])
 
   return (
     <>

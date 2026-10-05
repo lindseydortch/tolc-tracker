@@ -1,8 +1,8 @@
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { CircleAlert, LogOut } from 'lucide-react'
-import { landingPage } from '../auth/landing-page'
-import { requireSignedInMember } from '../auth/session'
+import { forgetCachedPages } from '../auth/forget-cached-pages'
+import { requireOnPage } from '../auth/landing-page'
 import { useSignOut } from '../auth/use-sign-out'
 import { getSignupCatalogs, submitProfile } from '../directory/directory-fns'
 import {
@@ -21,9 +21,7 @@ import { Wordmark } from '../ui/marks'
 // here until it's complete, and only then reach the Directory.
 export const Route = createFileRoute('/signup')({
   beforeLoad: async ({ context }) => {
-    const member = requireSignedInMember(await context.signIn.fresh())
-    const page = landingPage(member)
-    if (page !== '/signup') throw redirect({ to: page })
+    requireOnPage(await context.signIn.checkNow(), '/signup')
   },
   loader: () => getSignupCatalogs(),
   component: Signup,
@@ -39,7 +37,12 @@ function Signup() {
     initial: emptyForm,
     problemsOf: (profile) => profileProblems(profile, catalogs),
     save: (profile) => saveProfile({ data: profile }),
-    onSaved: () => router.navigate({ to: '/' }),
+    // A sign-in check started before the save would still say the profile
+    // is incomplete and send the Member back here.
+    onSaved: () => {
+      forgetCachedPages(router)
+      return router.navigate({ to: '/' })
+    },
   })
 
   return (

@@ -1,13 +1,5 @@
 import { useRouter, type AnyRouter } from '@tanstack/react-router'
-import type { RouterContext } from '../auth/sign-in-cache'
-
-// Drops every page's cached data and the last sign-in check, so the next
-// page asks the server for both.
-export function forgetCachedPages(router: AnyRouter) {
-  const { signIn } = router.options.context as RouterContext
-  signIn.clear()
-  router.clearCache()
-}
+import { forgetCachedPages } from '../auth/forget-cached-pages'
 
 // Reloads the current page after a change on the server (a profile edit or
 // an Admin action), and drops every other page's cached data.

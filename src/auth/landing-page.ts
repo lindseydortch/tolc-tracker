@@ -1,3 +1,4 @@
+import { redirect } from '@tanstack/react-router'
 import type { SignedInVisitor } from './signed-in-visitor'
 
 export type LandingPage = '/connect-discord' | '/members-only' | '/signup' | '/'
@@ -12,4 +13,16 @@ export function landingPage(member: SignedInVisitor): LandingPage {
   if (member.membership !== 'in-tolc') return '/members-only'
   if (!member.profileComplete) return '/signup'
   return '/'
+}
+
+// The signed-in Member, if `page` is where they belong. Otherwise redirects
+// them where they do belong: /sign-in when signed out.
+export function requireOnPage(
+  member: SignedInVisitor | null,
+  page: LandingPage,
+): SignedInVisitor {
+  if (!member) throw redirect({ to: '/sign-in' })
+  const belongsOn = landingPage(member)
+  if (belongsOn !== page) throw redirect({ to: belongsOn })
+  return member
 }

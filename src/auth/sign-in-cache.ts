@@ -9,9 +9,6 @@ export const SIGN_IN_REUSE_MS = 5 * 60_000
 
 export type SignInCache = ReturnType<typeof createSignInCache>
 
-// The router's context: every route can reach the sign-in check.
-export type RouterContext = { signIn: SignInCache }
-
 // Remembers the last sign-in check, so a click after a hover preload, or
 // the next page change, doesn't wait on another round trip. It only keeps
 // a Member who belongs in the Directory: anyone the gate sends elsewhere is
@@ -25,7 +22,7 @@ export function createSignInCache(
     | { checkedAt: number; member: Promise<SignedInVisitor | null> }
     | undefined
 
-  const fresh = () => {
+  const checkNow = () => {
     const entry = { checkedAt: now(), member: check() }
     lastCheck = entry
     const forget = () => {
@@ -42,13 +39,19 @@ export function createSignInCache(
 
   return {
     // For the gate pages: always asks the server.
-    fresh,
+    checkNow,
     // For the Member pages: reuses a check from the last `SIGN_IN_REUSE_MS`,
     // including one still in flight.
-    recent: () =>
+    checkRecent: () =>
       lastCheck && now() - lastCheck.checkedAt <= SIGN_IN_REUSE_MS
         ? lastCheck.member
-        : fresh(),
+        : checkNow(),
+    // For a check the server already made while rendering the page, so the
+    // first page change after it loads doesn't ask again. Keeps any check
+    // already held, which is at least as new.
+    remember: (member: SignedInVisitor) => {
+      lastCheck ??= { checkedAt: now(), member: Promise.resolve(member) }
+    },
     // On sign-out, a profile save or an Admin action.
     clear: () => {
       lastCheck = undefined
