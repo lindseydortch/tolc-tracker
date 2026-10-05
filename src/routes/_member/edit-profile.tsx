@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
+import { ArrowLeft, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import type { StackLayer } from '../../directory/directory'
 import type { EditResult } from '../../directory/profile-editing'
@@ -34,11 +35,15 @@ export const Route = createFileRoute('/_member/edit-profile')({
 
 function EditProfile() {
   return (
-    <main>
-      <p>
-        <Link to="/">Back to the Directory</Link>
-      </p>
-      <h1>Edit your profile</h1>
+    <main className="page page-narrow">
+      <Link to="/" className="back">
+        <ArrowLeft size={16} aria-hidden="true" />
+        Back to the Directory
+      </Link>
+      <div className="page-head">
+        <h1 className="page-title">Edit your profile</h1>
+        <p className="muted">Each section saves on its own.</p>
+      </div>
       <DetailsSection />
       <TechStackSection />
       <LinksSection />
@@ -56,19 +61,21 @@ function DetailsSection() {
   })
 
   return (
-    <section>
+    <section className="form-section">
       <h2>Details</h2>
-      <form onSubmit={onSubmit} noValidate>
+      <form onSubmit={onSubmit} noValidate className="group">
         <DetailsFields
           form={form}
           update={update}
           problems={problems}
           catalogs={catalogs}
         />
-        <button type="submit" disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : 'Save details'}
-        </button>
-        <SaveStatus status={status} />
+        <div className="form-foot">
+          <button type="submit" className="btn-primary" disabled={status === 'saving'}>
+            {status === 'saving' ? 'Saving…' : 'Save details'}
+          </button>
+          <SaveStatus status={status} />
+        </div>
       </form>
     </section>
   )
@@ -94,54 +101,68 @@ function TechStackSection() {
   const onBadgeChange = (on: boolean) => change(() => setBadge({ data: { on } }))
 
   return (
-    <section>
+    <section className="form-section">
       <h2>Tech Stack</h2>
-      <h3>Preferred Stack</h3>
-      <dl>
-        {stackLayers.map((layer) => {
-          const name = primary(layer)
-          return (
-            <div key={layer}>
-              <dt>{stackLayerLabels[layer]}</dt>
-              <dd>
-                {name ?? 'Empty'}
-                {name && (
-                  <>
-                    {' '}
-                    <button type="button" disabled={busy} onClick={() => onRemove(name)}>
-                      Remove {name}
+      <div className="group">
+        <h3 className="subhead">Preferred Stack</h3>
+        <dl className="stack-list">
+          {stackLayers.map((layer) => {
+            const name = primary(layer)
+            return (
+              <div key={layer} className={name ? 'layer' : 'layer layer-empty'}>
+                <dt>{stackLayerLabels[layer]}</dt>
+                <dd>
+                  {name ?? 'Empty'}
+                  {name && (
+                    <button
+                      type="button"
+                      className="btn-icon btn-quiet"
+                      disabled={busy}
+                      onClick={() => onRemove(name)}
+                      aria-label={`Remove ${name}`}
+                      title={`Remove ${name}`}
+                    >
+                      <X size={16} aria-hidden="true" />
                     </button>
-                  </>
-                )}
-              </dd>
-            </div>
-          )
-        })}
-      </dl>
-      <h3>Secondary Skills</h3>
-      {secondary.length === 0 ? (
-        <p>None yet.</p>
-      ) : (
-        <ul>
-          {secondary.map((skill) => (
-            <li key={skill.name}>
-              {skill.name}{' '}
-              <button type="button" disabled={busy} onClick={() => onRemove(skill.name)}>
-                Remove {skill.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                  )}
+                </dd>
+              </div>
+            )
+          })}
+        </dl>
+      </div>
+      <div className="group">
+        <h3 className="subhead">Secondary Skills</h3>
+        {secondary.length === 0 ? (
+          <p className="muted">None yet.</p>
+        ) : (
+          <ul className="chips">
+            {secondary.map((skill) => (
+              <li key={skill.name} className="chip chip-removable">
+                {skill.name}
+                <button
+                  type="button"
+                  className="chip-remove"
+                  disabled={busy}
+                  onClick={() => onRemove(skill.name)}
+                  aria-label={`Remove ${skill.name}`}
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <Problem text={problem} />
       <p>
-        <label>
+        <label className="check">
           <input
             type="checkbox"
             checked={profile.typeScriptBadge}
             disabled={busy}
             onChange={(e) => onBadgeChange(e.target.checked)}
-          />{' '}
+          />
           I know TypeScript (TypeScript Badge)
         </label>
       </p>
@@ -197,13 +218,14 @@ function AddSkillForm() {
 
   return (
     <form
+      className="group add-skill"
       onSubmit={(event) => {
         event.preventDefault()
         send(false)
       }}
       noValidate
     >
-      <h3>Add a Skill</h3>
+      <h3 className="subhead">Add a Skill</h3>
       <datalist id="add-skill">
         {choices.map((choice) => (
           <option key={choice.name} value={choice.name}>
@@ -211,15 +233,15 @@ function AddSkillForm() {
           </option>
         ))}
       </datalist>
-      <p>
+      <p className="field">
         <label>
-          Skill{' '}
+          Skill
           <input
             list="add-skill"
             value={skill}
             onChange={(e) => edit(() => setSkill(e.target.value))}
           />
-        </label>{' '}
+        </label>
         <Resolved
           typed={skill}
           name={findInCatalog(catalogs.skills, skill)?.name}
@@ -227,19 +249,19 @@ function AddSkillForm() {
         />
       </p>
       <p>
-        <label>
+        <label className="check">
           <input
             type="checkbox"
             checked={inPreferredStack}
             onChange={(e) => edit(() => setInPreferredStack(e.target.checked))}
-          />{' '}
+          />
           Part of my Preferred Stack?
         </label>
       </p>
       {inPreferredStack && (
-        <p>
+        <p className="field">
           <label>
-            Stack Layer{' '}
+            Stack Layer
             <select
               value={stackLayer ?? ''}
               onChange={(e) =>
@@ -258,19 +280,24 @@ function AddSkillForm() {
       )}
       <Problem text={problem} />
       {occupiedBy && layer ? (
-        <p role="alert">
-          Your {stackLayerLabels[layer]} is {occupiedBy}. Replace it with{' '}
-          {findInCatalog(catalogs.skills, skill)?.name ?? skill.trim()}?{' '}
-          {occupiedBy} will become a Secondary Skill.{' '}
-          <button type="button" disabled={busy} onClick={() => send(true)}>
-            Replace {occupiedBy}
-          </button>{' '}
-          <button type="button" onClick={() => setOccupiedBy(undefined)}>
-            Cancel
-          </button>
-        </p>
+        <div role="alert" className="confirm">
+          <p>
+            Your {stackLayerLabels[layer]} is {occupiedBy}. Replace it with{' '}
+            {findInCatalog(catalogs.skills, skill)?.name ?? skill.trim()}?{' '}
+            {occupiedBy} will become a Secondary Skill.
+          </p>
+          <div className="confirm-actions">
+            <button type="button" className="btn-primary" disabled={busy} onClick={() => send(true)}>
+              Replace {occupiedBy}
+            </button>
+            <button type="button" onClick={() => setOccupiedBy(undefined)}>
+              Cancel
+            </button>
+          </div>
+        </div>
       ) : (
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="btn-primary add-row" disabled={busy}>
+          <Plus size={16} aria-hidden="true" />
           {busy ? 'Adding…' : 'Add Skill'}
         </button>
       )}
@@ -292,14 +319,15 @@ function LinksSection() {
     })
 
   return (
-    <section>
+    <section className="form-section">
       <h2>Links</h2>
-      <form onSubmit={onSubmit} noValidate>
-        <p>LinkedIn and GitHub are always on your profile. These are optional.</p>
+      <form onSubmit={onSubmit} noValidate className="group">
+        <p className="hint">LinkedIn and GitHub are always on your profile. These are optional.</p>
+        <div className="form-grid">
         {optionalLinks.map(({ kind, label, placeholder }) => (
-          <p key={kind}>
+          <p key={kind} className="field">
             <label>
-              {label}{' '}
+              {label}
               <input
                 inputMode="url"
                 value={form[kind]}
@@ -310,31 +338,34 @@ function LinksSection() {
             <Problem text={problems[kind]} />
           </p>
         ))}
-        <fieldset>
+        </div>
+        <fieldset className="group">
           <legend>Custom Links</legend>
           {form.custom.map((link, index) => (
-            <p key={index}>
-              <label>
-                Label{' '}
+            <p key={index} className="repeat-row">
+              <label className="field">
+                Label
                 <input
                   value={link.label}
                   onChange={(e) => updateCustom(index, { label: e.target.value })}
                 />
-              </label>{' '}
-              <label>
-                URL{' '}
+              </label>
+              <label className="field">
+                URL
                 <input
                   inputMode="url"
                   value={link.url}
                   onChange={(e) => updateCustom(index, { url: e.target.value })}
                 />
-              </label>{' '}
+              </label>
               <button
                 type="button"
+                className="btn-quiet"
                 onClick={() =>
                   update({ custom: form.custom.filter((_, i) => i !== index) })
                 }
               >
+                <X size={16} aria-hidden="true" />
                 Remove
               </button>
               <Problem text={problems.custom?.[index]} />
@@ -342,15 +373,19 @@ function LinksSection() {
           ))}
           <button
             type="button"
+            className="add-row"
             onClick={() => update({ custom: [...form.custom, { label: '', url: '' }] })}
           >
+            <Plus size={16} aria-hidden="true" />
             Add a Custom Link
           </button>
         </fieldset>
-        <button type="submit" disabled={status === 'saving'}>
-          {status === 'saving' ? 'Saving…' : 'Save Links'}
-        </button>
-        <SaveStatus status={status} />
+        <div className="form-foot">
+          <button type="submit" className="btn-primary" disabled={status === 'saving'}>
+            {status === 'saving' ? 'Saving…' : 'Save Links'}
+          </button>
+          <SaveStatus status={status} />
+        </div>
       </form>
     </section>
   )

@@ -1,6 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '../auth/auth-client'
 import { getSignedInMember } from '../auth/session'
+import { Gate } from '../ui/gate'
+import { GitHubMark } from '../ui/marks'
 
 export const Route = createFileRoute('/sign-in')({
   beforeLoad: async () => {
@@ -11,17 +13,21 @@ export const Route = createFileRoute('/sign-in')({
 
 function SignIn() {
   return (
-    <main>
+    <Gate>
       <h1>TOLC Tracker</h1>
       <p>The Directory of the Offer Letter Club.</p>
-      <button
-        type="button"
-        onClick={() =>
-          authClient.signIn.social({ provider: 'github', callbackURL: '/' })
-        }
-      >
-        Sign in with GitHub
-      </button>
-    </main>
+      <div className="gate-actions">
+        <button
+          type="button"
+          className="btn-primary btn-lg"
+          onClick={() =>
+            authClient.signIn.social({ provider: 'github', callbackURL: '/' })
+          }
+        >
+          <GitHubMark size={18} />
+          Sign in with GitHub
+        </button>
+      </div>
+    </Gate>
   )
 }

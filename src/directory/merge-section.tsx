@@ -1,3 +1,4 @@
+import { ArrowRight, GitMerge } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import type { MergeResult } from './catalog-merge'
 import type { MergeForm } from './merge-form'
@@ -32,7 +33,7 @@ export function MergeSection({
   }
 
   return (
-    <section>
+    <section className="merge">
       <h3>Merge {kind}s</h3>
       <datalist id={listId}>
         {entries.map((entry) => (
@@ -41,31 +42,39 @@ export function MergeSection({
           </option>
         ))}
       </datalist>
-      <form onSubmit={onSubmit}>
-        <p>
-          <label>
-            Merge {kind}{' '}
+      <form onSubmit={onSubmit} className="group">
+        <p className="merge-row">
+          <label className="field">
+            Merge {kind}
             <input
               list={listId}
               value={form.from}
               onChange={(e) => setForm({ ...form, from: e.target.value })}
               required
             />
-          </label>{' '}
-          <label>
-            into{' '}
+          </label>
+          <span className="merge-arrow" aria-hidden="true">
+            <ArrowRight size={18} />
+          </span>
+          <label className="field">
+            into
             <input
               list={listId}
               value={form.into}
               onChange={(e) => setForm({ ...form, into: e.target.value })}
               required
             />
-          </label>{' '}
-          <button type="submit" disabled={busy}>
+          </label>
+          <button type="submit" className="btn-danger merge-submit" disabled={busy}>
+            <GitMerge size={16} aria-hidden="true" />
             Merge
           </button>
         </p>
-        {status && <p role="status">{status}</p>}
+        {status && (
+          <p role="status" className="status-line">
+            {status}
+          </p>
+        )}
       </form>
     </section>
   )

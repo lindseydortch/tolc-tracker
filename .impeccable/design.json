@@ -1,0 +1,562 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T04:12:48+00:00",
+  "title": "Design System: TOLC Tracker",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Hall Black",
+        "canonical": "oklch(17.4% 0.013 300.3)",
+        "tonalRamp": [
+          "#0c0a10",
+          "#252329",
+          "#413e46",
+          "#5f5c64",
+          "#7e7c84",
+          "#9f9da5",
+          "#c5c2cb",
+          "#f0edf6"
+        ]
+      },
+      "ground-raised": {
+        "role": "neutral",
+        "displayName": "Raised Hall",
+        "canonical": "oklch(19.9% 0.016 302.0)",
+        "tonalRamp": [
+          "#0c0a11",
+          "#25222b",
+          "#413e47",
+          "#5f5c66",
+          "#7f7b86",
+          "#a09ca7",
+          "#c6c2cd",
+          "#f0ecf8"
+        ]
+      },
+      "badge": {
+        "role": "neutral",
+        "displayName": "Badge Stock",
+        "canonical": "oklch(23.1% 0.020 303.1)",
+        "tonalRamp": [
+          "#0d0912",
+          "#26222c",
+          "#423d49",
+          "#605b67",
+          "#7f7b87",
+          "#a19ca9",
+          "#c6c1cf",
+          "#f1ecfa"
+        ]
+      },
+      "badge-hi": {
+        "role": "neutral",
+        "displayName": "Badge Stock Lit",
+        "canonical": "oklch(27.1% 0.021 305.6)",
+        "tonalRamp": [
+          "#0d0912",
+          "#26212c",
+          "#423d49",
+          "#605b67",
+          "#807a88",
+          "#a19ba9",
+          "#c7c1cf",
+          "#f2ebfa"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Well",
+        "canonical": "oklch(18.5% 0.015 304.5)",
+        "tonalRamp": [
+          "#0c0a10",
+          "#26222a",
+          "#413e46",
+          "#5f5c65",
+          "#7f7b85",
+          "#a09ca6",
+          "#c6c2cc",
+          "#f0ecf7"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(31.5% 0.028 306.0)",
+        "tonalRamp": [
+          "#0e0814",
+          "#27212f",
+          "#433c4c",
+          "#615a6a",
+          "#81798b",
+          "#a39aad",
+          "#c8c0d3",
+          "#f3eafe"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Seam",
+        "canonical": "oklch(39.8% 0.033 304.1)",
+        "tonalRamp": [
+          "#0e0716",
+          "#272031",
+          "#433c4e",
+          "#62596d",
+          "#81798e",
+          "#a39ab0",
+          "#c9bfd6",
+          "#f3e9ff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Badge Ink",
+        "canonical": "oklch(93.9% 0.011 76.6)",
+        "tonalRamp": [
+          "#0e0b06",
+          "#27231e",
+          "#433f39",
+          "#615d57",
+          "#817c76",
+          "#a29e97",
+          "#c8c3bc",
+          "#f3eee7"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "oklch(78.4% 0.023 309.5)",
+        "tonalRamp": [
+          "#0e0812",
+          "#27212c",
+          "#433d49",
+          "#615a68",
+          "#817a88",
+          "#a39ba9",
+          "#c8c0d0",
+          "#f3ebfa"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "oklch(65.6% 0.028 305.7)",
+        "tonalRamp": [
+          "#0e0814",
+          "#27212f",
+          "#433c4c",
+          "#615a6a",
+          "#81798b",
+          "#a29aad",
+          "#c8c0d3",
+          "#f3eafe"
+        ]
+      },
+      "violet": {
+        "role": "primary",
+        "displayName": "Club Violet",
+        "canonical": "oklch(44.1% 0.210 290.8)",
+        "tonalRamp": [
+          "#160047",
+          "#31007e",
+          "#4900a2",
+          "#6436c7",
+          "#825bed",
+          "#a27fff",
+          "#c7a6ff",
+          "#efdbff"
+        ]
+      },
+      "violet-hi": {
+        "role": "primary",
+        "displayName": "Lit Violet",
+        "canonical": "oklch(50.2% 0.225 291.3)",
+        "tonalRamp": [
+          "#170047",
+          "#330084",
+          "#4b00a9",
+          "#662fce",
+          "#8456f5",
+          "#a47bff",
+          "#c9a2ff",
+          "#f0daff"
+        ]
+      },
+      "violet-ink": {
+        "role": "primary",
+        "displayName": "Lavender Ink",
+        "canonical": "oklch(76.8% 0.120 296.6)",
+        "tonalRamp": [
+          "#140036",
+          "#2c0c55",
+          "#472d76",
+          "#654c99",
+          "#856dbc",
+          "#a68ee0",
+          "#ccb4ff",
+          "#f6deff"
+        ]
+      },
+      "crimson": {
+        "role": "secondary",
+        "displayName": "Signal Crimson",
+        "canonical": "oklch(53.2% 0.189 16.4)",
+        "tonalRamp": [
+          "#360000",
+          "#620000",
+          "#880019",
+          "#af0636",
+          "#d63c54",
+          "#fe6274",
+          "#ff8a99",
+          "#ffc0c9"
+        ]
+      },
+      "crimson-hi": {
+        "role": "secondary",
+        "displayName": "Signal Crimson Lit",
+        "canonical": "oklch(58.2% 0.198 15.3)",
+        "tonalRamp": [
+          "#360000",
+          "#640000",
+          "#8b001a",
+          "#b10037",
+          "#d93655",
+          "#ff5d75",
+          "#ff8699",
+          "#ffc0cb"
+        ]
+      },
+      "crimson-ink": {
+        "role": "secondary",
+        "displayName": "Rose Ink",
+        "canonical": "oklch(77.5% 0.136 9.3)",
+        "tonalRamp": [
+          "#2f0002",
+          "#520015",
+          "#760e30",
+          "#9a344d",
+          "#bf566c",
+          "#e5788c",
+          "#ff9db1",
+          "#ffc7db"
+        ]
+      },
+      "apricot": {
+        "role": "secondary",
+        "displayName": "Ticket Apricot",
+        "canonical": "oklch(80.0% 0.128 63.8)",
+        "tonalRamp": [
+          "#2a0000",
+          "#4a0700",
+          "#6b2a00",
+          "#8e4a00",
+          "#b16a13",
+          "#d58c3f",
+          "#feb166",
+          "#ffdc91"
+        ]
+      },
+      "sage": {
+        "role": "tertiary",
+        "displayName": "Lichen Sage",
+        "canonical": "oklch(77.5% 0.034 126.4)",
+        "tonalRamp": [
+          "#080e01",
+          "#202715",
+          "#3b4330",
+          "#59614d",
+          "#78816c",
+          "#99a38c",
+          "#bec8b1",
+          "#e9f3db"
+        ]
+      },
+      "on-apricot": {
+        "role": "secondary",
+        "displayName": "Burnt Umber",
+        "canonical": "oklch(22.9% 0.041 63.8)",
+        "tonalRamp": [
+          "#170700",
+          "#321f0d",
+          "#4f3b28",
+          "#6f5945",
+          "#8f7864",
+          "#b19984",
+          "#d8bfa9",
+          "#ffe9d3"
+        ]
+      },
+      "on-sage": {
+        "role": "tertiary",
+        "displayName": "Moss Black",
+        "canonical": "oklch(23.4% 0.023 126.5)",
+        "tonalRamp": [
+          "#090d04",
+          "#21261a",
+          "#3c4235",
+          "#5a6052",
+          "#7a8071",
+          "#9ba192",
+          "#c0c7b7",
+          "#eaf2e1"
+        ]
+      },
+      "on-ink-color": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "#262626",
+          "#424242",
+          "#5e5e5e",
+          "#7b7b7b",
+          "#9b9b9b",
+          "#bcbcbc",
+          "#dedede",
+          "#ffffff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles and gate headings."
+      },
+      "badge-name": {
+        "displayName": "Badge Name",
+        "purpose": "First name on every badge."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Group legends, merge headings, Stack Layer values."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All reading text and field values."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, nav, field labels, hints, fact values."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Fact terms, table headers, chips."
+      },
+      "ribbon": {
+        "displayName": "Ribbon",
+        "purpose": "Uppercase status label on the badge foot only."
+      },
+      "handle": {
+        "displayName": "Handle",
+        "purpose": "Discord handles only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-badge",
+        "value": "0 1px 0 rgb(255 255 255 / 0.04) inset, 0 6px 18px -8px rgb(0 0 0 / 0.7)",
+        "purpose": "Every badge at rest."
+      },
+      {
+        "name": "shadow-badge-hi",
+        "value": "0 1px 0 rgb(255 255 255 / 0.06) inset, 0 18px 32px -14px rgb(0 0 0 / 0.85)",
+        "purpose": "Badge on hover or focus, while it swings."
+      },
+      {
+        "name": "slot-punch",
+        "value": "inset 0 1px 2px rgb(0 0 0 / 0.8), 0 1px 0 rgb(255 255 255 / 0.05)",
+        "purpose": "The punched lanyard slot in the badge top."
+      },
+      {
+        "name": "sticker",
+        "value": "0 2px 6px -1px rgb(0 0 0 / 0.6)",
+        "purpose": "TypeScript Badge sticker on the badge."
+      },
+      {
+        "name": "focus",
+        "value": "0 0 0 2px var(--ground), 0 0 0 4px var(--apricot)",
+        "purpose": "The only focus treatment."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Every transition and keyframe."
+      },
+      {
+        "name": "state",
+        "value": "160ms",
+        "purpose": "Button, field, toggle color and border changes."
+      },
+      {
+        "name": "badge-lift",
+        "value": "240ms",
+        "purpose": "Badge shadow and border on hover/focus."
+      },
+      {
+        "name": "check",
+        "value": "120ms",
+        "purpose": "Checkbox and radio mark scale-in."
+      },
+      {
+        "name": "swing",
+        "value": "1100ms; rotate 0, -2.4, 1.5, -0.8, 0.35, 0 deg; pivot 50% 0.6rem",
+        "purpose": "Badge swings from its slot on hover/focus."
+      },
+      {
+        "name": "hang",
+        "value": "1400ms (profile) / 1600ms (gate); rotate -3, 1.8, -0.9, 0.3, 0 deg",
+        "purpose": "A single badge settling on arrival."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation none, transition 0ms",
+        "purpose": "All motion is instant under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tablet",
+        "value": "960px"
+      },
+      {
+        "name": "phone",
+        "value": "720px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action in a form or panel: Search, Save, Copy Discord handle.",
+      "html": "<button class=\"ds-btn ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg>Search</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;min-height:2.25rem;padding:0 .9rem;border:1px solid var(--line-strong,#4b4356);border-radius:var(--radius-sm,6px);background:transparent;color:var(--ink,#efeae3);font:600 .8125rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);cursor:pointer;transition:background-color 160ms cubic-bezier(.16,1,.3,1),border-color 160ms cubic-bezier(.16,1,.3,1),color 160ms cubic-bezier(.16,1,.3,1);}.ds-btn:hover{background:var(--badge-hi,#29242f);border-color:var(--ink-3,#958d9f);}.ds-btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}.ds-btn-primary{background:var(--violet,#5a27ba);border-color:var(--violet,#5a27ba);color:#fff;}.ds-btn-primary:hover{background:var(--violet-hi,#6c37d6);border-color:var(--violet-hi,#6c37d6);color:#fff;}"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Outlined secondary action, the default for every button.",
+      "html": "<button class=\"ds-btn\">Clear search</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;min-height:2.25rem;padding:0 .9rem;border:1px solid var(--line-strong,#4b4356);border-radius:var(--radius-sm,6px);background:transparent;color:var(--ink,#efeae3);font:600 .8125rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);cursor:pointer;transition:background-color 160ms cubic-bezier(.16,1,.3,1),border-color 160ms cubic-bezier(.16,1,.3,1),color 160ms cubic-bezier(.16,1,.3,1);}.ds-btn:hover{background:var(--badge-hi,#29242f);border-color:var(--ink-3,#958d9f);}.ds-btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive Admin actions such as delete.",
+      "html": "<button class=\"ds-btn ds-btn-danger\">Delete</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;min-height:2.25rem;padding:0 .9rem;border:1px solid var(--line-strong,#4b4356);border-radius:var(--radius-sm,6px);background:transparent;color:var(--ink,#efeae3);font:600 .8125rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);cursor:pointer;transition:background-color 160ms cubic-bezier(.16,1,.3,1),border-color 160ms cubic-bezier(.16,1,.3,1),color 160ms cubic-bezier(.16,1,.3,1);}.ds-btn:hover{background:var(--badge-hi,#29242f);border-color:var(--ink-3,#958d9f);}.ds-btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}.ds-btn-danger{border-color:color-mix(in oklab,var(--crimson,#c12544) 70%,transparent);color:var(--crimson-ink,#ff8fa3);}.ds-btn-danger:hover{background:var(--crimson,#c12544);border-color:var(--crimson,#c12544);color:#fff;}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labelled field: label above, well-filled control, apricot on focus.",
+      "html": "<label class=\"ds-field\">First name<input class=\"ds-input\" placeholder=\"Amara\"></label>",
+      "css": ".ds-field{display:grid;gap:.375rem;font:600 .8125rem/1.35 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);color:var(--ink-2,#bdb5c4);max-width:20rem;}.ds-input{min-height:2.5rem;padding:0 .75rem;border:1px solid var(--line-strong,#4b4356);border-radius:var(--radius-sm,6px);background:var(--field,#141118);color:var(--ink,#efeae3);font:400 .9375rem/1.2 inherit;font-family:inherit;transition:border-color 160ms cubic-bezier(.16,1,.3,1);}.ds-input::placeholder{color:var(--ink-3,#958d9f);}.ds-input:hover{border-color:var(--ink-3,#958d9f);}.ds-input:focus-visible{outline:none;border-color:var(--apricot,#f7ab60);box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}"
+    },
+    {
+      "name": "Skill Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Skill names on badges and profiles.",
+      "html": "<ul class=\"ds-chips\"><li class=\"ds-chip\">React</li><li class=\"ds-chip\">Node.js</li><li class=\"ds-chip\">PostgreSQL</li></ul>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin:0;padding:0;list-style:none;}.ds-chip{display:inline-flex;align-items:center;min-height:1.5rem;padding:0 .5rem;border:1px solid var(--line-strong,#4b4356);border-radius:99px;background:var(--badge-hi,#29242f);color:var(--ink,#efeae3);font:600 .75rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);}"
+    },
+    {
+      "name": "Status Filter Toggle",
+      "kind": "chip",
+      "refersTo": "toggle",
+      "description": "A filter choice as a pill around a real checkbox; violet when checked, status swatch leading.",
+      "html": "<div class=\"ds-toggles\"><label class=\"ds-toggle\"><input type=\"checkbox\" checked><span class=\"ds-sw\" style=\"background:#f7ab60\"></span>Actively Looking</label><label class=\"ds-toggle\"><input type=\"checkbox\"><span class=\"ds-sw\" style=\"background:#c12544\"></span>Employed and Looking</label></div>",
+      "css": ".ds-toggles{display:flex;flex-wrap:wrap;gap:.375rem;}.ds-toggle{position:relative;display:inline-flex;align-items:center;gap:.45rem;min-height:2rem;padding:0 .7rem;border:1px solid var(--line-strong,#4b4356);border-radius:99px;color:var(--ink-2,#bdb5c4);font:600 .8125rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);cursor:pointer;transition:background-color 160ms cubic-bezier(.16,1,.3,1),border-color 160ms cubic-bezier(.16,1,.3,1),color 160ms cubic-bezier(.16,1,.3,1);}.ds-toggle:hover{color:var(--ink,#efeae3);border-color:var(--ink-3,#958d9f);}.ds-toggle input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer;}.ds-toggle:has(input:checked){background:var(--violet,#5a27ba);border-color:var(--violet,#5a27ba);color:#fff;}.ds-toggle:has(input:focus-visible){box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}.ds-sw{width:.55rem;height:.55rem;border-radius:2px;box-shadow:0 0 0 1px rgb(0 0 0/.3);}"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Sticky translucent top bar with wordmark and icon-plus-label links.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-word\" href=\"#\"><b>TOLC</b> Tracker</a><a class=\"ds-link\" aria-current=\"page\" href=\"#\">Directory</a><a class=\"ds-link\" href=\"#\">Edit your profile</a><a class=\"ds-link\" href=\"#\">Admin</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:.25rem;height:3.75rem;padding:0 1.5rem;background:color-mix(in oklab,var(--ground,#110f15) 88%,transparent);border-bottom:1px solid var(--line,#352e3d);}.ds-word{margin-right:1.25rem;color:var(--ink,#efeae3);text-decoration:none;font-family:var(--font-display,'Archivo Variable','Arial Narrow',sans-serif);font-stretch:72%;font-weight:850;font-size:1.3rem;line-height:1;}.ds-word b{color:var(--apricot,#f7ab60);font-weight:inherit;}.ds-link{display:inline-flex;align-items:center;height:2.25rem;padding:0 .75rem;border-radius:var(--radius-sm,6px);color:var(--ink-2,#bdb5c4);font:600 .8125rem/1 var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);text-decoration:none;}.ds-link:hover{color:var(--ink,#efeae3);background:var(--badge,#1f1b25);}.ds-link[aria-current=page]{color:var(--ink,#efeae3);background:var(--badge-hi,#29242f);}.ds-link:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ground,#110f15),0 0 0 4px var(--apricot,#f7ab60);}"
+    },
+    {
+      "name": "Member Badge",
+      "kind": "card",
+      "refersTo": "badge",
+      "description": "The signature card: punched slot, condensed name, mono handle, dashed facts, status ribbon, TS sticker; swings from the slot on hover.",
+      "html": "<a class=\"ds-badge-link\" href=\"#\"><article class=\"ds-badge\" style=\"--status:#f7ab60;--on-status:#2a1806\"><span class=\"ds-ts\">TS</span><div class=\"ds-body\"><h3 class=\"ds-name\"><span class=\"ds-first\">Amara</span><span class=\"ds-last\">Okafor</span></h3><p class=\"ds-handle\">amara.codes</p><dl class=\"ds-facts\"><div><dt>Target Roles</dt><dd>Frontend Engineer</dd></div><div><dt>Seniority</dt><dd>Senior</dd></div></dl></div><footer class=\"ds-ribbon\">Actively Looking</footer></article></a>",
+      "css": ".ds-badge-link{display:flex;width:16rem;color:inherit;text-decoration:none;border-radius:16px;}.ds-badge-link:focus-visible{outline:none;}.ds-badge{position:relative;display:flex;flex-direction:column;flex:1;padding-top:1.75rem;border-radius:16px;background:var(--badge,#1f1b25);border:1px solid var(--line,#352e3d);color:var(--ink,#efeae3);box-shadow:0 1px 0 rgb(255 255 255/.04) inset,0 6px 18px -8px rgb(0 0 0/.7);overflow:hidden;transform-origin:50% .6rem;transition:box-shadow 240ms cubic-bezier(.16,1,.3,1),border-color 240ms cubic-bezier(.16,1,.3,1);font-family:var(--font-body,'Atkinson Hyperlegible Next Variable',system-ui,sans-serif);}.ds-badge::before{content:'';position:absolute;top:.65rem;left:50%;width:2.5rem;height:.45rem;translate:-50% 0;border-radius:99px;background:var(--ground,#110f15);box-shadow:inset 0 1px 2px rgb(0 0 0/.8),0 1px 0 rgb(255 255 255/.05);}.ds-badge-link:hover .ds-badge,.ds-badge-link:focus-visible .ds-badge{border-color:var(--line-strong,#4b4356);box-shadow:0 1px 0 rgb(255 255 255/.06) inset,0 18px 32px -14px rgb(0 0 0/.85);animation:ds-swing 1100ms cubic-bezier(.16,1,.3,1);}.ds-badge-link:focus-visible .ds-badge{border-color:var(--apricot,#f7ab60);}@keyframes ds-swing{0%{rotate:0deg}18%{rotate:-2.4deg}38%{rotate:1.5deg}58%{rotate:-.8deg}78%{rotate:.35deg}100%{rotate:0deg}}@media (prefers-reduced-motion:reduce){.ds-badge{animation:none!important;transition-duration:0ms!important}}.ds-body{display:grid;gap:.9rem;padding:.25rem 1.1rem 1.1rem;}.ds-name{display:grid;gap:.15rem;margin:0;padding-right:2.25rem;}.ds-first{font-family:var(--font-display,'Archivo Variable','Arial Narrow',sans-serif);font-stretch:68%;font-weight:850;font-size:2rem;line-height:.95;letter-spacing:-.01em;}.ds-last{font-family:var(--font-display,'Archivo Variable','Arial Narrow',sans-serif);font-stretch:85%;font-weight:600;font-size:1.0625rem;color:var(--ink-2,#bdb5c4);}.ds-handle{margin:0;font-family:var(--font-mono,'Atkinson Hyperlegible Mono Variable',ui-monospace,monospace);font-size:.8125rem;color:var(--ink-2,#bdb5c4);}.ds-facts{display:grid;gap:.55rem;margin:0;padding-top:.85rem;border-top:1px dashed var(--line-strong,#4b4356);}.ds-facts dt{font-size:.75rem;font-weight:700;color:var(--ink-3,#958d9f);}.ds-facts dd{margin:0;font-size:.8125rem;}.ds-ts{position:absolute;top:1.4rem;right:.85rem;display:grid;place-items:center;width:2.35rem;height:2.35rem;border-radius:50%;background:var(--sage,#b0baa3);color:var(--on-sage,#1b2014);font-family:var(--font-display,'Archivo Variable','Arial Narrow',sans-serif);font-stretch:75%;font-weight:900;font-size:.9rem;rotate:9deg;box-shadow:0 2px 6px -1px rgb(0 0 0/.6);}.ds-ribbon{display:flex;align-items:center;justify-content:center;min-height:2.1rem;padding:.35rem .75rem;background:var(--status);color:var(--on-status);font-family:var(--font-display,'Archivo Variable','Arial Narrow',sans-serif);font-stretch:78%;font-weight:800;font-size:.8125rem;letter-spacing:.06em;text-transform:uppercase;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Badge Wall",
+    "overview": "Every Member is an attendee badge hung on a violet-black wall. A badge has a punched lanyard slot at its top, a big condensed first name, the Discord handle in mono, a dashed perforation above its facts, and a full-strength status ribbon across its foot. The world is a conference hall after dark: dark badge stock, printed ink, lanyards in the club's violet. The pages before the Directory (sign-in, connect Discord, members only, not found) are a single blank badge hanging from a TOLC lanyard and clip.\n\nThe system is dense and operational. Lookup speed comes first, so the wall runs four columns at desktop width, the filter rail stays pinned, and every surface outside the badge is quiet: tonal violet-black panels, hairline borders, one button vocabulary. Color is saved for meaning. The four brand inks (apricot, crimson, violet, sage) appear at full strength on status ribbons and swatches, violet carries the primary action and the selected state, and apricot carries focus.\n\nMotion is physical and small. A badge swings a few degrees from its slot on hover or focus; a badge that arrives on a page settles from a short hang. Everything is instant under reduced motion. It refuses the category default of neutral dark SaaS cards with one neon accent.",
+    "keyCharacteristics": [
+      "Violet-black tonal ground with badges one step lighter; depth from tone first, soft shadow second.",
+      "Condensed heavy Archivo for names and headings; Atkinson Hyperlegible Next for everything read; Atkinson Hyperlegible Mono for Discord handles.",
+      "Job Search Status is a color code, used identically on ribbons and filter swatches.",
+      "Dashed rules are the badge's perforation, used for fact dividers and key-value lists.",
+      "Swing-from-the-slot is the signature interaction."
+    ],
+    "rules": [
+      {
+        "name": "The Status Ink Rule",
+        "body": "Each Job Search Status owns one ink everywhere: Actively Looking apricot, Employed and Looking crimson, Employed and Open to Offers violet, Not Looking sage. Ribbons and filter swatches use the same mapping; nothing else may borrow it to mean a different status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Apricot Focus Rule",
+        "body": "Keyboard focus is always a 2px ground gap plus a 2px apricot ring (or an apricot border on fields and badges). No other focus treatment exists.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-for-Text Rule",
+        "body": "Violet and crimson are fills; on dark ground their text forms are violet-ink and crimson-ink. Never set body-size text in raw violet or crimson on the ground.",
+        "section": "colors"
+      },
+      {
+        "name": "The Condensed Names Rule",
+        "body": "Archivo is only for names, headings, legends, the ribbon, the sticker and the wordmark, and always narrowed (68–85% width). Reading text never uses it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Means Handle Rule",
+        "body": "The mono face marks a Discord handle. Don't use it as decoration or for other data.",
+        "section": "typography"
+      },
+      {
+        "name": "The Only Cards Hang Rule",
+        "body": "Shadows exist only on the badge and things stuck to it. Any other container is flat, tonal and bordered.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do draw every Member as the full badge (slot, condensed name, mono handle, dashed perforation, status ribbon) wherever a Member is summarized.",
+      "Do map Job Search Status to its ink exactly: apricot, crimson, violet, sage, in that order of statuses, on ribbons and swatches alike.",
+      "Do use Club Violet for the single primary action and for every checked or selected state.",
+      "Do show focus as the apricot ring (`0 0 0 2px` ground, `0 0 0 4px` apricot), and nothing else.",
+      "Do keep panels tonal and flat (Raised Hall, Hairline border, 16px corners), and save shadow for the badge.",
+      "Do use dashed Seam rules for badge facts and key-value lists, and solid Hairline rules for structure.",
+      "Do keep the swing and hang motions small (under 3 degrees) and pivoted at the slot, with reduced motion making them instant."
+    ],
+    "donts": [
+      "Don't build neutral dark SaaS cards with one neon accent. The badge is the card.",
+      "Don't use Archivo for reading text, or the mono face for anything but Discord handles.",
+      "Don't reuse a status ink to mean something else on a Member surface.",
+      "Don't set body text in raw violet or crimson on the ground. Use violet-ink and crimson-ink.",
+      "Don't add uppercase tracked labels outside the status ribbon. The ribbon is the only printed-caps element.",
+      "Don't add shadows to panels, rails, tables or buttons."
+    ]
+  }
+}

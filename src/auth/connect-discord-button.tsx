@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { authClient } from './auth-client'
+import { DiscordMark } from '../ui/marks'
 import { discordProviderId } from './discord-provider'
 
 // Better Auth sends a failed link back to the page it started from with
@@ -31,6 +32,7 @@ export function ConnectDiscordButton({
   return (
     <button
       type="button"
+      className="btn-primary btn-lg"
       onClick={() =>
         authClient.linkSocial({
           provider: discordProviderId,
@@ -39,6 +41,7 @@ export function ConnectDiscordButton({
         })
       }
     >
+      <DiscordMark size={18} />
       {children}
     </button>
   )
