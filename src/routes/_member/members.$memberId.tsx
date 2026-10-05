@@ -1,14 +1,11 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ArrowLeft, Check, Copy, ExternalLink, FileText, Globe, Link2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { getMemberProfile } from '../../directory/directory-fns'
 import { MemberBadge } from '../../directory/member-card'
 import { NotFoundPage } from '../../not-found-page'
-import {
-  linkKindLabels,
-  stackLayerLabels,
-  stackLayers,
-} from '../../directory/profile'
+import { stackLayerLabels, stackLayers } from '../../directory/profile'
+import { linkKindLabels } from '../../directory/profile-links'
 import type { MemberLink } from '../../directory/directory'
 import { Lanyard } from '../../ui/lanyard'
 import { GitHubMark } from '../../ui/marks'
@@ -96,10 +93,19 @@ function MemberProfilePage() {
 }
 
 function LinkIcon({ kind }: { kind: MemberLink['kind'] }) {
-  if (kind === 'github') return <GitHubMark size={16} />
-  if (kind === 'resume') return <FileText size={16} aria-hidden="true" />
-  if (kind === 'portfolio') return <Globe size={16} aria-hidden="true" />
-  return <Link2 size={16} aria-hidden="true" />
+  return linkIcons[kind]
+}
+
+const otherLinkIcon = <Link2 size={16} aria-hidden="true" />
+
+const linkIcons: Record<MemberLink['kind'], ReactNode> = {
+  linkedin: otherLinkIcon,
+  github: <GitHubMark size={16} />,
+  resume: <FileText size={16} aria-hidden="true" />,
+  portfolio: <Globe size={16} aria-hidden="true" />,
+  x: otherLinkIcon,
+  bluesky: otherLinkIcon,
+  custom: otherLinkIcon,
 }
 
 // Copies the Discord handle, so the Member can message them about a role.

@@ -7,7 +7,7 @@ import {
   parseLinksForm,
   parseSkillName,
   parseTypeScriptBadge,
-} from './profile'
+} from './profile-parsing'
 
 // Every edit is made to the signed-in Member's own profile: none of these
 // take a Member from the browser.

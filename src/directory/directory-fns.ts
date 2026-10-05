@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { requireLandingPage } from '../auth/session'
 import { directory } from './app-directory'
-import { parseProfileForm } from './profile'
+import { parseProfileForm } from './profile-parsing'
 import { parseDirectorySearch } from './search'
 
 // The Catalogs the signup form autocompletes from.

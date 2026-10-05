@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { emptySearch } from './search'
+import { emptyLinks } from './profile-links'
 import { memberWithProfile, octoForm, seededSetup } from './test-profiles'
 
 describe('Secondary Skills', () => {
@@ -275,13 +276,7 @@ describe('Links', () => {
     const savedLinks = async () =>
       (await setup.directory.profileForEditing(authUserId)).links
 
-    expect(await savedLinks()).toEqual({
-      resume: '',
-      portfolio: '',
-      x: '',
-      bluesky: '',
-      custom: [],
-    })
+    expect(await savedLinks()).toEqual(emptyLinks())
 
     expect(
       await setup.directory.saveLinks({
@@ -389,7 +384,7 @@ describe('who can edit a profile', () => {
     await setup.directory.setTypeScriptBadge({ ...asAdmin, on: true })
     await setup.directory.saveLinks({
       ...asAdmin,
-      links: { resume: 'https://admin.dev/cv', portfolio: '', x: '', bluesky: '', custom: [] },
+      links: { ...emptyLinks(), resume: 'https://admin.dev/cv' },
     })
 
     expect(await setup.directory.profileForEditing(octo.authUserId)).toEqual(octoBefore)

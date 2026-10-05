@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { emptySearch } from './search'
-import {
-  emptyForm,
-  parseAddSkillForm,
-  parseLinksForm,
-  parseProfileForm,
-  profileProblems,
-  skillsForLayer,
-} from './profile'
+import { emptyForm, profileProblems, skillsForLayer } from './profile'
+import { emptyLinks } from './profile-links'
+import { parseAddSkillForm, parseLinksForm, parseProfileForm } from './profile-parsing'
 import { hideAsAdmin, memberInTolc, octoForm, seededSetup } from './test-profiles'
 
 async function seededCatalogs() {
@@ -115,7 +110,7 @@ describe('profile edits sent to the server', () => {
   })
 
   it('rejects malformed Links and Skills', () => {
-    const links = { resume: '', portfolio: '', x: '', bluesky: '', custom: [] }
+    const links = emptyLinks()
     expect(() => parseLinksForm({ ...links, resume: null })).toThrow('Malformed Links: resume')
     expect(() => parseLinksForm({ ...links, custom: [{ label: 'x' }] })).toThrow(
       'Malformed Custom Link: url',
