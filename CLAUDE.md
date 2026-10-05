@@ -2,9 +2,9 @@
 
 Read `CONTEXT.md` for domain language and `docs/adr/` for past decisions.
 
-## Design: wait for reference images
+## Design
 
-Do not implement visual design (styling, layout, theme, component look) yet. The Admin will add design reference images to the repo once the TanStack Start project is scaffolded. Build functionality with unstyled markup until then, and match those images once they exist.
+The visual design is the "Conference Badge Wall" (dark mode, Admin's palette `#b0baa3` `#5a27ba` `#c12544` `#f7ab60`). It replaces the reference images once planned for #11. `DESIGN.md` records the system and `PRODUCT.md` the product context; all styling lives in `src/styles.css`. New UI reuses its classes and tokens rather than adding new looks.
 
 ## Seed catalogs
 

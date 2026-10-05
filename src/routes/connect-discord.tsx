@@ -6,6 +6,8 @@ import {
 } from '../auth/connect-discord-button'
 import { landingPage, requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
+import { Gate } from '../ui/gate'
+import { Alert } from '../ui/alert'
 
 export const Route = createFileRoute('/connect-discord')({
   validateSearch: validateLinkSearch,
@@ -31,19 +33,21 @@ function ConnectDiscord() {
       : null
 
   return (
-    <main>
+    <Gate>
       <h1>Connect Discord</h1>
       <p>
         The Directory is for TOLC Members only. Connect your Discord account to
         continue.
       </p>
-      {message && <p role="alert">{message}</p>}
-      <ConnectDiscordButton returnTo="/connect-discord">
-        Connect Discord
-      </ConnectDiscordButton>
-      <button type="button" onClick={signOut}>
-        Sign out
-      </button>
-    </main>
+      {message && <Alert>{message}</Alert>}
+      <div className="gate-actions">
+        <ConnectDiscordButton returnTo="/connect-discord">
+          Connect Discord
+        </ConnectDiscordButton>
+        <button type="button" className="btn-quiet btn-lg" onClick={signOut}>
+          Sign out
+        </button>
+      </div>
+    </Gate>
   )
 }

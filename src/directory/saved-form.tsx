@@ -1,3 +1,4 @@
+import { Check, CircleAlert } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import type { SaveResult } from './profile'
 import { useReloadAfterChange } from './reload-after-change'
@@ -66,8 +67,20 @@ export function useSavedForm<Form, Problems extends object>({
 }
 
 export function SaveStatus({ status }: { status: SaveState }) {
-  if (status === 'saved') return <span role="status"> Saved</span>
-  if (status === 'failed') return <span role="alert"> {couldNotSave}</span>
+  if (status === 'saved')
+    return (
+      <span role="status" className="saved">
+        <Check size={14} aria-hidden="true" />
+        Saved
+      </span>
+    )
+  if (status === 'failed')
+    return (
+      <span role="alert" className="problem">
+        <CircleAlert size={14} aria-hidden="true" />
+        {couldNotSave}
+      </span>
+    )
   return null
 }
 

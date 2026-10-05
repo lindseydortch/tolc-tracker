@@ -1,3 +1,4 @@
+import { Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
 import type { JobSearchStatus, Seniority } from './directory'
 import {
@@ -11,7 +12,7 @@ import { emptySearch, type DirectorySearch } from './search'
 
 const jobSearchStatuses = Object.keys(jobSearchStatusLabels) as JobSearchStatus[]
 
-// The Quick View's search form. Unstyled until the design references land.
+// The Quick View's search form, shown in the filter rail.
 // Nothing is searched until it's sent with `onSearch`.
 export function SearchForm({
   search,
@@ -29,6 +30,7 @@ export function SearchForm({
   return (
     <form
       role="search"
+      className="search"
       onSubmit={(e) => {
         e.preventDefault()
         onSearch(draft)
@@ -67,17 +69,23 @@ export function SearchForm({
         labels={jobSearchStatusLabels}
         chosen={draft.jobSearchStatuses}
         onChange={(chosen: JobSearchStatus[]) => update({ jobSearchStatuses: chosen })}
+        swatches
       />
-      <button type="submit">Search</button>{' '}
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(emptySearch)
-          onSearch(emptySearch)
-        }}
-      >
-        Clear search
-      </button>
+      <div className="search-actions">
+        <button type="submit" className="btn-primary">
+          <Search size={16} aria-hidden="true" />
+          Search
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(emptySearch)
+            onSearch(emptySearch)
+          }}
+        >
+          Clear search
+        </button>
+      </div>
     </form>
   )
 }
@@ -111,23 +119,26 @@ function NamesField({
   }
 
   return (
-    <fieldset>
+    <fieldset className="filter">
       <legend>{legend}</legend>
-      <p>{hint}</p>
-      <ul>
-        {chosen.map((name) => (
-          <li key={name}>
-            {name}{' '}
-            <button
-              type="button"
-              aria-label={`Remove ${name}`}
-              onClick={() => onChange(chosen.filter((other) => other !== name))}
-            >
-              Remove
-            </button>
-          </li>
-        ))}
-      </ul>
+      <p className="hint">{hint}</p>
+      {chosen.length > 0 && (
+        <ul className="chips">
+          {chosen.map((name) => (
+            <li key={name} className="chip chip-removable">
+              {name}
+              <button
+                type="button"
+                className="chip-remove"
+                aria-label={`Remove ${name}`}
+                onClick={() => onChange(chosen.filter((other) => other !== name))}
+              >
+                <X size={12} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <datalist id={listId}>
         {catalog.map((option) => (
           <option key={option.name} value={option.name}>
@@ -135,10 +146,14 @@ function NamesField({
           </option>
         ))}
       </datalist>
-      <label>
-        Add a {noun}{' '}
+      <div className="filter-add">
+        <label className="visually-hidden" htmlFor={`${listId}-input`}>
+          Add a {noun}
+        </label>
         <input
+          id={`${listId}-input`}
           list={listId}
+          placeholder={`Add a ${noun}`}
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
           onKeyDown={(e) => {
@@ -148,11 +163,11 @@ function NamesField({
             add()
           }}
         />
-      </label>{' '}
-      <button type="button" disabled={!entry} onClick={add}>
-        Add
-      </button>
-      {typed.trim() && !entry && <span> Not in the {catalogName}</span>}
+        <button type="button" className="btn-icon" disabled={!entry} onClick={add} aria-label="Add">
+          <Plus size={16} aria-hidden="true" />
+        </button>
+      </div>
+      {typed.trim() && !entry && <span className="resolved">Not in the {catalogName}</span>}
     </fieldset>
   )
 }
@@ -166,6 +181,7 @@ function ChoicesField<T extends string>({
   labels,
   chosen,
   onChange,
+  swatches = false,
 }: {
   legend: string
   hint: string
@@ -173,13 +189,16 @@ function ChoicesField<T extends string>({
   labels: Record<T, string>
   chosen: T[]
   onChange: (chosen: T[]) => void
+  // Shows each choice's ribbon colour, for Job Search Status.
+  swatches?: boolean
 }) {
   return (
-    <fieldset>
+    <fieldset className="filter">
       <legend>{legend}</legend>
-      <p>{hint}</p>
+      <p className="hint">{hint}</p>
+      <div className="toggles">
       {choices.map((choice) => (
-        <label key={choice}>
+        <label key={choice} className="toggle" data-status={swatches ? choice : undefined}>
           <input
             type="checkbox"
             checked={chosen.includes(choice)}
@@ -190,10 +209,12 @@ function ChoicesField<T extends string>({
                   : chosen.filter((c) => c !== choice),
               )
             }
-          />{' '}
-          {labels[choice]}{' '}
+          />
+          {swatches && <span className="toggle-swatch" aria-hidden="true" />}
+          {labels[choice]}
         </label>
       ))}
+      </div>
     </fieldset>
   )
 }

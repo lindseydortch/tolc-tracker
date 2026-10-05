@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
+import { ArrowLeft } from 'lucide-react'
 import {
   deleteMember,
   getAdminPage,
@@ -68,54 +69,69 @@ function AdminPage() {
   }
 
   return (
-    <main>
-      <p>
-        <Link to="/">Back to the Directory</Link>
-      </p>
-      <h1>Admin</h1>
-      {status && <p role="status">{status}</p>}
+    <main className="page">
+      <Link to="/" className="back">
+        <ArrowLeft size={16} aria-hidden="true" />
+        Back to the Directory
+      </Link>
+      <div className="page-head">
+        <h1 className="page-title">Admin</h1>
+        {status && (
+          <p role="status" className="status-line">
+            {status}
+          </p>
+        )}
+      </div>
 
-      <h2>Members</h2>
-      <p>
-        Hiding a Member keeps their profile but takes them out of the
-        Directory, and they can't see it until you reactivate them.
-      </p>
-      <MemberTable
-        members={managed.members}
-        actions={[hide, remove]}
-        busy={busy}
-        onAction={onAction}
-      />
-
-      <h2>Hidden Members</h2>
-      {managed.hiddenMembers.length === 0 ? (
-        <p>No Hidden Members.</p>
-      ) : (
+      <section className="admin-section">
+        <h2>Members</h2>
+        <p>
+          Hiding a Member keeps their profile but takes them out of the
+          Directory, and they can't see it until you reactivate them.
+        </p>
         <MemberTable
-          members={managed.hiddenMembers}
-          actions={[reactivate, remove]}
+          members={managed.members}
+          actions={[hide, remove]}
           busy={busy}
           onAction={onAction}
         />
-      )}
+      </section>
 
-      <h2>Merge Skills and Target Roles</h2>
-      <p>
-        Merging A into B makes A's name and Aliases into Aliases of B, moves
-        every Member using A onto B, then removes A. It can't be undone.
-      </p>
-      <MergeSection
-        kind="Skill"
-        listId="skill-catalog"
-        entries={catalogs.skills}
-        merge={(form) => mergeSkill({ data: form })}
-      />
-      <MergeSection
-        kind="Target Role"
-        listId="role-catalog"
-        entries={catalogs.roles}
-        merge={(form) => mergeRole({ data: form })}
-      />
+      <section className="admin-section">
+        <h2>Hidden Members</h2>
+        {managed.hiddenMembers.length === 0 ? (
+          <p>No Hidden Members.</p>
+        ) : (
+          <MemberTable
+            members={managed.hiddenMembers}
+            actions={[reactivate, remove]}
+            busy={busy}
+            onAction={onAction}
+          />
+        )}
+      </section>
+
+      <section className="admin-section">
+        <h2>Merge Skills and Target Roles</h2>
+        <p>
+          Merging A into B makes A's name and Aliases into Aliases of B, moves
+          every Member using A onto B, then removes A. It can't be undone.
+        </p>
+        <div className="merges">
+          <MergeSection
+            kind="Skill"
+            listId="skill-catalog"
+            entries={catalogs.skills}
+            merge={(form) => mergeSkill({ data: form })}
+          />
+          <MergeSection
+            kind="Target Role"
+            listId="role-catalog"
+            entries={catalogs.roles}
+            merge={(form) => mergeRole({ data: form })}
+          />
+        </div>
+      </section>
     </main>
   )
 }
@@ -133,38 +149,49 @@ function MemberTable({
   onAction: (action: MemberAction, member: ManagedMember) => void
 }) {
   return (
-    <table>
+    <div className="table-wrap">
+    <table className="table">
       <thead>
         <tr>
           <th scope="col">Name</th>
           <th scope="col">Discord</th>
           <th scope="col">GitHub</th>
-          <th scope="col">Actions</th>
+          <th scope="col" className="actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         {members.map((member) => (
           <tr key={member.id}>
-            <td>{member.name}</td>
-            <td>{member.discordHandle ?? 'Not connected'}</td>
-            <td>{member.githubUrl && <a href={member.githubUrl}>{member.githubUrl}</a>}</td>
             <td>
-              {member.isYou
-                ? 'You'
-                : actions.map((action) => (
+              <strong>{member.name}</strong>
+            </td>
+            <td className={member.discordHandle ? 'mono' : 'muted'}>
+              {member.discordHandle ?? 'Not connected'}
+            </td>
+            <td className={member.githubUrl ? undefined : 'muted'}>
+              {member.githubUrl ? <a href={member.githubUrl}>{member.githubUrl}</a> : 'None'}
+            </td>
+            <td className="actions">
+              {member.isYou ? (
+                <span className="you">You</span>
+              ) : (
+                actions.map((action) => (
                     <button
                       key={action.label}
                       type="button"
+                      className={action.label === 'Delete' ? 'btn-danger' : undefined}
                       disabled={busy}
                       onClick={() => onAction(action, member)}
                     >
                       {action.label}
                     </button>
-                  ))}
+                  ))
+              )}
             </td>
           </tr>
         ))}
       </tbody>
     </table>
+    </div>
   )
 }
