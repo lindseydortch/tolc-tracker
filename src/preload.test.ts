@@ -1,50 +1,44 @@
 // The router only navigates with a DOM.
 // @vitest-environment happy-dom
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-} from '@tanstack/react-router'
+import { RouterProvider } from '@tanstack/react-router'
+import { createElement } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { reloadAfterChange } from './directory/reload-after-change'
-import { PRELOAD_STALE_TIME_MS, preloadOptions } from './preload'
+import { testRouter } from './directory/test-router'
+import { PRELOAD_DELAY_MS, PRELOAD_STALE_TIME_MS } from './preload'
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+let root: Root | undefined
 
 afterEach(() => {
+  root?.unmount()
+  root = undefined
+  document.body.replaceChildren()
   vi.useRealTimers()
 })
 
-// A start page and a Directory whose loader counts its server fetches and
-// reads `saved`, standing in for the database.
-function testApp() {
-  const db = { saved: 'old', fetches: 0 }
-  const rootRoute = createRootRoute()
-  const start = createRoute({ getParentRoute: () => rootRoute, path: '/edit-profile' })
-  const directory = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/',
-    loader: () => {
-      db.fetches++
-      return db.saved
-    },
+// Renders the editor page, whose link to the Directory can be hovered.
+async function renderEditor() {
+  const app = testRouter('/edit-profile')
+  const container = document.createElement('div')
+  document.body.append(container)
+  root = createRoot(container)
+  root.render(createElement(RouterProvider, { router: app.router }))
+  const link = await vi.waitFor(() => {
+    const found = container.querySelector('a')
+    if (!found) throw new Error('link not rendered yet')
+    return found
   })
-  const router = createRouter({
-    routeTree: rootRoute.addChildren([start, directory]),
-    history: createMemoryHistory({ initialEntries: ['/edit-profile'] }),
-    ...preloadOptions,
-  })
-  // In the app, RouterProvider does this.
-  router.history.subscribe(() => router.load())
-  const shownOnDirectory = () => {
-    const page = router.state.matches.at(-1)
-    return page?.pathname === '/' ? page.loaderData : undefined
-  }
-  return { db, router, shownOnDirectory }
+  // React listens for mouseover/mouseout to fire onMouseEnter/onMouseLeave.
+  const hover = () => link.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+  const unhover = () => link.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
+  return { ...app, hover, unhover }
 }
 
 describe('preloadOptions', () => {
-  it('renders a click right after a hover from the hover preload', async () => {
-    const { db, router, shownOnDirectory } = testApp()
+  it('shows the hover preload when the click comes right after the hover', async () => {
+    const { db, router, shownOnDirectory } = testRouter('/edit-profile')
     await router.load()
 
     await router.preloadRoute({ to: '/' })
@@ -54,29 +48,36 @@ describe('preloadOptions', () => {
     expect(shownOnDirectory()).toBe('old')
   })
 
-  it('refetches when the click comes long after the hover', async () => {
+  it('refetches when the click comes after the preload went stale', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
-    const { db, router, shownOnDirectory } = testApp()
+    const { db, router, shownOnDirectory } = testRouter('/edit-profile')
     await router.load()
 
     await router.preloadRoute({ to: '/' })
     db.saved = 'new'
-    vi.setSystemTime(Date.now() + PRELOAD_STALE_TIME_MS)
+    vi.setSystemTime(Date.now() + PRELOAD_STALE_TIME_MS + 1)
     await router.navigate({ to: '/' })
 
     expect(db.fetches).toBe(2)
     await vi.waitFor(() => expect(shownOnDirectory()).toBe('new'))
   })
 
-  it('refetches a hover preload after a profile save or an Admin action', async () => {
-    const { db, router, shownOnDirectory } = testApp()
-    await router.load()
+  it("doesn't preload a link the pointer passes over faster than the delay", async () => {
+    const { db, hover, unhover } = await renderEditor()
 
-    await router.preloadRoute({ to: '/' })
-    db.saved = 'new'
-    await reloadAfterChange(router)
-    await router.navigate({ to: '/' })
+    hover()
+    await wait(PRELOAD_DELAY_MS / 5)
+    unhover()
+    await wait(PRELOAD_DELAY_MS * 2)
 
-    expect(shownOnDirectory()).toBe('new')
+    expect(db.fetches).toBe(0)
+  })
+
+  it('preloads a link the pointer rests on past the delay', async () => {
+    const { db, hover } = await renderEditor()
+
+    hover()
+
+    await vi.waitFor(() => expect(db.fetches).toBe(1), { timeout: PRELOAD_DELAY_MS * 4 })
   })
 })
