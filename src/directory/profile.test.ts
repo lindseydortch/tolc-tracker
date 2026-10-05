@@ -105,6 +105,7 @@ describe('profile edits sent to the server', () => {
     const links = {
       resume: 'https://octo.dev/cv',
       portfolio: '',
+      x: 'https://x.com/octocat',
       bluesky: '',
       custom: [{ label: 'Talk', url: 'https://youtu.be/talk' }],
     }
@@ -114,7 +115,7 @@ describe('profile edits sent to the server', () => {
   })
 
   it('rejects malformed Links and Skills', () => {
-    const links = { resume: '', portfolio: '', bluesky: '', custom: [] }
+    const links = { resume: '', portfolio: '', x: '', bluesky: '', custom: [] }
     expect(() => parseLinksForm({ ...links, resume: null })).toThrow('Malformed Links: resume')
     expect(() => parseLinksForm({ ...links, custom: [{ label: 'x' }] })).toThrow(
       'Malformed Custom Link: url',
@@ -459,7 +460,8 @@ describe('a Member profile page', () => {
       links: {
         resume: 'https://example.com/cv.pdf',
         portfolio: '',
-        bluesky: '',
+        x: 'https://x.com/octocat',
+        bluesky: 'https://bsky.app/profile/octocat',
         custom: [{ label: 'My talk', url: 'https://example.com/talk' }],
       },
     })
@@ -480,6 +482,8 @@ describe('a Member profile page', () => {
         { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat', label: null },
         { kind: 'github', url: 'https://github.com/octocat', label: null },
         { kind: 'resume', url: 'https://example.com/cv.pdf', label: null },
+        { kind: 'x', url: 'https://x.com/octocat', label: null },
+        { kind: 'bluesky', url: 'https://bsky.app/profile/octocat', label: null },
         { kind: 'custom', url: 'https://example.com/talk', label: 'My talk' },
       ],
     })

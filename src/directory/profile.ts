@@ -37,6 +37,7 @@ export const linkKindLabels: Record<LinkKind, string> = {
   github: 'GitHub',
   resume: 'Resume',
   portfolio: 'Portfolio',
+  x: 'X',
   bluesky: 'Bluesky',
   custom: 'Custom',
 }
@@ -198,6 +199,12 @@ export const optionalLinks = [
     problem: 'Enter your portfolio as a URL',
   },
   {
+    kind: 'x',
+    label: 'X profile URL',
+    placeholder: 'https://x.com/you',
+    problem: 'Enter your X profile as a URL',
+  },
+  {
     kind: 'bluesky',
     label: 'Bluesky profile URL',
     placeholder: 'https://bsky.app/profile/you',
@@ -227,7 +234,7 @@ export type LinksCheck =
 
 export function checkLinks(form: LinksForm): LinksCheck {
   const problems: LinksProblems = {}
-  const links: LinksForm = { resume: '', portfolio: '', bluesky: '', custom: [] }
+  const links: LinksForm = { resume: '', portfolio: '', x: '', bluesky: '', custom: [] }
   for (const { kind, problem } of optionalLinks) {
     if (!form[kind].trim()) continue
     const url = toUrl(form[kind])
@@ -387,6 +394,7 @@ export function parseLinksForm(input: unknown): LinksForm {
   const links: LinksForm = {
     resume: '',
     portfolio: '',
+    x: '',
     bluesky: '',
     custom: read.list('custom').map((link) => {
       const custom = formReader(link, 'Custom Link')

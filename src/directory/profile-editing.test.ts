@@ -275,7 +275,13 @@ describe('Links', () => {
     const savedLinks = async () =>
       (await setup.directory.profileForEditing(authUserId)).links
 
-    expect(await savedLinks()).toEqual({ resume: '', portfolio: '', bluesky: '', custom: [] })
+    expect(await savedLinks()).toEqual({
+      resume: '',
+      portfolio: '',
+      x: '',
+      bluesky: '',
+      custom: [],
+    })
 
     expect(
       await setup.directory.saveLinks({
@@ -283,6 +289,7 @@ describe('Links', () => {
         links: {
           resume: 'octo.dev/resume.pdf',
           portfolio: 'https://octo.dev',
+          x: 'x.com/octocat',
           bluesky: 'https://bsky.app/profile/octo.dev',
           custom: [
             { label: 'My talk', url: 'https://youtu.be/talk' },
@@ -294,6 +301,7 @@ describe('Links', () => {
     expect(await savedLinks()).toEqual({
       resume: 'https://octo.dev/resume.pdf',
       portfolio: 'https://octo.dev/',
+      x: 'https://x.com/octocat',
       bluesky: 'https://bsky.app/profile/octo.dev',
       custom: [
         { label: 'My talk', url: 'https://youtu.be/talk' },
@@ -306,6 +314,7 @@ describe('Links', () => {
       links: {
         resume: 'https://octo.dev/cv.pdf',
         portfolio: '',
+        x: '',
         bluesky: ' ',
         custom: [{ label: 'Side project', url: 'https://github.com/octocat/hello' }],
       },
@@ -313,6 +322,7 @@ describe('Links', () => {
     expect(await savedLinks()).toEqual({
       resume: 'https://octo.dev/cv.pdf',
       portfolio: '',
+      x: '',
       bluesky: '',
       custom: [{ label: 'Side project', url: 'https://github.com/octocat/hello' }],
     })
@@ -336,6 +346,7 @@ describe('Links', () => {
         links: {
           resume: 'my resume',
           portfolio: 'ftp://octo.dev',
+          x: '@octocat',
           bluesky: 'octo',
           custom: [
             { label: 'Fine', url: 'https://octo.dev' },
@@ -349,6 +360,7 @@ describe('Links', () => {
       problems: {
         resume: 'Enter your resume as a URL',
         portfolio: 'Enter your portfolio as a URL',
+        x: 'Enter your X profile as a URL',
         bluesky: 'Enter your Bluesky profile as a URL',
         custom: [undefined, 'Enter a label', 'Enter a URL'],
       },
@@ -377,7 +389,7 @@ describe('who can edit a profile', () => {
     await setup.directory.setTypeScriptBadge({ ...asAdmin, on: true })
     await setup.directory.saveLinks({
       ...asAdmin,
-      links: { resume: 'https://admin.dev/cv', portfolio: '', bluesky: '', custom: [] },
+      links: { resume: 'https://admin.dev/cv', portfolio: '', x: '', bluesky: '', custom: [] },
     })
 
     expect(await setup.directory.profileForEditing(octo.authUserId)).toEqual(octoBefore)

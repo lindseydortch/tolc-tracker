@@ -103,6 +103,7 @@ export const linkKind = pgEnum('link_kind', [
   'github',
   'resume',
   'portfolio',
+  'x',
   'bluesky',
   'custom',
 ])

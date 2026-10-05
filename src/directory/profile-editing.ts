@@ -228,6 +228,7 @@ export function createProfileEditing(
         links: {
           resume: linkOf('resume'),
           portfolio: linkOf('portfolio'),
+          x: linkOf('x'),
           bluesky: linkOf('bluesky'),
           custom: memberLinks
             .filter((link) => link.kind === 'custom')
