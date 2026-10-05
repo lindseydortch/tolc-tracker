@@ -67,6 +67,7 @@ const steps = [
     links: {
       resume: 'https://example.com/test-admin-resume.pdf',
       portfolio: 'https://example.com/test-admin',
+      x: '',
       bluesky: '',
       custom: [{ label: 'Test talk', url: 'https://example.com/test-talk' }],
     },
