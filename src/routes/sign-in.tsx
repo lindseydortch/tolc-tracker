@@ -1,12 +1,11 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '../auth/auth-client'
-import { getSignedInMember } from '../auth/session'
 import { Gate } from '../ui/gate'
 import { GitHubMark } from '../ui/marks'
 
 export const Route = createFileRoute('/sign-in')({
-  beforeLoad: async () => {
-    if (await getSignedInMember()) throw redirect({ to: '/' })
+  beforeLoad: async ({ context }) => {
+    if (await context.signIn.fresh()) throw redirect({ to: '/' })
   },
   component: SignIn,
 })

@@ -43,6 +43,17 @@ describe('reloadAfterChange', () => {
     expect(shownOnDirectory()).toBe('new')
   })
 
+  it('makes the next Member page ask the server whether the Member is still signed in', async () => {
+    const { db, router, signIn } = testRouter()
+    await router.load()
+    await signIn.fresh()
+
+    await reloadAfterChange(router)
+    await signIn.recent()
+
+    expect(db.signInChecks).toBe(2)
+  })
+
   it('leaves a return to the Directory without an edit showing cached data at once', async () => {
     const { db, router, shownOnDirectory } = testRouter()
     await router.load()

@@ -1,7 +1,8 @@
 import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { CircleAlert, LogOut } from 'lucide-react'
-import { landingPage, requireSignedInMember } from '../auth/session'
+import { landingPage } from '../auth/landing-page'
+import { requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
 import { getSignupCatalogs, submitProfile } from '../directory/directory-fns'
 import {
@@ -19,8 +20,8 @@ import { Wordmark } from '../ui/marks'
 // The required profile form a Member fills once they're in TOLC. They stay
 // here until it's complete, and only then reach the Directory.
 export const Route = createFileRoute('/signup')({
-  beforeLoad: async () => {
-    const member = await requireSignedInMember()
+  beforeLoad: async ({ context }) => {
+    const member = requireSignedInMember(await context.signIn.fresh())
     const page = landingPage(member)
     if (page !== '/signup') throw redirect({ to: page })
   },

@@ -1,14 +1,17 @@
 import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { LayoutGrid, LogOut, ShieldCheck, UserPen } from 'lucide-react'
-import { landingPage, requireSignedInMember } from '../auth/session'
+import { landingPage } from '../auth/landing-page'
+import { requireSignedInMember } from '../auth/session'
 import { useSignOut } from '../auth/use-sign-out'
 import { Wordmark } from '../ui/marks'
 
 // Every page under this layout is for signed-in Members with Discord
 // connected who are in TOLC. Everyone else is sent to their `landingPage`.
+// A recent sign-in check is reused, so page changes don't wait on the
+// server; each page's server functions check access again.
 export const Route = createFileRoute('/_member')({
-  beforeLoad: async () => {
-    const member = await requireSignedInMember()
+  beforeLoad: async ({ context }) => {
+    const member = requireSignedInMember(await context.signIn.recent())
     const page = landingPage(member)
     const { discordHandle } = member
     if (page !== '/' || !discordHandle) throw redirect({ to: page })
