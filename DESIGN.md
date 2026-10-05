@@ -173,6 +173,10 @@ components:
   nav-link-active:
     backgroundColor: "{colors.badge-hi}"
     textColor: "{colors.ink}"
+  nav-progress:
+    backgroundColor: "{colors.violet}"
+    textColor: "{colors.violet-ink}"
+    height: "3px"
 ---
 
 # Design System: TOLC Tracker
@@ -185,7 +189,7 @@ Every Member is an attendee badge hung on a violet-black wall. A badge has a pun
 
 The system is dense and operational. Lookup speed comes first, so the wall runs four columns at desktop width, the filter rail stays pinned, and every surface outside the badge is quiet: tonal violet-black panels, hairline borders, one button vocabulary. Color is saved for meaning. The four brand inks (apricot, crimson, violet, sage) appear at full strength on status ribbons and swatches, violet carries the primary action and the selected state, and apricot carries focus.
 
-Motion is physical and small. A badge swings a few degrees from its slot on hover or focus; a badge that arrives on a page settles from a short hang. Everything is instant under reduced motion. It refuses the category default of neutral dark SaaS cards with one neon accent.
+Motion is physical and small. A badge swings a few degrees from its slot on hover or focus; a badge that arrives on a page settles from a short hang. While a page loads, a thin violet strap sweeps across the top of the window. Everything is instant under reduced motion. It refuses the category default of neutral dark SaaS cards with one neon accent.
 
 **Key Characteristics:**
 - Violet-black tonal ground with badges one step lighter; depth from tone first, soft shadow second.
@@ -199,8 +203,8 @@ Motion is physical and small. A badge swings a few degrees from its slot on hove
 A dark violet-black hall lit by four printed inks, each with one job.
 
 ### Primary
-- **Club Violet** (violet): the primary action fill (Search, Copy Discord handle, Save), the checked state of checkboxes, radios and filter toggles, the selection highlight, the lanyard strap, and the Employed and Open to Offers ribbon. Hover deepens to **Lit Violet** (violet-hi).
-- **Lavender Ink** (violet-ink): inline links and the wordmark's badge mark; violet made readable as text on the dark ground.
+- **Club Violet** (violet): the primary action fill (Search, Copy Discord handle, Save), the checked state of checkboxes, radios and filter toggles, the selection highlight, the lanyard strap, the loading bar, and the Employed and Open to Offers ribbon. Hover deepens to **Lit Violet** (violet-hi).
+- **Lavender Ink** (violet-ink): inline links, the wordmark's badge mark, and the loading bar's sweep; violet made readable as text on the dark ground.
 
 ### Secondary
 - **Ticket Apricot** (apricot): the focus ring, the caret, the "TOLC" in the wordmark, the Actively Looking ribbon and swatch, and the tinted confirm panel. Text on it is **Burnt Umber** (on-apricot).
@@ -307,6 +311,7 @@ One vocabulary everywhere, compact and outlined.
 ### Navigation
 - **Top bar:** the wordmark (badge mark in Lavender Ink, "TOLC" in apricot, Archivo at 72% width, weight 850) on the left, then icon-plus-label links. Links are Faded Ink at rest. Hover fills Badge Stock, and the current page fills Badge Stock Lit with Badge Ink text. The signed-in name and handle sit right, followed by a quiet Sign out. Under 720px, link labels hide visually and only the icons show.
 - **Back link:** a small Faded Ink arrow link above page content.
+- **Loading bar:** a 3px Club Violet strap fixed across the top of the window, above the top bar, with a 40% Lavender Ink segment sweeping left to right every 1100ms. It shows only when a page takes over 200ms to load, stays at least 300ms once shown, and fades in over 160ms. Under reduced motion the whole strap turns Lavender Ink instead of sweeping. The old page stays on screen underneath. A status region announces "Loading page" to screen readers.
 
 ### The Member Badge (signature)
 The one card in the system. It has 16px corners, a Badge Stock fill, a Hairline border and the badge rest shadow, with 1.75rem of top padding that holds the punched slot: a 2.5rem pill cut in Hall Black, centered. Inside, from top to bottom, are the condensed first name over the last name, the mono Discord handle with the Discord mark, a dashed perforation, a fact list (caption terms in Pencil over label values: Target Roles, Seniority, Primary Skills as chips), and the full-width status ribbon in the status ink. The TypeScript Badge is a sage circular "TS" sticker, rotated 9 degrees, top right. On hover or focus the badge lifts its shadow, brightens its border (apricot on focus) and swings around its slot (rotate -2.4°, 1.5°, -0.8°, 0.35°, 0 over 1100ms). On the profile and gates, the badge settles in from a -3° hang and hangs from a violet lanyard strap and clip.
@@ -324,6 +329,7 @@ The pages before the Directory: a 24rem column with a violet lanyard strap (prin
 - **Do** keep panels tonal and flat (Raised Hall, Hairline border, 16px corners), and save shadow for the badge.
 - **Do** use dashed Seam rules for badge facts and key-value lists, and solid Hairline rules for structure.
 - **Do** keep the swing and hang motions small (under 3 degrees) and pivoted at the slot, with reduced motion making them instant.
+- **Do** keep the loading bar's sweep the only looping motion, and only while a page is loading.
 
 ### Don't:
 - **Don't** build neutral dark SaaS cards with one neon accent. The badge is the card.

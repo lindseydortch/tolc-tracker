@@ -470,6 +470,49 @@ label.field {
   background: var(--line-strong);
 }
 
+/* ---------- Navigation progress: a lanyard strap drawn across the top ---------- */
+
+.nav-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  /* Above the sticky top bar (10). */
+  z-index: 20;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out);
+}
+.nav-progress[data-showing] {
+  opacity: 1;
+  background: var(--violet);
+}
+.nav-progress[data-showing]::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--violet-ink);
+  animation: nav-progress 1100ms var(--ease-out) infinite;
+}
+@keyframes nav-progress {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 250% 0;
+  }
+}
+/* A segment frozen mid-sweep reads as stuck, so the strap lights up whole. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-showing] {
+    background: var(--violet-ink);
+  }
+  .nav-progress[data-showing]::before {
+    content: none;
+  }
+}
+
 /* ---------- App shell ---------- */
 
 .topbar {
