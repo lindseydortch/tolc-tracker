@@ -90,6 +90,8 @@ export const members = pgTable('members', {
   // Discord's hash for the profile picture; null means Discord's default.
   discordAvatar: text('discord_avatar'),
   discordSyncedAt: timestamp('discord_synced_at'),
+  // When a viewer last asked to refresh the avatar, answered or not.
+  discordRefreshAttemptedAt: timestamp('discord_refresh_attempted_at'),
   hidden: boolean('hidden').default(false).notNull(),
   membershipPassedAt: timestamp('membership_passed_at'),
   membershipCheckedAt: timestamp('membership_checked_at'),

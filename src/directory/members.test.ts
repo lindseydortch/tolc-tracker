@@ -3,7 +3,7 @@ import { isDiscordSyncDue } from './directory'
 import { discordAvatarUrl } from './discord-profile'
 import { emptySearch } from './search'
 import { createTestSetup } from './test-directory'
-import { hideAsAdmin, memberWithProfile, seededSetup } from './test-profiles'
+import { hideAsAdmin, memberInTolc, memberWithProfile, seededSetup } from './test-profiles'
 
 describe('signing in a Member with GitHub', () => {
   it('creates a Member with their GitHub Link on first sign-in', async () => {
@@ -134,36 +134,60 @@ describe('connecting Discord', () => {
       expect(profile?.discordAvatarUrl).toBe(entry.discordAvatarUrl)
       return entry.discordAvatarUrl
     }
-    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: null }))
+    const urlFor = (avatar: string | null) =>
+      discordAvatarUrl({ userId: discord.userId, avatar })
+    const change = (avatar: string | null) =>
+      setup.directory.connectDiscord({ authUserId, discord: { ...discord, avatar } })
+    expect(await avatarUrl()).toBe(urlFor(null))
 
-    await setup.directory.connectDiscord({ authUserId, discord: { ...discord, avatar: 'a_1f2e' } })
-    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: 'a_1f2e' }))
+    await change('a_1f2e')
+    expect(await avatarUrl()).toBe(urlFor('a_1f2e'))
 
-    await setup.directory.connectDiscord({ authUserId, discord: { ...discord, avatar: null } })
-    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: null }))
+    await change(null)
+    expect(await avatarUrl()).toBe(urlFor(null))
   })
 
-  it("refreshes a Member's Discord avatar at most once a minute when it stops loading", async () => {
+  it("refreshes a Member's Discord avatar at most once a minute", async () => {
     const setup = await seededSetup()
     const { authUserId } = await memberWithProfile(setup, 'octocat')
     const [entry] = await setup.directory.searchDirectory(emptySearch)
-    const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
+    const now = new Date()
+    const inTwoMinutes = new Date(now.getTime() + 2 * 60 * 1000)
 
-    expect(await setup.directory.claimAvatarRefresh(entry.id)).toBeNull()
-    expect(await setup.directory.claimAvatarRefresh(entry.id, inTwoMinutes)).toBe(authUserId)
-    expect(await setup.directory.claimAvatarRefresh(entry.id + 1, inTwoMinutes)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(entry.id, now)).toBe(authUserId)
+    expect(await setup.directory.claimAvatarRefresh(entry.id, now)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(entry.id, inTwoMinutes)).toBe(
+      authUserId,
+    )
+  })
+
+  it('lets only one of several viewers refresh the same avatar', async () => {
+    const setup = await seededSetup()
+    await memberWithProfile(setup, 'octocat')
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
+
+    const claims = await Promise.all(
+      [1, 2, 3].map(() => setup.directory.claimAvatarRefresh(entry.id)),
+    )
+
+    expect(claims.filter(Boolean)).toHaveLength(1)
   })
 
   it("never refreshes the avatar of a Member the Directory doesn't show", async () => {
     const setup = await seededSetup()
     const { authUserId } = await memberWithProfile(setup, 'octocat')
-    const { memberId } = await hideAsAdmin(setup, authUserId)
-    const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
+    const unfinished = await memberInTolc(setup, 'mona')
+    const unfinishedId = (
+      await setup.directory.memberForAuthUser(unfinished.authUserId)
+    )!.id
+    const { memberId: hiddenId } = await hideAsAdmin(setup, authUserId)
 
-    expect(await setup.directory.claimAvatarRefresh(memberId, inTwoMinutes)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(hiddenId)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(unfinishedId)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(unfinishedId + 100)).toBeNull()
   })
 
-    it('refuses a Discord account already connected to another Member', async () => {
+  it('refuses a Discord account already connected to another Member', async () => {
     const { directory, signUpWithGitHub } = await createTestSetup()
     const first = await signUpWithGitHub('octocat')
     const second = await signUpWithGitHub('hubot')
@@ -215,25 +239,47 @@ describe('when to sync Discord', () => {
   const sessionStartedAt = new Date('2026-10-01T09:00:00Z')
   const minute = 60 * 1000
   const at = (ms: number) => new Date(sessionStartedAt.getTime() + ms)
+  const now = at(5 * minute)
 
   it('syncs when Discord was never synced', () => {
     expect(
-      isDiscordSyncDue({ syncedAt: null, sessionStartedAt, linkedAt: at(0) }),
+      isDiscordSyncDue({ syncedAt: null, sessionStartedAt, linkedAt: at(0), now }),
     ).toBe(true)
   })
 
-  it('syncs once per sign-in', () => {
+  it('syncs on each sign-in', () => {
     expect(
-      isDiscordSyncDue({ syncedAt: at(-minute), sessionStartedAt, linkedAt: at(-2 * minute) }),
+      isDiscordSyncDue({
+        syncedAt: at(-minute),
+        sessionStartedAt,
+        linkedAt: at(-2 * minute),
+        now,
+      }),
     ).toBe(true)
     expect(
-      isDiscordSyncDue({ syncedAt: at(minute), sessionStartedAt, linkedAt: at(-2 * minute) }),
+      isDiscordSyncDue({
+        syncedAt: at(minute),
+        sessionStartedAt,
+        linkedAt: at(-2 * minute),
+        now,
+      }),
     ).toBe(false)
   })
 
   it('syncs again after Discord is connected again in the same session', () => {
     expect(
-      isDiscordSyncDue({ syncedAt: at(minute), sessionStartedAt, linkedAt: at(2 * minute) }),
+      isDiscordSyncDue({
+        syncedAt: at(minute),
+        sessionStartedAt,
+        linkedAt: at(2 * minute),
+        now,
+      }),
     ).toBe(true)
+  })
+
+  it('syncs again once the last sync is over 10 minutes old', () => {
+    const synced = { syncedAt: at(minute), sessionStartedAt, linkedAt: at(-2 * minute) }
+    expect(isDiscordSyncDue({ ...synced, now: at(11 * minute) })).toBe(false)
+    expect(isDiscordSyncDue({ ...synced, now: at(11 * minute + 1) })).toBe(true)
   })
 })

@@ -64,6 +64,13 @@
       "when": 1791316229523,
       "tag": "0008_members_discord_avatar",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791319717927,
+      "tag": "0009_members_discord_refresh_attempted",
+      "breakpoints": true
     }
   ]
 }

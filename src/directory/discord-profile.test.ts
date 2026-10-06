@@ -17,17 +17,16 @@ describe('a Discord handle', () => {
 
 describe('a Discord avatar', () => {
   it("is the Member's custom picture when they set one", () => {
-    expect(
-      discordAvatarUrl({ userId: '80351110224678912', avatar: '8342729096ea3675442027381ff50dfe' }),
-    ).toBe(
-      'https://cdn.discordapp.com/avatars/80351110224678912/8342729096ea3675442027381ff50dfe.png?size=128',
+    const avatar = '8342729096ea3675442027381ff50dfe'
+    expect(discordAvatarUrl({ userId: '80351110224678912', avatar })).toBe(
+      `https://cdn.discordapp.com/avatars/80351110224678912/${avatar}.png?size=128`,
     )
   })
 
   it("is Discord's default picture, chosen by user ID, when they set none", () => {
     // (80351110224678912 >> 22) % 6 = 5
-    expect(discordAvatarUrl({ userId: '80351110224678912', avatar: null })).toBe(
-      'https://cdn.discordapp.com/embed/avatars/5.png',
-    )
+    expect(
+      discordAvatarUrl({ userId: '80351110224678912', avatar: null }),
+    ).toBe('https://cdn.discordapp.com/embed/avatars/5.png')
   })
 })

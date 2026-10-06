@@ -1,6 +1,10 @@
 import { directory } from '../directory/app-directory'
 import { discordHandle, type DiscordProfile } from '../directory/discord-profile'
-import { discordGet, type LinkedDiscordAccount } from './discord-api'
+import {
+  discordGet,
+  findLinkedDiscordAccount,
+  type LinkedDiscordAccount,
+} from './discord-api'
 
 export type DiscordSyncResult = 'synced' | 'failed'
 
@@ -25,4 +29,13 @@ export async function syncDiscord(
     console.error('Could not sync the Discord connection', error)
     return 'failed'
   }
+}
+
+// Syncs the Discord account that `authUserId` linked most recently, for
+// syncs a signed-in Member's page load didn't start. 'failed' without one.
+export async function syncDiscordFor(
+  authUserId: string,
+): Promise<DiscordSyncResult> {
+  const linked = await findLinkedDiscordAccount(authUserId)
+  return linked ? syncDiscord(linked) : 'failed'
 }

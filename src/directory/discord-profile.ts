@@ -1,5 +1,3 @@
-import type { DiscordConnection } from './directory'
-
 // The fields of Discord's /users/@me response that the Directory uses.
 export type DiscordProfile = {
   id: string
@@ -8,6 +6,13 @@ export type DiscordProfile = {
   discriminator: string
   // Null until the user uploads a picture; `a_` hashes are animated.
   avatar: string | null
+}
+
+// The Discord account a Member connected, as the Directory stores it.
+export type DiscordConnection = {
+  userId: string
+  handle: string
+  avatar: DiscordProfile['avatar']
 }
 
 // What other Members type to find someone on Discord.

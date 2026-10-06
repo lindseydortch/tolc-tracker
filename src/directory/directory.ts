@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull, lt, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
@@ -18,7 +18,7 @@ import {
 import { NotAdminError } from './admin'
 import { mergeSkills, mergeTargetRoles } from './catalog-merge'
 import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
-import { discordAvatarUrl } from './discord-profile'
+import { discordAvatarUrl, type DiscordConnection } from './discord-profile'
 import type { MergeForm } from './merge-form'
 import {
   deleteMember,
@@ -85,12 +85,6 @@ export type Member = {
   links: MemberLink[]
 }
 
-export type DiscordConnection = {
-  userId: string
-  handle: string
-  avatar: string | null
-}
-
 export type SignedInMember = {
   id: number
   githubUrl: string
@@ -130,6 +124,7 @@ export type Membership = 'in-tolc' | 'not-in-tolc' | 'hidden' | 'unknown'
 // Discord rate-limits each user's token, so never ask more often than this.
 const membershipRetryMs = 30 * 1000
 const avatarRefreshMs = 60 * 1000
+const discordResyncMs = 10 * 60 * 1000
 
 // `membershipChecker` is only needed by `checkMembership`.
 // `adminDiscordUserId` names the Admin; without it, no one is.
@@ -498,24 +493,34 @@ export function createDirectory(
 
     // A Member's badge photo stopped loading, which usually means they
     // changed their Discord avatar. Returns whose Discord to sync again, or
-    // null if the Directory doesn't show them or they synced within the
-    // last minute, so a Discord CDN outage can't set off a sync per viewer.
+    // null if the Directory doesn't show them or a viewer already asked in
+    // the last minute, answered or not, so a Discord outage can't set off a
+    // sync per viewer. Claiming is atomic: of viewers asking at once, one wins.
     async claimAvatarRefresh(
       memberId: number,
       now = new Date(),
     ): Promise<string | null> {
-      const [member] = await db
-        .select({ authUserId: members.authUserId })
-        .from(members)
+      const [shown] = await completeProfiles(
+        and(eq(members.id, memberId), eq(members.hidden, false)),
+      )
+      if (!shown) return null
+      const [claimed] = await db
+        .update(members)
+        .set({ discordRefreshAttemptedAt: now })
         .where(
           and(
             eq(members.id, memberId),
-            eq(members.hidden, false),
-            isNotNull(members.discordUserId),
-            lt(members.discordSyncedAt, new Date(now.getTime() - avatarRefreshMs)),
+            or(
+              isNull(members.discordRefreshAttemptedAt),
+              lt(
+                members.discordRefreshAttemptedAt,
+                new Date(now.getTime() - avatarRefreshMs),
+              ),
+            ),
           ),
         )
-      return member?.authUserId ?? null
+        .returning({ authUserId: members.authUserId })
+      return claimed?.authUserId ?? null
     },
 
     async memberForAuthUser(authUserId: string): Promise<Member | null> {
@@ -634,19 +639,27 @@ export function createDirectory(
 
 export type Directory = ReturnType<typeof createDirectory>
 
-// Discord is synced once per sign-in, and again after the Member connects
-// Discord in the middle of a session (which doesn't start a new one).
+// Discord is synced on each sign-in, again after the Member connects
+// Discord in the middle of a session (which doesn't start a new one), and
+// every 10 minutes while they use the app, so a new avatar shows up soon.
 export function isDiscordSyncDue({
   syncedAt,
   sessionStartedAt,
   linkedAt,
+  now,
 }: {
   syncedAt: Date | null
   sessionStartedAt: Date
   // When the linked Discord account was last connected or refreshed.
   linkedAt: Date
+  now: Date
 }): boolean {
-  return !syncedAt || syncedAt < sessionStartedAt || syncedAt < linkedAt
+  return (
+    !syncedAt ||
+    syncedAt < sessionStartedAt ||
+    syncedAt < linkedAt ||
+    now.getTime() - syncedAt.getTime() > discordResyncMs
+  )
 }
 
 type CatalogEntryRef = { id: number; name: string }

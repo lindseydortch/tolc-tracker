@@ -80,7 +80,8 @@ export function MemberBadge({
 
 // The Member's Discord avatar, printed on the badge like an ID photo. If it
 // stops loading (usually a changed avatar), it asks for the current one
-// once; failing that, the Member's initials take its place at the same size.
+// once. The Member's initials hold its place at the same size meanwhile,
+// and for good if there's nothing newer.
 function BadgePhoto({ entry }: { entry: DirectoryEntry }) {
   const [src, setSrc] = useState(entry.discordAvatarUrl)
   const [status, setStatus] = useState<'showing' | 'refreshing' | 'failed'>('showing')
@@ -108,7 +109,7 @@ function BadgePhoto({ entry }: { entry: DirectoryEntry }) {
 
   return (
     <span className="badge-photo">
-      {status === 'failed' && (
+      {status !== 'showing' && (
         <span aria-hidden="true">
           {entry.firstName.charAt(0)}
           {entry.lastName.charAt(0)}
