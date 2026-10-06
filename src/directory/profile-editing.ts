@@ -18,21 +18,24 @@ import type { LinkKind, StackLayer } from './directory'
 import { normalizeName } from './normalize-name'
 import {
   checkDetails,
-  checkLinks,
   checkProfile,
   isTypeScript,
-  optionalLinks,
   sortSeniorities,
   typeScript,
   type Catalogs,
   type DetailsForm,
-  type LinksForm,
-  type LinksProblems,
   type ProfileForm,
   type ProfileProblems,
   type ResolvedDetails,
   type SaveResult,
 } from './profile'
+import {
+  checkLinks,
+  linksFrom,
+  optionalLinks,
+  type LinksForm,
+  type LinksProblems,
+} from './profile-links'
 
 export type TechStackSkill = { name: string; stackLayer: StackLayer | null }
 
@@ -196,6 +199,12 @@ export function createProfileEditing(
         .orderBy(asc(links.id))
       const linkOf = (kind: LinkKind) =>
         memberLinks.find((link) => link.kind === kind)?.url ?? ''
+      const savedLinks = linksFrom(
+        linkOf,
+        memberLinks
+          .filter((link) => link.kind === 'custom')
+          .map((link) => ({ label: link.label ?? '', url: link.url })),
+      )
       const roles = await db
         .select({ name: targetRoles.name })
         .from(memberTargetRoles)
@@ -225,14 +234,7 @@ export function createProfileEditing(
             seniorities.filter((s) => !s.preferred).map((s) => s.seniority),
           ),
         },
-        links: {
-          resume: linkOf('resume'),
-          portfolio: linkOf('portfolio'),
-          bluesky: linkOf('bluesky'),
-          custom: memberLinks
-            .filter((link) => link.kind === 'custom')
-            .map((link) => ({ label: link.label ?? '', url: link.url })),
-        },
+        links: savedLinks,
         techStack,
         typeScriptBadge: techStack.some((skill) => isTypeScript(skill.name)),
       }

@@ -15,13 +15,15 @@ import {
 import {
   detailsProblems,
   findInCatalog,
-  linksProblems,
-  optionalLinks,
   skillsForLayer,
   stackLayerLabels,
   stackLayers,
-  type CustomLinkForm,
 } from '../../directory/profile'
+import {
+  linksProblems,
+  optionalLinks,
+  type CustomLinkForm,
+} from '../../directory/profile-links'
 import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
 import { useReloadAfterChange } from '../../directory/reload-after-change'
 import { SaveStatus, useSavedForm, useServerChange } from '../../directory/saved-form'

@@ -1,4 +1,4 @@
-import { formReader } from './profile'
+import { formReader } from './profile-parsing'
 
 // The Admin merges the Catalog entry named `from` into the one named `into`.
 export type MergeForm = { from: string; into: string }

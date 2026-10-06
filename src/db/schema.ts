@@ -98,11 +98,14 @@ export const members = pgTable('members', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// Profile pages list Links in this order, so a migration adding a kind
+// must place it with `ADD VALUE ... BEFORE`, not append it.
 export const linkKind = pgEnum('link_kind', [
   'linkedin',
   'github',
   'resume',
   'portfolio',
+  'x',
   'bluesky',
   'custom',
 ])

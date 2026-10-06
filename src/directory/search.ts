@@ -1,10 +1,10 @@
 import type { JobSearchStatus, Seniority } from './directory'
 import {
-  formReader,
   jobSearchStatusLabels,
   seniorityLabels,
   type PreferredStack,
 } from './profile'
+import { formReader } from './profile-parsing'
 
 // What a Member searches the Directory by. An empty list doesn't filter.
 // Skills and Target Roles are typed names or Aliases.

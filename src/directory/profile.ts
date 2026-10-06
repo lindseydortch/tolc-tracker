@@ -4,11 +4,11 @@ import type {
   CatalogSkill,
   CatalogTargetRole,
   JobSearchStatus,
-  LinkKind,
   Seniority,
   StackLayer,
 } from './directory'
 import { normalizeName } from './normalize-name'
+import { toUrl } from './to-url'
 
 export const jobSearchStatusLabels: Record<JobSearchStatus, string> = {
   activelyLooking: 'Actively Looking',
@@ -29,16 +29,6 @@ export const stackLayerLabels: Record<StackLayer, string> = {
   backendFramework: 'Backend Framework',
   backendLanguage: 'Backend Language',
   database: 'Database',
-}
-
-// Custom Links show their own label instead.
-export const linkKindLabels: Record<LinkKind, string> = {
-  linkedin: 'LinkedIn',
-  github: 'GitHub',
-  resume: 'Resume',
-  portfolio: 'Portfolio',
-  bluesky: 'Bluesky',
-  custom: 'Custom',
 }
 
 export type Catalogs = {
@@ -183,79 +173,6 @@ export function checkProfile(form: ProfileForm, catalogs: Catalogs): ProfileChec
 // What a save returns: success, or what blocked it.
 export type SaveResult<Failure> = { ok: true } | ({ ok: false } & Failure)
 
-// The optional Links other than Custom Links, one of each per Member.
-export const optionalLinks = [
-  {
-    kind: 'resume',
-    label: 'Resume URL',
-    placeholder: 'https://example.com/resume.pdf',
-    problem: 'Enter your resume as a URL',
-  },
-  {
-    kind: 'portfolio',
-    label: 'Portfolio URL',
-    placeholder: 'https://example.com',
-    problem: 'Enter your portfolio as a URL',
-  },
-  {
-    kind: 'bluesky',
-    label: 'Bluesky profile URL',
-    placeholder: 'https://bsky.app/profile/you',
-    problem: 'Enter your Bluesky profile as a URL',
-  },
-] as const
-
-export type OptionalLinkKind = (typeof optionalLinks)[number]['kind']
-
-// The optional Links. A blank URL means the Member has no such Link.
-export type LinksForm = Record<OptionalLinkKind, string> & {
-  custom: CustomLinkForm[]
-}
-
-export type CustomLinkForm = { label: string; url: string }
-
-export type LinksProblems = Partial<
-  Record<OptionalLinkKind, string> & {
-    // One entry per Custom Link, undefined where it is fine.
-    custom: (string | undefined)[]
-  }
->
-
-export type LinksCheck =
-  | { ok: true; links: LinksForm }
-  | { ok: false; problems: LinksProblems }
-
-export function checkLinks(form: LinksForm): LinksCheck {
-  const problems: LinksProblems = {}
-  const links: LinksForm = { resume: '', portfolio: '', bluesky: '', custom: [] }
-  for (const { kind, problem } of optionalLinks) {
-    if (!form[kind].trim()) continue
-    const url = toUrl(form[kind])
-    if (url) links[kind] = url
-    else problems[kind] = problem
-  }
-
-  const custom = form.custom.map((link) => ({
-    label: link.label.trim(),
-    url: toUrl(link.url),
-  }))
-  const customProblems = custom.map((link) => {
-    if (!link.label) return 'Enter a label'
-    if (!link.url) return 'Enter a URL'
-    return undefined
-  })
-  if (customProblems.some(Boolean)) problems.custom = customProblems
-  links.custom = custom.map(({ label, url }) => ({ label, url: url ?? '' }))
-
-  if (Object.keys(problems).length > 0) return { ok: false, problems }
-  return { ok: true, links }
-}
-
-export function linksProblems(form: LinksForm): LinksProblems {
-  const check = checkLinks(form)
-  return check.ok ? {} : check.problems
-}
-
 export function profileProblems(
   form: ProfileForm,
   catalogs: Catalogs,
@@ -339,132 +256,7 @@ function toLinkedinUrl(typed: string): string | null {
   return toUrl(typed, 'linkedin.com')
 }
 
-// Accepts an http(s) URL, with or without "https://", on `site` or its
-// subdomains if given.
-function toUrl(typed: string, site?: string): string | null {
-  const trimmed = typed.trim()
-  if (!trimmed) return null
-  let url: URL
-  try {
-    url = new URL(/^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`)
-  } catch {
-    return null
-  }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
-  const host = url.hostname.toLowerCase()
-  if (!host.includes('.')) return null
-  if (site && host !== site && !host.endsWith(`.${site}`)) return null
-  return url.toString()
-}
-
 // Drops names with nothing to match on, such as "" or " - ".
 function nonBlank(names: string[]): string[] {
   return names.filter((name) => normalizeName(name))
-}
-
-// Checks the shape of a form sent to the server, where it can't be trusted.
-// Throws on anything that isn't a ProfileForm; `checkProfile` then decides
-// whether it's complete.
-export function parseProfileForm(input: unknown): ProfileForm {
-  const read = formReader(input, 'signup form')
-  const stack = read.form.preferredStack
-  if (typeof stack !== 'object' || stack === null) read.fail('preferredStack')
-  const preferredStack: PreferredStack = {}
-  for (const [layer, name] of Object.entries(stack as object)) {
-    if (name === undefined) continue
-    if (typeof name !== 'string') read.fail('preferredStack')
-    preferredStack[read.oneOf('preferredStack', layer, stackLayerLabels)] = name
-  }
-  return { ...readDetails(read), preferredStack }
-}
-
-export function parseDetailsForm(input: unknown): DetailsForm {
-  return readDetails(formReader(input, 'profile details'))
-}
-
-export function parseLinksForm(input: unknown): LinksForm {
-  const read = formReader(input, 'Links')
-  const links: LinksForm = {
-    resume: '',
-    portfolio: '',
-    bluesky: '',
-    custom: read.list('custom').map((link) => {
-      const custom = formReader(link, 'Custom Link')
-      return { label: custom.text('label'), url: custom.text('url') }
-    }),
-  }
-  for (const { kind } of optionalLinks) links[kind] = read.text(kind)
-  return links
-}
-
-export type AddSkillForm = {
-  skill: string
-  stackLayer: StackLayer | null
-  // True once the Member agreed to replace the Skill in that Stack Layer.
-  replace: boolean
-}
-
-export function parseAddSkillForm(input: unknown): AddSkillForm {
-  const read = formReader(input, 'Skill')
-  return {
-    skill: read.text('skill'),
-    stackLayer:
-      read.form.stackLayer === null
-        ? null
-        : read.oneOf('stackLayer', read.form.stackLayer, stackLayerLabels),
-    replace: read.flag('replace'),
-  }
-}
-
-export function parseSkillName(input: unknown): { skill: string } {
-  return { skill: formReader(input, 'Skill').text('skill') }
-}
-
-export function parseTypeScriptBadge(input: unknown): { on: boolean } {
-  return { on: formReader(input, 'TypeScript Badge').flag('on') }
-}
-
-function readDetails(read: FormReader): DetailsForm {
-  const { form } = read
-  return {
-    firstName: read.text('firstName'),
-    lastName: read.text('lastName'),
-    linkedinUrl: read.text('linkedinUrl'),
-    jobSearchStatus:
-      form.jobSearchStatus === null
-        ? null
-        : read.oneOf('jobSearchStatus', form.jobSearchStatus, jobSearchStatusLabels),
-    targetRoles: read.list('targetRoles').map((name) =>
-      typeof name === 'string' ? name : read.fail('targetRoles'),
-    ),
-    preferredSeniority:
-      form.preferredSeniority === null
-        ? null
-        : read.oneOf('preferredSeniority', form.preferredSeniority, seniorityLabels),
-    otherSeniorities: read.list('otherSeniorities').map((value) =>
-      read.oneOf('otherSeniorities', value, seniorityLabels),
-    ),
-  }
-}
-
-type FormReader = ReturnType<typeof formReader>
-
-export function formReader(input: unknown, formName: string) {
-  const fail = (field: string): never => {
-    throw new Error(`Malformed ${formName}: ${field}`)
-  }
-  if (typeof input !== 'object' || input === null) fail('not an object')
-  const form = input as Record<string, unknown>
-  return {
-    form,
-    fail,
-    text: (field: string) =>
-      typeof form[field] === 'string' ? form[field] : fail(field),
-    flag: (field: string) =>
-      typeof form[field] === 'boolean' ? form[field] : fail(field),
-    list: (field: string) =>
-      Array.isArray(form[field]) ? (form[field] as unknown[]) : fail(field),
-    oneOf: <T extends string>(field: string, value: unknown, labels: Record<T, string>) =>
-      typeof value === 'string' && Object.hasOwn(labels, value) ? (value as T) : fail(field),
-  }
 }
