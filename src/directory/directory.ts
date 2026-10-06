@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
@@ -18,6 +18,7 @@ import {
 import { NotAdminError } from './admin'
 import { mergeSkills, mergeTargetRoles } from './catalog-merge'
 import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
+import { discordAvatarUrl, type DiscordConnection } from './discord-profile'
 import type { MergeForm } from './merge-form'
 import {
   deleteMember,
@@ -84,11 +85,6 @@ export type Member = {
   links: MemberLink[]
 }
 
-export type DiscordConnection = {
-  userId: string
-  handle: string
-}
-
 export type SignedInMember = {
   id: number
   githubUrl: string
@@ -103,6 +99,7 @@ export type DirectoryEntry = {
   firstName: string
   lastName: string
   discordHandle: string
+  discordAvatarUrl: string
   jobSearchStatus: JobSearchStatus
   targetRoles: string[]
   preferredSeniority: Seniority
@@ -126,6 +123,8 @@ export type Membership = 'in-tolc' | 'not-in-tolc' | 'hidden' | 'unknown'
 
 // Discord rate-limits each user's token, so never ask more often than this.
 const membershipRetryMs = 30 * 1000
+const avatarRefreshMs = 60 * 1000
+const discordResyncMs = 10 * 60 * 1000
 
 // `membershipChecker` is only needed by `checkMembership`.
 // `adminDiscordUserId` names the Admin; without it, no one is.
@@ -147,7 +146,9 @@ export function createDirectory(
         id: members.id,
         firstName: members.firstName,
         lastName: members.lastName,
+        discordUserId: members.discordUserId,
         discordHandle: members.discordHandle,
+        discordAvatar: members.discordAvatar,
         jobSearchStatus: members.jobSearchStatus,
       })
       .from(members)
@@ -190,7 +191,7 @@ export function createDirectory(
 
     const entries: CompleteProfile[] = []
     for (const row of rows) {
-      const { firstName, lastName, discordHandle, jobSearchStatus } = row
+      const { firstName, lastName, discordUserId, discordHandle, jobSearchStatus } = row
       const own = <T extends { memberId: number }>(all: T[]) =>
         all.filter((item) => item.memberId === row.id)
       const preferred = own(seniorities).find((s) => s.preferred)
@@ -204,6 +205,7 @@ export function createDirectory(
       if (
         !firstName ||
         !lastName ||
+        !discordUserId ||
         !discordHandle ||
         !jobSearchStatus ||
         !preferred ||
@@ -217,6 +219,10 @@ export function createDirectory(
         firstName,
         lastName,
         discordHandle,
+        discordAvatarUrl: discordAvatarUrl({
+          userId: discordUserId,
+          avatar: row.discordAvatar,
+        }),
         jobSearchStatus,
         targetRoles: targetRoleNames,
         preferredSeniority: preferred.seniority,
@@ -266,6 +272,7 @@ export function createDirectory(
             id: members.id,
             discordUserId: members.discordUserId,
             discordHandle: members.discordHandle,
+            discordAvatar: members.discordAvatar,
             discordSyncedAt: members.discordSyncedAt,
             githubUrl: links.url,
             linkId: links.id,
@@ -298,7 +305,11 @@ export function createDirectory(
         }
         const discord =
           existing?.discordUserId && existing.discordHandle
-            ? { userId: existing.discordUserId, handle: existing.discordHandle }
+            ? {
+                userId: existing.discordUserId,
+                handle: existing.discordHandle,
+                avatar: existing.discordAvatar,
+              }
             : null
         return {
           id: memberId,
@@ -310,7 +321,8 @@ export function createDirectory(
     },
 
     // Called when the Member links Discord and again after each sign-in, so
-    // the handle follows Discord renames. The Discord user ID never changes.
+    // the handle and avatar follow Discord changes. The Discord user ID
+    // never changes.
     async connectDiscord({
       authUserId,
       discord,
@@ -323,6 +335,7 @@ export function createDirectory(
         .set({
           discordUserId: discord.userId,
           discordHandle: discord.handle,
+          discordAvatar: discord.avatar,
           discordSyncedAt: new Date(),
           // A different Discord account must pass the membership check anew.
           membershipPassedAt: sql`
@@ -478,6 +491,38 @@ export function createDirectory(
       return { ...profile, links: memberLinks }
     },
 
+    // A Member's badge photo stopped loading, which usually means they
+    // changed their Discord avatar. Returns whose Discord to sync again, or
+    // null if the Directory doesn't show them or a viewer already asked in
+    // the last minute, answered or not, so a Discord outage can't set off a
+    // sync per viewer. Claiming is atomic: of viewers asking at once, one wins.
+    async claimAvatarRefresh(
+      memberId: number,
+      now = new Date(),
+    ): Promise<string | null> {
+      const [shown] = await completeProfiles(
+        and(eq(members.id, memberId), eq(members.hidden, false)),
+      )
+      if (!shown) return null
+      const [claimed] = await db
+        .update(members)
+        .set({ discordRefreshAttemptedAt: now })
+        .where(
+          and(
+            eq(members.id, memberId),
+            or(
+              isNull(members.discordRefreshAttemptedAt),
+              lt(
+                members.discordRefreshAttemptedAt,
+                new Date(now.getTime() - avatarRefreshMs),
+              ),
+            ),
+          ),
+        )
+        .returning({ authUserId: members.authUserId })
+      return claimed?.authUserId ?? null
+    },
+
     async memberForAuthUser(authUserId: string): Promise<Member | null> {
       const [member] = await db
         .select({ id: members.id, hidden: members.hidden })
@@ -594,19 +639,27 @@ export function createDirectory(
 
 export type Directory = ReturnType<typeof createDirectory>
 
-// Discord is synced once per sign-in, and again after the Member connects
-// Discord in the middle of a session (which doesn't start a new one).
+// Discord is synced on each sign-in, again after the Member connects
+// Discord in the middle of a session (which doesn't start a new one), and
+// every 10 minutes while they use the app, so a new avatar shows up soon.
 export function isDiscordSyncDue({
   syncedAt,
   sessionStartedAt,
   linkedAt,
+  now,
 }: {
   syncedAt: Date | null
   sessionStartedAt: Date
   // When the linked Discord account was last connected or refreshed.
   linkedAt: Date
+  now: Date
 }): boolean {
-  return !syncedAt || syncedAt < sessionStartedAt || syncedAt < linkedAt
+  return (
+    !syncedAt ||
+    syncedAt < sessionStartedAt ||
+    syncedAt < linkedAt ||
+    now.getTime() - syncedAt.getTime() > discordResyncMs
+  )
 }
 
 type CatalogEntryRef = { id: number; name: string }

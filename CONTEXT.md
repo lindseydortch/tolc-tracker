@@ -97,5 +97,5 @@ _Avoid_: synonym, variant
 ### Views
 
 **Quick View**:
-The Directory shown as a grid of Member cards, used to scan for someone before searching. Each card shows first and last name, Discord handle, Job Search Status, Target Roles, Seniority, and Primary Skills.
+The Directory shown as a grid of Member cards, used to scan for someone before searching. Each card shows the Member's Discord avatar, first and last name, Discord handle, Job Search Status, Target Roles, Seniority, and Primary Skills.
 _Avoid_: dashboard, home

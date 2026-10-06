@@ -929,9 +929,40 @@ label.field {
   display: grid;
   padding-right: 2.25rem;
 }
+.badge-who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
 .badge-name {
   display: grid;
   gap: 0.15rem;
+  min-width: 0;
+}
+/* The Discord avatar as the badge's ID photo, or initials if it fails. */
+.badge-photo {
+  --photo: 3.25rem;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--photo);
+  height: var(--photo);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  background: var(--badge-hi);
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: var(--text-md);
+  color: var(--ink-2);
+}
+.badge-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .badge-first {
   font-family: var(--font-display);
@@ -1090,6 +1121,10 @@ label.field {
 }
 .profile-badge .badge-first {
   font-size: var(--text-2xl);
+}
+.profile-badge .badge-photo {
+  --photo: 4.5rem;
+  font-size: var(--text-lg);
 }
 .profile-badge .badge-last {
   font-size: var(--text-lg);

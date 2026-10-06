@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createTestSetup } from './test-directory'
 
-const octoDiscord = { userId: '80351110224678912', handle: 'octo_discord' }
+const octoDiscord = { userId: '80351110224678912', handle: 'octo_discord', avatar: null }
 const second = 1000
 const hour = 60 * 60 * second
 
@@ -117,7 +117,7 @@ describe('the TOLC membership check', () => {
     tolc.join(octoDiscord.userId)
     await check(firstLoad)
 
-    const otherDiscord = { userId: '41771983423143937', handle: 'other' }
+    const otherDiscord = { userId: '41771983423143937', handle: 'other', avatar: null }
     await directory.connectDiscord({ authUserId, discord: otherDiscord })
 
     expect(await check(after(hour))).toBe('not-in-tolc')

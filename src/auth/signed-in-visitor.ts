@@ -47,6 +47,7 @@ export async function loadSignedInVisitor(): Promise<{
       syncedAt: member.discordSyncedAt,
       sessionStartedAt: session.session.createdAt,
       linkedAt: linked.updatedAt,
+      now: new Date(),
     })
   ) {
     discordSyncFailed = (await syncDiscord(linked)) === 'failed'
