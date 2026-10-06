@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNotNull, isNull, lt, sql, type SQL } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import {
   links,
@@ -129,6 +129,7 @@ export type Membership = 'in-tolc' | 'not-in-tolc' | 'hidden' | 'unknown'
 
 // Discord rate-limits each user's token, so never ask more often than this.
 const membershipRetryMs = 30 * 1000
+const avatarRefreshMs = 60 * 1000
 
 // `membershipChecker` is only needed by `checkMembership`.
 // `adminDiscordUserId` names the Admin; without it, no one is.
@@ -493,6 +494,28 @@ export function createDirectory(
         // Link kinds sort in the order the `link_kind` enum declares them.
         .orderBy(asc(links.kind), asc(links.id))
       return { ...profile, links: memberLinks }
+    },
+
+    // A Member's badge photo stopped loading, which usually means they
+    // changed their Discord avatar. Returns whose Discord to sync again, or
+    // null if the Directory doesn't show them or they synced within the
+    // last minute, so a Discord CDN outage can't set off a sync per viewer.
+    async claimAvatarRefresh(
+      memberId: number,
+      now = new Date(),
+    ): Promise<string | null> {
+      const [member] = await db
+        .select({ authUserId: members.authUserId })
+        .from(members)
+        .where(
+          and(
+            eq(members.id, memberId),
+            eq(members.hidden, false),
+            isNotNull(members.discordUserId),
+            lt(members.discordSyncedAt, new Date(now.getTime() - avatarRefreshMs)),
+          ),
+        )
+      return member?.authUserId ?? null
     },
 
     async memberForAuthUser(authUserId: string): Promise<Member | null> {

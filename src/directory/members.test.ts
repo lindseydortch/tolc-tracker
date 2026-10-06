@@ -3,7 +3,7 @@ import { isDiscordSyncDue } from './directory'
 import { discordAvatarUrl } from './discord-profile'
 import { emptySearch } from './search'
 import { createTestSetup } from './test-directory'
-import { memberWithProfile, seededSetup } from './test-profiles'
+import { hideAsAdmin, memberWithProfile, seededSetup } from './test-profiles'
 
 describe('signing in a Member with GitHub', () => {
   it('creates a Member with their GitHub Link on first sign-in', async () => {
@@ -143,7 +143,27 @@ describe('connecting Discord', () => {
     expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: null }))
   })
 
-  it('refuses a Discord account already connected to another Member', async () => {
+  it("refreshes a Member's Discord avatar at most once a minute when it stops loading", async () => {
+    const setup = await seededSetup()
+    const { authUserId } = await memberWithProfile(setup, 'octocat')
+    const [entry] = await setup.directory.searchDirectory(emptySearch)
+    const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
+
+    expect(await setup.directory.claimAvatarRefresh(entry.id)).toBeNull()
+    expect(await setup.directory.claimAvatarRefresh(entry.id, inTwoMinutes)).toBe(authUserId)
+    expect(await setup.directory.claimAvatarRefresh(entry.id + 1, inTwoMinutes)).toBeNull()
+  })
+
+  it("never refreshes the avatar of a Member the Directory doesn't show", async () => {
+    const setup = await seededSetup()
+    const { authUserId } = await memberWithProfile(setup, 'octocat')
+    const { memberId } = await hideAsAdmin(setup, authUserId)
+    const inTwoMinutes = new Date(Date.now() + 2 * 60 * 1000)
+
+    expect(await setup.directory.claimAvatarRefresh(memberId, inTwoMinutes)).toBeNull()
+  })
+
+    it('refuses a Discord account already connected to another Member', async () => {
     const { directory, signUpWithGitHub } = await createTestSetup()
     const first = await signUpWithGitHub('octocat')
     const second = await signUpWithGitHub('hubot')
