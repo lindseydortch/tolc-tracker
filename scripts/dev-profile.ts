@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { createNeonDb } from '../src/db/neon'
 import { memberSkills, members } from '../src/db/schema'
 import { createDirectory } from '../src/directory/directory'
+import { emptyLinks } from '../src/directory/profile-links'
 
 // Resets the Admin's Member in the dev database to a standing, clearly fake
 // profile, so live tests start from the same filled profile every time.
@@ -65,10 +66,9 @@ const steps = [
   await directory.saveLinks({
     authUserId,
     links: {
+      ...emptyLinks(),
       resume: 'https://example.com/test-admin-resume.pdf',
       portfolio: 'https://example.com/test-admin',
-      x: '',
-      bluesky: '',
       custom: [{ label: 'Test talk', url: 'https://example.com/test-talk' }],
     },
   }),

@@ -31,7 +31,7 @@ import {
 } from './profile'
 import {
   checkLinks,
-  emptyLinks,
+  linksFrom,
   optionalLinks,
   type LinksForm,
   type LinksProblems,
@@ -199,11 +199,12 @@ export function createProfileEditing(
         .orderBy(asc(links.id))
       const linkOf = (kind: LinkKind) =>
         memberLinks.find((link) => link.kind === kind)?.url ?? ''
-      const savedLinks = emptyLinks()
-      for (const { kind } of optionalLinks) savedLinks[kind] = linkOf(kind)
-      savedLinks.custom = memberLinks
-        .filter((link) => link.kind === 'custom')
-        .map((link) => ({ label: link.label ?? '', url: link.url }))
+      const savedLinks = linksFrom(
+        linkOf,
+        memberLinks
+          .filter((link) => link.kind === 'custom')
+          .map((link) => ({ label: link.label ?? '', url: link.url })),
+      )
       const roles = await db
         .select({ name: targetRoles.name })
         .from(memberTargetRoles)

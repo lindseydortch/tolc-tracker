@@ -76,7 +76,7 @@ function MemberProfilePage() {
               {profile.links.map((link) => (
                 <li key={`${link.kind} ${link.url}`}>
                   <a href={link.url} target="_blank" rel="noreferrer">
-                    <LinkIcon kind={link.kind} />
+                    {linkIcons[link.kind]}
                     {link.kind === 'custom' && link.label
                       ? link.label
                       : linkKindLabels[link.kind]}
@@ -90,10 +90,6 @@ function MemberProfilePage() {
       </div>
     </main>
   )
-}
-
-function LinkIcon({ kind }: { kind: MemberLink['kind'] }) {
-  return linkIcons[kind]
 }
 
 const otherLinkIcon = <Link2 size={16} aria-hidden="true" />

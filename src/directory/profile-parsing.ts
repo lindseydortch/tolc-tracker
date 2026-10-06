@@ -10,7 +10,7 @@ import {
   type PreferredStack,
   type ProfileForm,
 } from './profile'
-import { emptyLinks, optionalLinks, type LinksForm } from './profile-links'
+import { linksFrom, type LinksForm } from './profile-links'
 
 export function parseProfileForm(input: unknown): ProfileForm {
   const read = formReader(input, 'signup form')
@@ -31,13 +31,13 @@ export function parseDetailsForm(input: unknown): DetailsForm {
 
 export function parseLinksForm(input: unknown): LinksForm {
   const read = formReader(input, 'Links')
-  const links = emptyLinks()
-  for (const { kind } of optionalLinks) links[kind] = read.text(kind)
-  links.custom = read.list('custom').map((link) => {
-    const custom = formReader(link, 'Custom Link')
-    return { label: custom.text('label'), url: custom.text('url') }
-  })
-  return links
+  return linksFrom(
+    (kind) => read.text(kind),
+    read.list('custom').map((link) => {
+      const custom = formReader(link, 'Custom Link')
+      return { label: custom.text('label'), url: custom.text('url') }
+    }),
+  )
 }
 
 export type AddSkillForm = {

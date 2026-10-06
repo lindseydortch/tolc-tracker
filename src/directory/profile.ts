@@ -8,7 +8,7 @@ import type {
   StackLayer,
 } from './directory'
 import { normalizeName } from './normalize-name'
-import { toUrl } from './profile-links'
+import { toUrl } from './to-url'
 
 export const jobSearchStatusLabels: Record<JobSearchStatus, string> = {
   activelyLooking: 'Actively Looking',

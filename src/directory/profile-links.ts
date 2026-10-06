@@ -1,41 +1,35 @@
 // Link rules shared by the browser and the server. Imports no database
 // code, so routes can use it client-side.
 import type { LinkKind } from './directory'
-
-// Custom Links show their own label instead.
-export const linkKindLabels: Record<LinkKind, string> = {
-  linkedin: 'LinkedIn',
-  github: 'GitHub',
-  resume: 'Resume',
-  portfolio: 'Portfolio',
-  x: 'X',
-  bluesky: 'Bluesky',
-  custom: 'Custom',
-}
+import { toUrl } from './to-url'
 
 // The optional Links other than Custom Links, one of each per Member.
 // Adding a kind here also needs it in the `link_kind` enum.
 export const optionalLinks = [
   {
     kind: 'resume',
+    name: 'Resume',
     label: 'Resume URL',
     placeholder: 'https://example.com/resume.pdf',
     problem: 'Enter your resume as a URL',
   },
   {
     kind: 'portfolio',
+    name: 'Portfolio',
     label: 'Portfolio URL',
     placeholder: 'https://example.com',
     problem: 'Enter your portfolio as a URL',
   },
   {
     kind: 'x',
+    name: 'X',
     label: 'X profile URL',
     placeholder: 'https://x.com/you',
     problem: 'Enter your X profile as a URL',
   },
   {
     kind: 'bluesky',
+    name: 'Bluesky',
     label: 'Bluesky profile URL',
     placeholder: 'https://bsky.app/profile/you',
     problem: 'Enter your Bluesky profile as a URL',
@@ -44,6 +38,14 @@ export const optionalLinks = [
 
 export type OptionalLinkKind = (typeof optionalLinks)[number]['kind']
 
+// Custom Links show their own label instead.
+export const linkKindLabels: Record<LinkKind, string> = {
+  linkedin: 'LinkedIn',
+  github: 'GitHub',
+  ...optionalLinkValues(({ name }) => name),
+  custom: 'Custom',
+}
+
 // The optional Links. A blank URL means the Member has no such Link.
 export type LinksForm = Record<OptionalLinkKind, string> & {
   custom: CustomLinkForm[]
@@ -51,11 +53,28 @@ export type LinksForm = Record<OptionalLinkKind, string> & {
 
 export type CustomLinkForm = { label: string; url: string }
 
+// A LinksForm whose optional Links take their URLs from `urlOf`.
+export function linksFrom(
+  urlOf: (kind: OptionalLinkKind) => string,
+  custom: CustomLinkForm[],
+): LinksForm {
+  return { ...optionalLinkValues(({ kind }) => urlOf(kind)), custom }
+}
+
 // A LinksForm with every optional Link blank and no Custom Links.
 export function emptyLinks(): LinksForm {
-  const links = { custom: [] } as unknown as LinksForm
-  for (const { kind } of optionalLinks) links[kind] = ''
-  return links
+  return linksFrom(() => '', [])
+}
+
+// One value per optional Link kind. The cast is safe because `optionalLinks`
+// lists every OptionalLinkKind, and TypeScript can't see that through
+// Object.fromEntries.
+function optionalLinkValues(
+  valueOf: (link: (typeof optionalLinks)[number]) => string,
+): Record<OptionalLinkKind, string> {
+  return Object.fromEntries(
+    optionalLinks.map((link) => [link.kind, valueOf(link)]),
+  ) as Record<OptionalLinkKind, string>
 }
 
 export type LinksProblems = Partial<
@@ -71,12 +90,8 @@ export type LinksCheck =
 
 export function checkLinks(form: LinksForm): LinksCheck {
   const problems: LinksProblems = {}
-  const links = emptyLinks()
   for (const { kind, problem } of optionalLinks) {
-    if (!form[kind].trim()) continue
-    const url = toUrl(form[kind])
-    if (url) links[kind] = url
-    else problems[kind] = problem
+    if (form[kind].trim() && !toUrl(form[kind])) problems[kind] = problem
   }
 
   const custom = form.custom.map((link) => ({
@@ -89,10 +104,15 @@ export function checkLinks(form: LinksForm): LinksCheck {
     return undefined
   })
   if (customProblems.some(Boolean)) problems.custom = customProblems
-  links.custom = custom.map(({ label, url }) => ({ label, url: url ?? '' }))
 
   if (Object.keys(problems).length > 0) return { ok: false, problems }
-  return { ok: true, links }
+  return {
+    ok: true,
+    links: linksFrom(
+      (kind) => toUrl(form[kind]) ?? '',
+      custom.map(({ label, url }) => ({ label, url: url ?? '' })),
+    ),
+  }
 }
 
 export function linksProblems(form: LinksForm): LinksProblems {
@@ -100,20 +120,3 @@ export function linksProblems(form: LinksForm): LinksProblems {
   return check.ok ? {} : check.problems
 }
 
-// Accepts an http(s) URL, with or without "https://", on `site` or its
-// subdomains if given.
-export function toUrl(typed: string, site?: string): string | null {
-  const trimmed = typed.trim()
-  if (!trimmed) return null
-  let url: URL
-  try {
-    url = new URL(/^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`)
-  } catch {
-    return null
-  }
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
-  const host = url.hostname.toLowerCase()
-  if (!host.includes('.')) return null
-  if (site && host !== site && !host.endsWith(`.${site}`)) return null
-  return url.toString()
-}
