@@ -87,6 +87,8 @@ export const members = pgTable('members', {
     .references(() => user.id, { onDelete: 'cascade' }),
   discordUserId: text('discord_user_id').unique(),
   discordHandle: text('discord_handle'),
+  // Discord's hash for the profile picture; null means Discord's default.
+  discordAvatar: text('discord_avatar'),
   discordSyncedAt: timestamp('discord_synced_at'),
   hidden: boolean('hidden').default(false).notNull(),
   membershipPassedAt: timestamp('membership_passed_at'),

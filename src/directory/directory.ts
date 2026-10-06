@@ -18,6 +18,7 @@ import {
 import { NotAdminError } from './admin'
 import { mergeSkills, mergeTargetRoles } from './catalog-merge'
 import { canonicalSkillNames, canonicalTargetRoleNames } from './catalog-entries'
+import { discordAvatarUrl } from './discord-profile'
 import type { MergeForm } from './merge-form'
 import {
   deleteMember,
@@ -87,6 +88,7 @@ export type Member = {
 export type DiscordConnection = {
   userId: string
   handle: string
+  avatar: string | null
 }
 
 export type SignedInMember = {
@@ -103,6 +105,7 @@ export type DirectoryEntry = {
   firstName: string
   lastName: string
   discordHandle: string
+  discordAvatarUrl: string
   jobSearchStatus: JobSearchStatus
   targetRoles: string[]
   preferredSeniority: Seniority
@@ -147,7 +150,9 @@ export function createDirectory(
         id: members.id,
         firstName: members.firstName,
         lastName: members.lastName,
+        discordUserId: members.discordUserId,
         discordHandle: members.discordHandle,
+        discordAvatar: members.discordAvatar,
         jobSearchStatus: members.jobSearchStatus,
       })
       .from(members)
@@ -190,7 +195,7 @@ export function createDirectory(
 
     const entries: CompleteProfile[] = []
     for (const row of rows) {
-      const { firstName, lastName, discordHandle, jobSearchStatus } = row
+      const { firstName, lastName, discordUserId, discordHandle, jobSearchStatus } = row
       const own = <T extends { memberId: number }>(all: T[]) =>
         all.filter((item) => item.memberId === row.id)
       const preferred = own(seniorities).find((s) => s.preferred)
@@ -204,6 +209,7 @@ export function createDirectory(
       if (
         !firstName ||
         !lastName ||
+        !discordUserId ||
         !discordHandle ||
         !jobSearchStatus ||
         !preferred ||
@@ -217,6 +223,10 @@ export function createDirectory(
         firstName,
         lastName,
         discordHandle,
+        discordAvatarUrl: discordAvatarUrl({
+          userId: discordUserId,
+          avatar: row.discordAvatar,
+        }),
         jobSearchStatus,
         targetRoles: targetRoleNames,
         preferredSeniority: preferred.seniority,
@@ -266,6 +276,7 @@ export function createDirectory(
             id: members.id,
             discordUserId: members.discordUserId,
             discordHandle: members.discordHandle,
+            discordAvatar: members.discordAvatar,
             discordSyncedAt: members.discordSyncedAt,
             githubUrl: links.url,
             linkId: links.id,
@@ -298,7 +309,11 @@ export function createDirectory(
         }
         const discord =
           existing?.discordUserId && existing.discordHandle
-            ? { userId: existing.discordUserId, handle: existing.discordHandle }
+            ? {
+                userId: existing.discordUserId,
+                handle: existing.discordHandle,
+                avatar: existing.discordAvatar,
+              }
             : null
         return {
           id: memberId,
@@ -310,7 +325,8 @@ export function createDirectory(
     },
 
     // Called when the Member links Discord and again after each sign-in, so
-    // the handle follows Discord renames. The Discord user ID never changes.
+    // the handle and avatar follow Discord changes. The Discord user ID
+    // never changes.
     async connectDiscord({
       authUserId,
       discord,
@@ -323,6 +339,7 @@ export function createDirectory(
         .set({
           discordUserId: discord.userId,
           discordHandle: discord.handle,
+          discordAvatar: discord.avatar,
           discordSyncedAt: new Date(),
           // A different Discord account must pass the membership check anew.
           membershipPassedAt: sql`

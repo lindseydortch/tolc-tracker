@@ -57,6 +57,13 @@
       "when": 1791183841385,
       "tag": "0007_links_x",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791316229523,
+      "tag": "0008_members_discord_avatar",
+      "breakpoints": true
     }
   ]
 }

@@ -23,7 +23,7 @@ export async function memberInTolc(
   const { directory, tolc, signUpWithGitHub } = setup
   const authUserId = await signUpWithGitHub(githubUsername)
   await directory.signIn({ authUserId, githubUsername })
-  const discord = { userId: discordUserId, handle: `${githubUsername}_dc` }
+  const discord = { userId: discordUserId, handle: `${githubUsername}_dc`, avatar: null }
   await directory.connectDiscord({ authUserId, discord })
   tolc.join(discord.userId)
   await directory.checkMembership({ authUserId })

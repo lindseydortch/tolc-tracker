@@ -5,6 +5,11 @@ import { emptyLinks } from './profile-links'
 import { parseAddSkillForm, parseLinksForm, parseProfileForm } from './profile-parsing'
 import { hideAsAdmin, memberInTolc, octoForm, seededSetup } from './test-profiles'
 
+// One of the six default pictures, since test Members set no avatar.
+const defaultDiscordAvatar = expect.stringMatching(
+  /^https:\/\/cdn\.discordapp\.com\/embed\/avatars\/[0-5]\.png$/,
+)
+
 async function seededCatalogs() {
   return (await seededSetup()).directory.catalogs()
 }
@@ -157,6 +162,7 @@ describe('completing a profile', () => {
         firstName: 'Octo',
         lastName: 'Cat',
         discordHandle: 'octocat_dc',
+        discordAvatarUrl: defaultDiscordAvatar,
         jobSearchStatus: 'activelyLooking',
         targetRoles: ['Software Engineer'],
         preferredSeniority: 'senior',
@@ -466,6 +472,7 @@ describe('a Member profile page', () => {
       firstName: 'Octo',
       lastName: 'Cat',
       discordHandle: 'octocat_dc',
+      discordAvatarUrl: defaultDiscordAvatar,
       jobSearchStatus: 'activelyLooking',
       targetRoles: ['Software Engineer'],
       preferredSeniority: 'senior',

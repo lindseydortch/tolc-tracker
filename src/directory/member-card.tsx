@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DiscordMark } from '../ui/marks'
 import type { DirectoryEntry } from './directory'
 import { jobSearchStatusLabels, seniorityLabels, stackLayers } from './profile'
@@ -26,10 +26,13 @@ export function MemberBadge({
       )}
       <div className="badge-body">
         <header className="badge-head">
-          <Title className="badge-name">
-            <span className="badge-first">{entry.firstName}</span>{' '}
-            <span className="badge-last">{entry.lastName}</span>
-          </Title>
+          <div className="badge-who">
+            <BadgePhoto key={entry.discordAvatarUrl} entry={entry} />
+            <Title className="badge-name">
+              <span className="badge-first">{entry.firstName}</span>{' '}
+              <span className="badge-last">{entry.lastName}</span>
+            </Title>
+          </div>
           <p className="badge-handle">
             <DiscordMark size={14} />
             <span className="visually-hidden">Discord: </span>
@@ -71,5 +74,40 @@ export function MemberBadge({
       </div>
       <footer className="ribbon">{jobSearchStatusLabels[entry.jobSearchStatus]}</footer>
     </article>
+  )
+}
+
+// The Member's Discord avatar, printed on the badge like an ID photo. If it
+// can't load, the Member's initials take its place at the same size.
+function BadgePhoto({ entry }: { entry: DirectoryEntry }) {
+  const [failed, setFailed] = useState(false)
+  const image = useRef<HTMLImageElement>(null)
+
+  // An image that failed before hydration fired its error event unheard.
+  useEffect(() => {
+    const loaded = image.current
+    if (loaded?.complete && loaded.naturalWidth === 0) setFailed(true)
+  }, [])
+
+  return (
+    <span className="badge-photo">
+      {failed ? (
+        <span aria-hidden="true">
+          {entry.firstName.charAt(0)}
+          {entry.lastName.charAt(0)}
+        </span>
+      ) : (
+        <img
+          ref={image}
+          src={entry.discordAvatarUrl}
+          alt={`${entry.firstName} ${entry.lastName}'s Discord avatar`}
+          width={128}
+          height={128}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
   )
 }

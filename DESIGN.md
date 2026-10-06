@@ -158,6 +158,11 @@ components:
     textColor: "{colors.on-sage}"
     rounded: "50%"
     size: "2.35rem"
+  badge-photo:
+    backgroundColor: "{colors.badge-hi}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.sm}"
+    size: "3.25rem"
   panel:
     backgroundColor: "{colors.ground-raised}"
     textColor: "{colors.ink}"
@@ -185,7 +190,7 @@ components:
 
 **Creative North Star: "The Badge Wall"**
 
-Every Member is an attendee badge hung on a violet-black wall. A badge has a punched lanyard slot at its top, a big condensed first name, the Discord handle in mono, a dashed perforation above its facts, and a full-strength status ribbon across its foot. The world is a conference hall after dark: dark badge stock, printed ink, lanyards in the club's violet. The pages before the Directory (sign-in, connect Discord, members only, not found) are a single blank badge hanging from a TOLC lanyard and clip.
+Every Member is an attendee badge hung on a violet-black wall. A badge has a punched lanyard slot at its top, the Member's Discord avatar as an ID photo beside a big condensed first name, the Discord handle in mono, a dashed perforation above its facts, and a full-strength status ribbon across its foot. The world is a conference hall after dark: dark badge stock, printed ink, lanyards in the club's violet. The pages before the Directory (sign-in, connect Discord, members only, not found) are a single blank badge hanging from a TOLC lanyard and clip.
 
 The system is dense and operational. Lookup speed comes first, so the wall runs four columns at desktop width, the filter rail stays pinned, and every surface outside the badge is quiet: tonal violet-black panels, hairline borders, one button vocabulary. Color is saved for meaning. The four brand inks (apricot, crimson, violet, sage) appear at full strength on status ribbons and swatches, violet carries the primary action and the selected state, and apricot carries focus.
 
@@ -314,7 +319,7 @@ One vocabulary everywhere, compact and outlined.
 - **Loading bar:** a 3px Club Violet strap fixed across the top of the window, above the top bar, with a 40% Lavender Ink segment sweeping left to right every 1100ms. It shows only when a page takes over 200ms to load, stays at least 300ms once shown, and fades in over 160ms. Under reduced motion the whole strap turns Lavender Ink instead of sweeping. The old page stays on screen underneath. A status region announces "Loading page" to screen readers.
 
 ### The Member Badge (signature)
-The one card in the system. It has 16px corners, a Badge Stock fill, a Hairline border and the badge rest shadow, with 1.75rem of top padding that holds the punched slot: a 2.5rem pill cut in Hall Black, centered. Inside, from top to bottom, are the condensed first name over the last name, the mono Discord handle with the Discord mark, a dashed perforation, a fact list (caption terms in Pencil over label values: Target Roles, Seniority, Primary Skills as chips), and the full-width status ribbon in the status ink. The TypeScript Badge is a sage circular "TS" sticker, rotated 9 degrees, top right. On hover or focus the badge lifts its shadow, brightens its border (apricot on focus) and swings around its slot (rotate -2.4°, 1.5°, -0.8°, 0.35°, 0 over 1100ms). On the profile and gates, the badge settles in from a -3° hang and hangs from a violet lanyard strap and clip.
+The one card in the system. It has 16px corners, a Badge Stock fill, a Hairline border and the badge rest shadow, with 1.75rem of top padding that holds the punched slot: a 2.5rem pill cut in Hall Black, centered. Inside, from top to bottom, are the ID photo beside the condensed first name over the last name, the mono Discord handle with the Discord mark, a dashed perforation, a fact list (caption terms in Pencil over label values: Target Roles, Seniority, Primary Skills as chips), and the full-width status ribbon in the status ink. The ID photo is the Member's Discord avatar: a plain image, not a link, 3.25rem square (4.5rem on the profile page) with 6px corners and a Seam border. If it fails to load, the Member's initials in condensed Archivo, Faded Ink on Badge Stock Lit, fill the same square. The TypeScript Badge is a sage circular "TS" sticker, rotated 9 degrees, top right. On hover or focus the badge lifts its shadow, brightens its border (apricot on focus) and swings around its slot (rotate -2.4°, 1.5°, -0.8°, 0.35°, 0 over 1100ms). On the profile and gates, the badge settles in from a -3° hang and hangs from a violet lanyard strap and clip.
 
 ### Gate
 The pages before the Directory: a 24rem column with a violet lanyard strap (printed with "TOLC" vertically at 55% white) and a Pencil clip, holding one badge with the heading, a line of Faded Ink copy, and full-width large buttons.

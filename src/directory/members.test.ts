@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { isDiscordSyncDue } from './directory'
+import { discordAvatarUrl } from './discord-profile'
+import { emptySearch } from './search'
 import { createTestSetup } from './test-directory'
+import { memberWithProfile, seededSetup } from './test-profiles'
 
 describe('signing in a Member with GitHub', () => {
   it('creates a Member with their GitHub Link on first sign-in', async () => {
@@ -62,7 +65,7 @@ describe('signing in a Member with GitHub', () => {
 })
 
 describe('connecting Discord', () => {
-  const octoDiscord = { userId: '80351110224678912', handle: 'octo_discord' }
+  const octoDiscord = { userId: '80351110224678912', handle: 'octo_discord', avatar: null }
 
   it('has no Discord connection right after GitHub sign-in', async () => {
     const { directory, signUpWithGitHub } = await createTestSetup()
@@ -97,6 +100,7 @@ describe('connecting Discord', () => {
     expect(after?.discord).toEqual({
       userId: '80351110224678912',
       handle: 'octo_discord',
+      avatar: null,
     })
   })
 
@@ -119,6 +123,24 @@ describe('connecting Discord', () => {
       githubUsername: 'octocat',
     })
     expect(signedIn?.discord?.handle).toBe('octo_renamed')
+  })
+
+  it("shows the Member's current Discord avatar on their profile", async () => {
+    const setup = await seededSetup()
+    const { authUserId, discord } = await memberWithProfile(setup, 'octocat')
+    const avatarUrl = async () => {
+      const [entry] = await setup.directory.searchDirectory(emptySearch)
+      const profile = await setup.directory.memberProfile(entry.id)
+      expect(profile?.discordAvatarUrl).toBe(entry.discordAvatarUrl)
+      return entry.discordAvatarUrl
+    }
+    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: null }))
+
+    await setup.directory.connectDiscord({ authUserId, discord: { ...discord, avatar: 'a_1f2e' } })
+    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: 'a_1f2e' }))
+
+    await setup.directory.connectDiscord({ authUserId, discord: { ...discord, avatar: null } })
+    expect(await avatarUrl()).toBe(discordAvatarUrl({ userId: discord.userId, avatar: null }))
   })
 
   it('refuses a Discord account already connected to another Member', async () => {

@@ -56,7 +56,7 @@ describe('recognising the Admin', () => {
     await setup.directory.signIn({ authUserId, githubUsername: 'tolc-owner' })
     await setup.directory.connectDiscord({
       authUserId,
-      discord: { userId: testAdminDiscordUserId, handle: 'tolc-owner_dc' },
+      discord: { userId: testAdminDiscordUserId, handle: 'tolc-owner_dc', avatar: null },
     })
     await setup.directory.checkMembership({ authUserId })
 

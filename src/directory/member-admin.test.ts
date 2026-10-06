@@ -147,7 +147,7 @@ describe('reactivating a Hidden Member', () => {
     const { setup, admin } = await adminAndOcto()
     const authUserId = await setup.signUpWithGitHub('mona')
     await setup.directory.signIn({ authUserId, githubUsername: 'mona' })
-    const discord = { userId: '41771983423143937', handle: 'mona_dc' }
+    const discord = { userId: '41771983423143937', handle: 'mona_dc', avatar: null }
     await setup.directory.connectDiscord({ authUserId, discord })
     const memberId = (await setup.directory.memberForAuthUser(authUserId))!.id
     await setup.directory.hideMember({ authUserId: admin, memberId })
