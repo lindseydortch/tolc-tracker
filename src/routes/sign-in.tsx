@@ -3,6 +3,9 @@ import { authClient } from '../auth/auth-client'
 import { Gate } from '../ui/gate'
 import { GitHubMark } from '../ui/marks'
 
+// The line strangers see under the heading. Change the wording here.
+const TAGLINE = "If you don't know what this is, it isn't for you."
+
 export const Route = createFileRoute('/sign-in')({
   beforeLoad: async ({ context }) => {
     if (await context.signIn.checkNow()) throw redirect({ to: '/' })
@@ -14,7 +17,7 @@ function SignIn() {
   return (
     <Gate>
       <h1>TOLC Tracker</h1>
-      <p>The Directory of the Offer Letter Club.</p>
+      <p>{TAGLINE}</p>
       <div className="gate-actions">
         <button
           type="button"
