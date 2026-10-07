@@ -16,6 +16,7 @@ import {
 import {
   detailsProblems,
   findInCatalog,
+  profileCompleteness,
   skillsForLayer,
   stackLayerLabels,
   stackLayers,
@@ -24,6 +25,7 @@ import {
   linksProblems,
   optionalLinks,
   type CustomLinkForm,
+  type LinksForm,
 } from '../../directory/profile-links'
 import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
 import { useReloadAfterChange } from '../../directory/reload-after-change'
@@ -38,6 +40,7 @@ export const Route = createFileRoute('/_member/edit-profile')({
 
 function EditProfile() {
   useMarkSeen()
+  const links = useLinksForm()
   return (
     <main className="page page-narrow">
       <Link to="/" className="back">
@@ -47,10 +50,11 @@ function EditProfile() {
       <div className="page-head">
         <h1 className="page-title">Edit your profile</h1>
         <p className="muted">Each section saves on its own.</p>
+        <Completeness unsavedLinks={links.form} />
       </div>
       <DetailsSection />
       <TechStackSection />
-      <LinksSection />
+      <LinksSection links={links} />
     </main>
   )
 }
@@ -70,6 +74,35 @@ function useMarkSeen() {
     signIn.sawEditProfile()
     void markSeen()
   }, [member, signIn, markSeen])
+}
+
+// Only ever the signed-in Member's own profile, so no one sees another
+// Member's percentage. It counts what's saved: saving a section reloads the
+// profile, which updates it. Links typed but not yet saved get a reminder.
+function Completeness({ unsavedLinks }: { unsavedLinks: LinksForm }) {
+  const { profile } = Route.useLoaderData()
+  const { percent, next } = profileCompleteness(profile)
+  const unsaved = profileCompleteness({ ...profile, links: unsavedLinks }).percent
+  return (
+    <div className="completeness">
+      <p aria-live="polite">
+        <strong>{percent}% complete.</strong>{' '}
+        {next ? `Next: ${next}.` : 'Your profile is complete.'}
+        {unsaved !== percent && ` Save your Links to make it ${unsaved}%.`}
+      </p>
+      <div
+        className="completeness-bar"
+        role="progressbar"
+        aria-label="Profile completeness"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        data-complete={next ? undefined : ''}
+      >
+        <span style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  )
 }
 
 function DetailsSection() {
@@ -326,14 +359,19 @@ function AddSkillForm() {
   )
 }
 
-function LinksSection() {
+// Held by the page, so the completeness bar can see Links not yet saved.
+function useLinksForm() {
   const { profile } = Route.useLoaderData()
   const save = useServerFn(saveLinks)
-  const { form, update, problems, status, onSubmit } = useSavedForm({
+  return useSavedForm({
     initial: profile.links,
     problemsOf: linksProblems,
     save: (links) => save({ data: links }),
   })
+}
+
+function LinksSection({ links }: { links: ReturnType<typeof useLinksForm> }) {
+  const { form, update, problems, status, onSubmit } = links
   const updateCustom = (index: number, changes: Partial<CustomLinkForm>) =>
     update({
       custom: form.custom.map((link, i) => (i === index ? { ...link, ...changes } : link)),

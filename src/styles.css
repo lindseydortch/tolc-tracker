@@ -1288,6 +1288,41 @@ label.field {
   width: 100%;
 }
 
+/* ---------- Profile completeness, on Edit Profile ---------- */
+
+/* How complete the Member's own profile is: a violet lanyard strap that
+   fills as they add to it, turning sage once it's complete. */
+.completeness {
+  display: grid;
+  gap: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+.completeness strong {
+  color: var(--ink);
+}
+.completeness-bar {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+.completeness-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--violet);
+  transition: width 300ms var(--ease-out);
+}
+.completeness-bar[data-complete] > span {
+  background: var(--sage);
+}
+@media (prefers-reduced-motion: reduce) {
+  .completeness-bar > span {
+    transition: none;
+  }
+}
+
 /* ---------- Forms on signup and edit profile ---------- */
 
 .form-section {
