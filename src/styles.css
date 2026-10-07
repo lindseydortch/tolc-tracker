@@ -575,6 +575,13 @@ label.field {
   color: var(--ink);
   background: var(--badge-hi);
 }
+/* Edit Profile's link until the Member first opens it after signup. */
+.nav-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--violet-ink);
+}
 .topbar-me {
   margin-left: auto;
   display: flex;
@@ -636,6 +643,23 @@ label.field {
 }
 
 /* ---------- Quick View ---------- */
+
+/* The once-only prompt after signup, above the rail and the wall. */
+.finish-profile {
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.finish-profile > span {
+  flex: 1 1 18rem;
+}
+.finish-profile > svg {
+  margin-top: 0;
+}
+/* The banner's icon ink is for its leading icon, not the button's. */
+.finish-profile .btn svg {
+  color: inherit;
+}
 
 .quick-view {
   display: grid;

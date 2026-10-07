@@ -71,6 +71,13 @@
       "when": 1791319717927,
       "tag": "0009_members_discord_refresh_attempted",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791326854586,
+      "tag": "0010_members_edit_profile_seen",
+      "breakpoints": true
     }
   ]
 }

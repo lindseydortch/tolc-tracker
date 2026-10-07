@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronDown, CircleCheck, SlidersHorizontal, UserPen } from 'lucide-react'
 import { getDirectory } from '../../directory/directory-fns'
 import { MemberBadge } from '../../directory/member-card'
 import { SearchForm } from '../../directory/search-form'
@@ -34,9 +34,14 @@ function QuickView() {
   const onSearch = (chosen: DirectorySearch) => navigate({ search: searchToUrl(chosen) })
   // Phones fold the filters away; wider screens always show them.
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const { finishProfilePrompt } = Route.useRouteContext()
+  // Kept for as long as this page stays open, searches included.
+  const [justSignedUp] = useState(finishProfilePrompt.isRaised)
+  useEffect(finishProfilePrompt.lower, [finishProfilePrompt])
 
   return (
     <main className="page quick-view">
+      {justSignedUp && <FinishProfilePrompt />}
       <div className="rail" data-open={filtersOpen || undefined}>
         <button
           type="button"
@@ -109,5 +114,23 @@ function QuickView() {
         )}
       </section>
     </main>
+  )
+}
+
+// Shown once, on the Directory visit right after signup: the signup form
+// only asks for what's required, and Edit Profile has the rest.
+function FinishProfilePrompt() {
+  return (
+    <div className="banner banner-ok finish-profile">
+      <CircleCheck size={16} aria-hidden="true" />
+      <span>
+        Your profile is live. Add Secondary Skills and Links so Members can find
+        and refer you.
+      </span>
+      <Link to="/edit-profile" className="btn btn-primary">
+        <UserPen size={16} aria-hidden="true" />
+        Finish your profile
+      </Link>
+    </div>
   )
 }

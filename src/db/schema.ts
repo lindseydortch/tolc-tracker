@@ -78,7 +78,8 @@ export const seniority = pgEnum('seniority', [
 // `membershipCheckedAt` when Discord last answered "not in TOLC" (null if it
 // never has, or since refused to answer). `membershipAttemptedAt` is when
 // Discord was last asked, answer or not. The profile columns stay null until
-// the Member fills the signup form.
+// the Member fills the signup form. `editProfileSeenAt` is when the Member
+// first opened Edit Profile; until then, its nav link carries a dot.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
@@ -99,6 +100,7 @@ export const members = pgTable('members', {
   firstName: text('first_name'),
   lastName: text('last_name'),
   jobSearchStatus: jobSearchStatus('job_search_status'),
+  editProfileSeenAt: timestamp('edit_profile_seen_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 

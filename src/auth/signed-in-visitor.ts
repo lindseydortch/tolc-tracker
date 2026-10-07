@@ -18,6 +18,9 @@ export type SignedInVisitor = {
   // False until the Member has sent the signup form. Only worked out for
   // someone 'in-tolc', since no one else can reach the form.
   profileComplete: boolean
+  // False from signup until the Member first opens Edit Profile, while its
+  // nav link carries a dot. Only worked out for someone 'in-tolc'.
+  editProfileSeen: boolean
   // Only the Admin can merge Catalog entries and hide or delete Members.
   isAdmin: boolean
 }
@@ -55,6 +58,14 @@ export async function loadSignedInVisitor(): Promise<{
   }
   if (!member) return null
   const membership = await directory.checkMembership({ authUserId })
+  // Only worked out for someone 'in-tolc'; false for everyone else.
+  const ifInTolc = (ask: (authUserId: string) => Promise<boolean>) =>
+    membership === 'in-tolc' ? ask(authUserId) : Promise.resolve(false)
+  const [profileComplete, editProfileSeen, isAdmin] = await Promise.all([
+    ifInTolc(directory.isProfileComplete),
+    ifInTolc(directory.hasSeenEditProfile),
+    ifInTolc(directory.isAdmin),
+  ])
   return {
     authUserId,
     visitor: {
@@ -63,9 +74,9 @@ export async function loadSignedInVisitor(): Promise<{
       discordHandle: member.discord?.handle ?? null,
       discordSyncFailed,
       membership,
-      profileComplete:
-        membership === 'in-tolc' && (await directory.isProfileComplete(authUserId)),
-      isAdmin: membership === 'in-tolc' && (await directory.isAdmin(authUserId)),
+      profileComplete,
+      editProfileSeen,
+      isAdmin,
     },
   }
 }

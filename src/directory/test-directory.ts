@@ -1,3 +1,6 @@
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
@@ -20,12 +23,14 @@ export async function createTestDirectory() {
 // creates, `tolc`, a fake TOLC server the Directory's membership checks
 // ask, and `signUpWithGitHub`, standing in for Better Auth creating its
 // user row on a first GitHub sign-in. Returns that row's id (`authUserId`).
-// Pass `adminDiscordUserId: null` for a Directory with no Admin configured.
+// Pass `adminDiscordUserId: null` for a Directory with no Admin configured,
+// and `migrationsFolder` (see `migrationsBefore`) to start from an older schema.
 export async function createTestSetup({
   adminDiscordUserId = testAdminDiscordUserId,
-}: { adminDiscordUserId?: string | null } = {}) {
+  migrationsFolder = 'drizzle',
+}: { adminDiscordUserId?: string | null; migrationsFolder?: string } = {}) {
   const db = drizzle(new PGlite(), { schema })
-  await migrate(db, { migrationsFolder: 'drizzle' })
+  await migrate(db, { migrationsFolder })
   let userCount = 0
   const tolc = createFakeTolc()
   return {
@@ -46,6 +51,23 @@ export async function createTestSetup({
       return id
     },
   }
+}
+
+// A copy of the migrations folder without the first migration whose SQL
+// mentions `marker`, or any after it, so a test can set up rows from
+// before it ran. Migrating to 'drizzle' afterwards applies the rest.
+export function migrationsBefore(marker: string): string {
+  const folder = mkdtempSync(join(tmpdir(), 'tolc-migrations-'))
+  cpSync('drizzle', folder, { recursive: true })
+  const journalPath = join(folder, 'meta', '_journal.json')
+  const journal = JSON.parse(readFileSync(journalPath, 'utf8'))
+  const cut = journal.entries.findIndex((entry: { tag: string }) =>
+    readFileSync(join(folder, `${entry.tag}.sql`), 'utf8').includes(marker),
+  )
+  if (cut < 0) throw new Error(`No migration mentions "${marker}"`)
+  journal.entries = journal.entries.slice(0, cut)
+  writeFileSync(journalPath, JSON.stringify(journal))
+  return folder
 }
 
 function createFakeTolc() {

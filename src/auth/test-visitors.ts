@@ -8,5 +8,6 @@ export const visitorInDirectory: SignedInVisitor = {
   discordSyncFailed: false,
   membership: 'in-tolc',
   profileComplete: true,
+  editProfileSeen: true,
   isAdmin: false,
 }
