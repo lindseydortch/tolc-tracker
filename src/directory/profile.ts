@@ -8,6 +8,7 @@ import type {
   StackLayer,
 } from './directory'
 import { normalizeName } from './normalize-name'
+import { optionalLinks, type LinksForm } from './profile-links'
 import { toUrl } from './to-url'
 
 export const jobSearchStatusLabels: Record<JobSearchStatus, string> = {
@@ -168,6 +169,52 @@ export function checkProfile(form: ProfileForm, catalogs: Catalogs): ProfileChec
 
   if (!details.ok || Object.keys(problems).length > 0) return { ok: false, problems }
   return { ok: true, profile: { ...details.details, preferredStack } }
+}
+
+// The parts of a profile that count toward how complete it is.
+export type CompletenessProfile = {
+  techStack: { name: string; stackLayer: StackLayer | null }[]
+  links: LinksForm
+}
+
+export type Completeness = {
+  // A whole percent, from 14 right after signup to 100.
+  percent: number
+  // The first part still missing, such as "add your Resume", or null when
+  // the profile is complete.
+  next: string | null
+}
+
+// How much of a profile is filled out. Every part has equal weight: the
+// required signup fields, every Stack Layer filled, at least one Secondary
+// Skill, and each optional Link other than Custom Links. TypeScript doesn't
+// count as a Secondary Skill, so the TypeScript Badge leaves the percentage
+// alone.
+export function profileCompleteness(profile: CompletenessProfile): Completeness {
+  const filledLayers = new Set(profile.techStack.map((skill) => skill.stackLayer))
+  // The parts beyond the signup fields, which every profile has.
+  const optionalParts: { filled: boolean; next: string }[] = [
+    {
+      filled: stackLayers.every((layer) => filledLayers.has(layer)),
+      next: 'fill every Stack Layer in your Preferred Stack',
+    },
+    {
+      filled: profile.techStack.some(
+        (skill) => !skill.stackLayer && !isTypeScript(skill.name),
+      ),
+      next: 'add a Secondary Skill',
+    },
+    ...optionalLinks.map(({ kind, label }) => ({
+      filled: profile.links[kind].trim() !== '',
+      // "Resume URL" asks for "your Resume", "X profile URL" for "your X profile".
+      next: `add your ${label.replace(/ URL$/, '')}`,
+    })),
+  ]
+  const filled = 1 + optionalParts.filter((part) => part.filled).length
+  return {
+    percent: Math.round((filled / (optionalParts.length + 1)) * 100),
+    next: optionalParts.find((part) => !part.filled)?.next ?? null,
+  }
 }
 
 // What a save returns: success, or what blocked it.
