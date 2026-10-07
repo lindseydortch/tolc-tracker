@@ -169,6 +169,10 @@ describe('completing a profile', () => {
         otherSeniorities: ['mid'],
         preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
         typeScriptBadge: false,
+        badgeLinks: [
+          { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat' },
+          { kind: 'github', url: 'https://github.com/octocat' },
+        ],
       },
     ])
     const member = await setup.directory.memberForAuthUser(authUserId)
@@ -350,6 +354,44 @@ describe('the Directory', () => {
     ])
   })
 
+  it("puts each Member's own LinkedIn, GitHub, and X Links on their card", async () => {
+    const setup = await seededSetup()
+    const octo = await memberInTolc(setup, 'octocat')
+    const mona = await memberInTolc(setup, 'mona')
+    await setup.directory.completeProfile({ authUserId: octo.authUserId, form: octoForm })
+    await setup.directory.completeProfile({
+      authUserId: mona.authUserId,
+      form: {
+        ...octoForm,
+        firstName: 'Mona',
+        linkedinUrl: 'https://www.linkedin.com/in/mona',
+      },
+    })
+    await setup.directory.saveLinks({
+      authUserId: mona.authUserId,
+      links: { ...emptyLinks(), x: 'https://x.com/mona' },
+    })
+
+    const entries = await setup.directory.searchDirectory(emptySearch)
+    expect(entries.map(({ firstName, badgeLinks }) => [firstName, badgeLinks])).toEqual([
+      [
+        'Mona',
+        [
+          { kind: 'linkedin', url: 'https://www.linkedin.com/in/mona' },
+          { kind: 'github', url: 'https://github.com/mona' },
+          { kind: 'x', url: 'https://x.com/mona' },
+        ],
+      ],
+      [
+        'Octo',
+        [
+          { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat' },
+          { kind: 'github', url: 'https://github.com/octocat' },
+        ],
+      ],
+    ])
+  })
+
   it('leaves out Members who have not completed their profile', async () => {
     const setup = await seededSetup()
     const octo = await memberInTolc(setup, 'octocat')
@@ -479,6 +521,11 @@ describe('a Member profile page', () => {
       otherSeniorities: ['mid'],
       preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
       typeScriptBadge: true,
+      badgeLinks: [
+        { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat' },
+        { kind: 'github', url: 'https://github.com/octocat' },
+        { kind: 'x', url: 'https://x.com/octocat' },
+      ],
       secondarySkills: ['Docker', 'TypeScript'],
       links: [
         { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat', label: null },

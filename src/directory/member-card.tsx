@@ -1,22 +1,35 @@
+import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DiscordMark } from '../ui/marks'
 import type { DirectoryEntry } from './directory'
 import { refreshDiscordAvatar } from './directory-fns'
+import { linkIcons } from './link-icons'
+import { linkKindLabels } from './profile-links'
 import { jobSearchStatusLabels, seniorityLabels, stackLayers } from './profile'
 
 // What a Quick View card shows, drawn as a conference badge: the punched
 // slot, the name, and the Job Search Status ribbon at its foot. The profile
 // page repeats it at the top. `titleAs` sets the name's heading level.
+// `linkToProfile` makes the whole badge open the profile page, except its
+// Link icons, which can't sit inside that link.
 export function MemberBadge({
   entry,
   titleAs: Title = 'h3',
+  linkToProfile = false,
   children,
 }: {
   entry: DirectoryEntry
   titleAs?: 'h1' | 'h2' | 'h3'
+  linkToProfile?: boolean
   children?: ReactNode
 }) {
   const primarySkills = stackLayers.flatMap((layer) => entry.preferredStack[layer] ?? [])
+  const name = (
+    <>
+      <span className="badge-first">{entry.firstName}</span>{' '}
+      <span className="badge-last">{entry.lastName}</span>
+    </>
+  )
 
   return (
     <article className="badge" data-status={entry.jobSearchStatus}>
@@ -30,15 +43,27 @@ export function MemberBadge({
           <div className="badge-who">
             <BadgePhoto key={entry.discordAvatarUrl} entry={entry} />
             <Title className="badge-name">
-              <span className="badge-first">{entry.firstName}</span>{' '}
-              <span className="badge-last">{entry.lastName}</span>
+              {linkToProfile ? (
+                <Link
+                  to="/members/$memberId"
+                  params={{ memberId: String(entry.id) }}
+                  className="badge-profile-link"
+                >
+                  {name}
+                </Link>
+              ) : (
+                name
+              )}
             </Title>
           </div>
-          <p className="badge-handle">
-            <DiscordMark size={14} />
-            <span className="visually-hidden">Discord: </span>
-            <span>{entry.discordHandle}</span>
-          </p>
+          <div className="badge-contact">
+            <p className="badge-handle">
+              <DiscordMark size={14} />
+              <span className="visually-hidden">Discord: </span>
+              <span>{entry.discordHandle}</span>
+            </p>
+            <BadgeLinks entry={entry} />
+          </div>
         </header>
         <dl className="badge-facts">
           <div>
@@ -75,6 +100,29 @@ export function MemberBadge({
       </div>
       <footer className="ribbon">{jobSearchStatusLabels[entry.jobSearchStatus]}</footer>
     </article>
+  )
+}
+
+// Quick links to the Member's LinkedIn, GitHub, and X (if they added one).
+function BadgeLinks({ entry }: { entry: DirectoryEntry }) {
+  const fullName = `${entry.firstName} ${entry.lastName}`
+  return (
+    <ul className="badge-links">
+      {entry.badgeLinks.map(({ kind, url }) => (
+        <li key={kind}>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-quiet btn-icon"
+            aria-label={`${fullName} on ${linkKindLabels[kind]}`}
+            title={linkKindLabels[kind]}
+          >
+            {linkIcons[kind]}
+          </a>
+        </li>
+      ))}
+    </ul>
   )
 }
 

@@ -106,7 +106,12 @@ export type DirectoryEntry = {
   otherSeniorities: Seniority[]
   preferredStack: PreferredStack
   typeScriptBadge: boolean
+  // The Links the badge shows, in `badgeLinkKinds` order.
+  badgeLinks: Pick<MemberLink, 'kind' | 'url'>[]
 }
+
+// LinkedIn and GitHub are required; X shows only if the Member added one.
+const badgeLinkKinds: LinkKind[] = ['linkedin', 'github', 'x']
 
 // A merge the signed-in Member asks for; only the Admin's go through.
 export type AdminMerge = MergeForm & { authUserId: string }
@@ -188,6 +193,12 @@ export function createDirectory(
       .innerJoin(skills, eq(memberSkills.skillId, skills.id))
       .where(inArray(memberSkills.memberId, ids))
       .orderBy(asc(skills.name))
+    const badgeLinks = await db
+      .select({ memberId: links.memberId, kind: links.kind, url: links.url })
+      .from(links)
+      .where(and(inArray(links.memberId, ids), inArray(links.kind, badgeLinkKinds)))
+      // Link kinds sort in the order the `link_kind` enum declares them.
+      .orderBy(asc(links.kind), asc(links.id))
 
     const entries: CompleteProfile[] = []
     for (const row of rows) {
@@ -234,6 +245,7 @@ export function createDirectory(
         preferredStack,
         // Turning the Badge on adds TypeScript to the Tech Stack.
         typeScriptBadge: own(techStack).some((skill) => isTypeScript(skill.name)),
+        badgeLinks: own(badgeLinks).map(({ kind, url }) => ({ kind, url })),
         secondarySkills,
       })
     }
