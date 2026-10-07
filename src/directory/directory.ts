@@ -461,6 +461,28 @@ export function createDirectory(
       return found.length > 0
     },
 
+    // False until the Member first opens Edit Profile, which marks it.
+    async hasSeenEditProfile(authUserId: string): Promise<boolean> {
+      const [member] = await db
+        .select({ seenAt: members.editProfileSeenAt })
+        .from(members)
+        .where(eq(members.authUserId, authUserId))
+      return Boolean(member?.seenAt)
+    },
+
+    // Keeps the first time, so opening it again changes nothing.
+    async markEditProfileSeen(authUserId: string): Promise<void> {
+      await db
+        .update(members)
+        .set({ editProfileSeenAt: new Date() })
+        .where(
+          and(
+            eq(members.authUserId, authUserId),
+            isNull(members.editProfileSeenAt),
+          ),
+        )
+    },
+
     // The Directory Members matching `search`, best first: see
     // `rankSearchResults`. With nothing chosen, every complete, non-hidden
     // Member, whatever their Job Search Status.

@@ -30,6 +30,7 @@ export const Route = createFileRoute('/signup')({
 function Signup() {
   const catalogs = Route.useLoaderData()
   const router = useRouter()
+  const { finishProfilePrompt } = Route.useRouteContext()
   const signOut = useSignOut()
   // Follows the redirect if the Member no longer belongs on this page.
   const saveProfile = useServerFn(submitProfile)
@@ -41,6 +42,8 @@ function Signup() {
     // is incomplete and send the Member back here.
     onSaved: () => {
       forgetCachedPages(router)
+      // The Directory asks them, this once, to finish their profile.
+      finishProfilePrompt.raise()
       return router.navigate({ to: '/' })
     },
   })

@@ -1,12 +1,13 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { ArrowLeft, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { StackLayer } from '../../directory/directory'
 import type { EditResult } from '../../directory/profile-editing'
 import {
   addSkill,
   getProfileEditor,
+  markEditProfileSeen,
   removeSkill,
   saveLinks,
   setTypeScriptBadge,
@@ -36,6 +37,7 @@ export const Route = createFileRoute('/_member/edit-profile')({
 })
 
 function EditProfile() {
+  useMarkSeen()
   return (
     <main className="page page-narrow">
       <Link to="/" className="back">
@@ -51,6 +53,23 @@ function EditProfile() {
       <LinksSection />
     </main>
   )
+}
+
+// Opening this page once clears the Edit Profile nav dot for good. The
+// held sign-in check is marked at once, so leaving before the server has
+// saved it doesn't bring the dot back. Another device's held check keeps
+// the dot until it asks again (`SIGN_IN_REUSE_MS`).
+function useMarkSeen() {
+  const { member, signIn } = Route.useRouteContext()
+  const markSeen = useServerFn(markEditProfileSeen)
+  useEffect(() => {
+    if (member.editProfileSeen) return
+    // This runs before the layout's own `remember`, on a page loaded
+    // straight from the server.
+    signIn.remember(member)
+    signIn.sawEditProfile()
+    void markSeen()
+  }, [member, signIn, markSeen])
 }
 
 function DetailsSection() {

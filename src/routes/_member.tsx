@@ -48,8 +48,19 @@ function MemberLayout() {
             <span>Directory</span>
           </Link>
           <Link to="/edit-profile">
-            <UserPen size={16} aria-hidden="true" />
-            <span>Edit your profile</span>
+            {({ isActive }) => (
+              <>
+                <UserPen size={16} aria-hidden="true" />
+                <span>Edit your profile</span>
+                {/* Until the Member first opens it after signup. */}
+                {!member.editProfileSeen && !isActive && (
+                  <>
+                    <span className="nav-dot" aria-hidden="true" />
+                    <span className="visually-hidden">, new</span>
+                  </>
+                )}
+              </>
+            )}
           </Link>
           {member.isAdmin && (
             <Link to="/admin">

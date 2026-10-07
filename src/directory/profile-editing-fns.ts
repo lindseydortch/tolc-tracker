@@ -22,6 +22,15 @@ export const getProfileEditor = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+// Called once the page is open, not from its loader, so a hover preload
+// doesn't count as opening it.
+export const markEditProfileSeen = createServerFn({ method: 'POST' }).handler(
+  async () => {
+    const authUserId = await requireLandingPage('/')
+    await directory.markEditProfileSeen(authUserId)
+  },
+)
+
 export const updateDetails = createServerFn({ method: 'POST' })
   .validator(parseDetailsForm)
   .handler(async ({ data }) => {

@@ -182,6 +182,9 @@ components:
     backgroundColor: "{colors.violet}"
     textColor: "{colors.violet-ink}"
     height: "3px"
+  nav-dot:
+    backgroundColor: "{colors.violet-ink}"
+    size: "0.5rem"
 ---
 
 # Design System: TOLC Tracker
@@ -209,7 +212,7 @@ A dark violet-black hall lit by four printed inks, each with one job.
 
 ### Primary
 - **Club Violet** (violet): the primary action fill (Search, Copy Discord handle, Save), the checked state of checkboxes, radios and filter toggles, the selection highlight, the lanyard strap, the loading bar, and the Employed and Open to Offers ribbon. Hover deepens to **Lit Violet** (violet-hi).
-- **Lavender Ink** (violet-ink): inline links, the wordmark's badge mark, and the loading bar's sweep; violet made readable as text on the dark ground.
+- **Lavender Ink** (violet-ink): inline links, the wordmark's badge mark, the loading bar's sweep, and the nav's "new" dot; violet made readable as text on the dark ground.
 
 ### Secondary
 - **Ticket Apricot** (apricot): the focus ring, the caret, the "TOLC" in the wordmark, the Actively Looking ribbon and swatch, and the tinted confirm panel. Text on it is **Burnt Umber** (on-apricot).
@@ -304,7 +307,7 @@ One vocabulary everywhere, compact and outlined.
 ### Cards / Containers
 - **Badge:** see the signature component below.
 - **Panels** (filter rail, form sections, merge cards, table frames): 16px corners, Raised Hall fill, Hairline border, flat. Padding is 1.25rem (rail, merge) or 1.75rem (forms, dropping to 1.25rem on phones).
-- **Banners:** 10px corners with a tinted fill: crimson at 16% into Badge Stock for errors, or sage at 12% for success, each with a matching 16px icon. **Confirm** panels mix apricot at 10%.
+- **Banners:** 10px corners with a tinted fill: crimson at 16% into Badge Stock for errors, or sage at 12% for success, each with a matching 16px icon. The success banner right after signup spans the Quick View and ends in a primary button to Edit Profile. **Confirm** panels mix apricot at 10%.
 - **Empty state:** a dashed Seam frame around a tilted, dashed blank badge outline with its slot.
 
 ### Inputs / Fields
@@ -314,7 +317,7 @@ One vocabulary everywhere, compact and outlined.
 - **Error:** inline Rose Ink text with an alert icon (weight 600). Saved confirmations use sage text.
 
 ### Navigation
-- **Top bar:** the wordmark (badge mark in Lavender Ink, "TOLC" in apricot, Archivo at 72% width, weight 850) on the left, then icon-plus-label links. Links are Faded Ink at rest. Hover fills Badge Stock, and the current page fills Badge Stock Lit with Badge Ink text. The signed-in name and handle sit right, followed by a quiet Sign out. Under 720px, link labels hide visually and only the icons show.
+- **Top bar:** the wordmark (badge mark in Lavender Ink, "TOLC" in apricot, Archivo at 72% width, weight 850) on the left, then icon-plus-label links. Links are Faded Ink at rest. Hover fills Badge Stock, and the current page fills Badge Stock Lit with Badge Ink text. The signed-in name and handle sit right, followed by a quiet Sign out. Under 720px, link labels hide visually and only the icons show. A new Member's Edit Profile link carries a 0.5rem Lavender Ink dot after its label, with a hidden ", new" for screen readers, until they first open it.
 - **Back link:** a small Faded Ink arrow link above page content.
 - **Loading bar:** a 3px Club Violet strap fixed across the top of the window, above the top bar, with a 40% Lavender Ink segment sweeping left to right every 1100ms. It shows only when a page takes over 200ms to load, stays at least 300ms once shown, and fades in over 160ms. Under reduced motion the whole strap turns Lavender Ink instead of sweeping. The old page stays on screen underneath. A status region announces "Loading page" to screen readers.
 

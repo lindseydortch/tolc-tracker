@@ -52,6 +52,16 @@ export function createSignInCache(
     remember: (member: SignedInVisitor) => {
       lastCheck ??= { checkedAt: now(), member: Promise.resolve(member) }
     },
+    // When the Member opens Edit Profile: the held check stops showing its
+    // nav dot at once, even if they leave before the server has saved it.
+    sawEditProfile: () => {
+      // Changed in place, so `checkNow` can still tell it's the held check.
+      if (lastCheck) {
+        lastCheck.member = lastCheck.member.then(
+          (member) => member && { ...member, editProfileSeen: true },
+        )
+      }
+    },
     // On sign-out, a profile save or an Admin action.
     clear: () => {
       lastCheck = undefined

@@ -160,4 +160,25 @@ describe('createSignInCache', () => {
     expect(member).toEqual(inDirectory)
     expect(checks).toBe(2)
   })
+
+  it('reuses a check with Edit Profile marked seen, without asking the server', async () => {
+    const { cache, server } = cacheOver({ ...inDirectory, editProfileSeen: false })
+
+    await cache.checkRecent()
+    cache.sawEditProfile()
+    const member = await cache.checkRecent()
+
+    expect(member?.editProfileSeen).toBe(true)
+    expect(server.checks).toBe(1)
+  })
+
+  it('marks Edit Profile seen on a check still in flight', async () => {
+    const { cache } = cacheOver({ ...inDirectory, editProfileSeen: false })
+
+    const inFlight = cache.checkRecent()
+    cache.sawEditProfile()
+    await inFlight
+
+    expect((await cache.checkRecent())?.editProfileSeen).toBe(true)
+  })
 })
