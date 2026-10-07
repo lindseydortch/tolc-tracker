@@ -14,7 +14,7 @@ function SignIn() {
   return (
     <Gate>
       <h1>TOLC Tracker</h1>
-      <p>The Directory of the Offer Letter Club.</p>
+      <p>If you don't know what this is, it isn't for you.</p>
       <div className="gate-actions">
         <button
           type="button"
