@@ -101,13 +101,7 @@ function QuickView() {
           <ul className="wall">
             {entries.map((entry) => (
               <li key={entry.id}>
-                <Link
-                  to="/members/$memberId"
-                  params={{ memberId: String(entry.id) }}
-                  className="badge-link"
-                >
-                  <MemberBadge entry={entry} />
-                </Link>
+                <MemberBadge entry={entry} linkToProfile />
               </li>
             ))}
           </ul>

@@ -835,17 +835,24 @@ label.field {
   display: flex;
 }
 
-.badge-link {
-  display: flex;
-  flex: 1;
+/* The name links to the profile page and stretches over the whole badge,
+   so the Link icons above it stay links of their own. */
+.badge-profile-link {
+  display: grid;
+  gap: 0.15rem;
   color: inherit;
   text-decoration: none;
-  border-radius: var(--radius-lg);
 }
-.badge-link:hover {
+.badge-profile-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.badge-profile-link:hover {
   color: inherit;
 }
-.badge-link:focus-visible {
+.badge-profile-link:focus-visible {
   box-shadow: none;
 }
 
@@ -911,13 +918,14 @@ label.field {
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.8), 0 1px 0 rgb(255 255 255 / 0.05);
 }
 
-.badge-link:hover .badge,
-.badge-link:focus-visible .badge {
+/* Not while over a Link icon, whose click opens that Link instead. */
+.badge:has(.badge-profile-link):not(:has(.badge-links:hover)):hover,
+.badge:has(.badge-profile-link:focus-visible) {
   border-color: var(--line-strong);
   box-shadow: var(--shadow-badge-hi);
   animation: swing 1100ms var(--ease-out);
 }
-.badge-link:focus-visible .badge {
+.badge:has(.badge-profile-link:focus-visible) {
   border-color: var(--apricot);
 }
 
@@ -1006,11 +1014,19 @@ label.field {
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
+/* The Discord handle, with the Link icons under it. */
+.badge-contact {
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+  min-width: 0;
+}
 .badge-handle {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.35rem;
+  margin: 0;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   color: var(--ink-2);
@@ -1023,6 +1039,16 @@ label.field {
 }
 .badge-handle svg {
   color: var(--ink-3);
+}
+.badge-links {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 0.25rem;
+  /* Lines the first icon up with the handle's Discord mark. */
+  margin: 0 0 0 -0.5rem;
+  padding: 0;
+  list-style: none;
 }
 
 .badge-facts {
