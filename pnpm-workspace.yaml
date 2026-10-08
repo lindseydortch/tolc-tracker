@@ -1,3 +1,5 @@
 allowBuilds:
   esbuild: true
   lightningcss: true
+  # Pulled in by the Netlify plugin for local image CDN emulation only.
+  sharp: false
