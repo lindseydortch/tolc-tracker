@@ -13,7 +13,8 @@ import {
   stackLayerLabels,
   stackLayers,
 } from '../directory/profile'
-import { DetailsFields, Problem, Resolved } from '../directory/profile-fields'
+import { Problem } from '../directory/problem'
+import { DetailsFields, Resolved } from '../directory/profile-fields'
 import { SaveStatus, useSavedForm } from '../directory/saved-form'
 import { Wordmark } from '../ui/marks'
 
@@ -62,7 +63,9 @@ function Signup() {
     <main className="page page-narrow">
       <div className="page-head">
         <h1 className="page-title">Create your profile</h1>
-        <p className="muted">Every field is required before you can see the Directory.</p>
+        <p className="muted">
+          Every field not marked optional is required before you can see the Directory.
+        </p>
       </div>
       <form onSubmit={onSubmit} noValidate>
         <section className="form-section">

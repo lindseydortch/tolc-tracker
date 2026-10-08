@@ -1,14 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { profileCompleteness, type CompletenessProfile } from './profile'
+import { emptyLocation } from './location'
 import { emptyLinks } from './profile-links'
+import { octoForm } from './test-profiles'
+
+const signupDetails: CompletenessProfile['details'] = {
+  workArrangements: octoForm.workArrangements,
+  location: octoForm.location,
+}
 
 // What signup leaves: one Stack Layer filled and no optional Links.
 const fromSignup: CompletenessProfile = {
+  details: signupDetails,
   techStack: [{ name: 'React', stackLayer: 'frontendFramework' }],
   links: emptyLinks(),
 }
 
 const complete: CompletenessProfile = {
+  details: signupDetails,
   techStack: [
     { name: 'React', stackLayer: 'frontendFramework' },
     { name: 'Express', stackLayer: 'backendFramework' },
@@ -62,8 +71,23 @@ describe('profile completeness', () => {
     expect(profileCompleteness(noX).next).toBe('add your X profile')
   })
 
+  // Members who signed up before Location and Work Arrangement existed.
+  it('counts the signup fields only once Location and Work Arrangement are added', () => {
+    const noLocation = { ...complete, details: { ...signupDetails, location: emptyLocation } }
+    expect(profileCompleteness(noLocation)).toEqual({
+      percent: 86,
+      next: 'add your Location and Work Arrangement',
+    })
+
+    const noArrangement = { ...complete, details: { ...signupDetails, workArrangements: [] } }
+    expect(profileCompleteness(noArrangement).next).toBe(
+      'add your Location and Work Arrangement',
+    )
+  })
+
   it("doesn't count Custom Links or the TypeScript Badge", () => {
     const extras: CompletenessProfile = {
+      details: signupDetails,
       techStack: [...fromSignup.techStack, { name: 'TypeScript', stackLayer: null }],
       links: {
         ...fromSignup.links,

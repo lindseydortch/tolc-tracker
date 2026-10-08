@@ -1,4 +1,4 @@
-import { CircleAlert, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import {
   findInCatalog,
   jobSearchStatusLabels,
@@ -9,6 +9,8 @@ import {
   type ProfileProblems,
 } from './profile'
 import type { Seniority } from './directory'
+import { Problem } from './problem'
+import { WhereToWorkFields } from './where-to-work-fields'
 
 // The profile fields other than the Tech Stack, shared by the signup form
 // and the profile editor.
@@ -188,17 +190,9 @@ export function DetailsFields({
         </table>
         <Problem text={problems.preferredSeniority} />
       </fieldset>
-    </div>
-  )
-}
 
-export function Problem({ text }: { text?: string }) {
-  if (!text) return null
-  return (
-    <span role="alert" className="problem">
-      <CircleAlert size={14} aria-hidden="true" />
-      {text}
-    </span>
+      <WhereToWorkFields form={form} update={update} problems={problems} />
+    </div>
   )
 }
 

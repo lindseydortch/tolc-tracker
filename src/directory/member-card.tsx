@@ -5,6 +5,7 @@ import type { DirectoryEntry } from './directory'
 import { refreshDiscordAvatar } from './directory-fns'
 import { linkIcons } from './link-icons'
 import { linkKindLabels } from './profile-links'
+import { placeName, workArrangementLabels } from './location'
 import { jobSearchStatusLabels, seniorityLabels, stackLayers } from './profile'
 
 // What a Quick View card shows, drawn as a conference badge: the punched
@@ -83,6 +84,37 @@ export function MemberBadge({
               )}
             </dd>
           </div>
+          {entry.workArrangements.length > 0 && (
+            <div>
+              <dt className="visually-hidden">Work Arrangement</dt>
+              <dd>
+                {entry.workArrangements.map((a) => workArrangementLabels[a]).join(' · ')}
+              </dd>
+            </div>
+          )}
+          {entry.location && (
+            <div>
+              <dt className="visually-hidden">Location</dt>
+              <dd>
+                {placeName(entry.location)} · {entry.location.timeZone}
+              </dd>
+            </div>
+          )}
+          {entry.wantsToWorkFrom.length > 0 && (
+            <div>
+              <dt className="visually-hidden">Wants to Work From</dt>
+              <dd>
+                <span aria-hidden="true">Wants to work from: </span>
+                {entry.wantsToWorkFrom.map(placeName).join('; ')}
+              </dd>
+            </div>
+          )}
+          {entry.willingToRelocate && (
+            <div>
+              <dt className="visually-hidden">Willing to Relocate</dt>
+              <dd>Open to relocate</dd>
+            </div>
+          )}
           <div>
             <dt>Primary Skills</dt>
             <dd>

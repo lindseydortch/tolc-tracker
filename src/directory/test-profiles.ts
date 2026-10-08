@@ -38,6 +38,15 @@ export const octoForm: ProfileForm = {
   targetRoles: ['Software Engineer'],
   preferredSeniority: 'senior',
   otherSeniorities: ['mid'],
+  workArrangements: ['remote', 'hybrid'],
+  location: {
+    city: 'Austin',
+    region: 'TX',
+    country: 'United States',
+    timeZone: 'America/Chicago',
+  },
+  wantsToWorkFrom: [],
+  willingToRelocate: false,
   preferredStack: { frontendFramework: 'React', database: 'PostgreSQL' },
 }
 

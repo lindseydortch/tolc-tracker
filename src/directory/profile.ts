@@ -7,7 +7,15 @@ import type {
   Seniority,
   StackLayer,
 } from './directory'
-import { normalizeName } from './normalize-name'
+import { inOrder } from './in-order'
+import {
+  checkWhereToWork,
+  emptyLocation,
+  hasWhereToWork,
+  type WhereToWork,
+  type WhereToWorkField,
+} from './location'
+import { normalizeName, tidyName } from './normalize-name'
 import { optionalLinks, type LinksForm } from './profile-links'
 import { toUrl } from './to-url'
 
@@ -44,8 +52,9 @@ export type PreferredStack = Partial<Record<StackLayer, string>>
 
 // The editable profile fields other than the Tech Stack. Names may be
 // Aliases or differently cased or punctuated; they resolve against the
-// Catalogs, and names not in them become new entries.
-export type DetailsForm = {
+// Catalogs, and names not in them become new entries. `location.ts` checks
+// the `WhereToWork` fields.
+export type DetailsForm = WhereToWork & {
   firstName: string
   lastName: string
   linkedinUrl: string
@@ -67,10 +76,16 @@ export const emptyForm: ProfileForm = {
   targetRoles: [''],
   preferredSeniority: null,
   otherSeniorities: [],
+  workArrangements: [],
+  location: emptyLocation,
+  wantsToWorkFrom: [],
+  willingToRelocate: false,
   preferredStack: {},
 }
 
-export type ProfileField = Exclude<keyof ProfileForm, 'otherSeniorities'>
+export type ProfileField =
+  | Exclude<keyof ProfileForm, 'otherSeniorities' | keyof WhereToWork>
+  | WhereToWorkField
 
 // One message per field that blocks submission; empty when the form is ready.
 export type ProfileProblems = Partial<Record<ProfileField, string>>
@@ -117,6 +132,9 @@ export function checkDetails(form: DetailsForm, catalogs: Catalogs): DetailsChec
     problems.targetRoles = 'Choose at least one Target Role'
   }
 
+  const whereToWork = checkWhereToWork(form)
+  Object.assign(problems, whereToWork.problems)
+
   if (
     Object.keys(problems).length > 0 ||
     !linkedinUrl ||
@@ -138,6 +156,7 @@ export function checkDetails(form: DetailsForm, catalogs: Catalogs): DetailsChec
       otherSeniorities: sortSeniorities(
         form.otherSeniorities.filter((s) => s !== preferredSeniority),
       ),
+      ...whereToWork.tidied,
     },
   }
 }
@@ -173,12 +192,13 @@ export function checkProfile(form: ProfileForm, catalogs: Catalogs): ProfileChec
 
 // The parts of a profile that count toward how complete it is.
 export type CompletenessProfile = {
+  details: Pick<DetailsForm, 'workArrangements' | 'location'>
   techStack: { name: string; stackLayer: StackLayer | null }[]
   links: LinksForm
 }
 
 export type Completeness = {
-  // A whole percent, from 14 right after signup to 100.
+  // A whole percent: 14 right after signup, up to 100.
   percent: number
   // The first part still missing, such as "add your Resume", or null when
   // the profile is complete.
@@ -187,12 +207,13 @@ export type Completeness = {
 
 // How much of a profile is filled out. Every part has equal weight: the
 // required signup fields, every Stack Layer filled, at least one Secondary
-// Skill, and each optional Link other than Custom Links. TypeScript doesn't
-// count as a Secondary Skill, so the TypeScript Badge leaves the percentage
-// alone.
+// Skill, and each optional Link other than Custom Links. The signup fields
+// count once Location and Work Arrangement are there, which Members who
+// signed up before those existed lack. TypeScript doesn't count as a
+// Secondary Skill, so the TypeScript Badge leaves the percentage alone.
 export function profileCompleteness(profile: CompletenessProfile): Completeness {
   const filledLayers = new Set(profile.techStack.map((skill) => skill.stackLayer))
-  // The parts beyond the signup fields, which every profile has.
+  // The parts beyond the signup fields.
   const optionalParts: { filled: boolean; next: string }[] = [
     {
       filled: stackLayers.every((layer) => filledLayers.has(layer)),
@@ -210,10 +231,17 @@ export function profileCompleteness(profile: CompletenessProfile): Completeness 
       next: `add your ${label.replace(/ URL$/, '')}`,
     })),
   ]
-  const filled = 1 + optionalParts.filter((part) => part.filled).length
+  const parts = [
+    {
+      filled: hasWhereToWork(profile.details),
+      next: 'add your Location and Work Arrangement',
+    },
+    ...optionalParts,
+  ]
+  const filled = parts.filter((part) => part.filled).length
   return {
-    percent: Math.round((filled / (optionalParts.length + 1)) * 100),
-    next: optionalParts.find((part) => !part.filled)?.next ?? null,
+    percent: Math.round((filled / parts.length) * 100),
+    next: parts.find((part) => !part.filled)?.next ?? null,
   }
 }
 
@@ -277,7 +305,7 @@ export function skillsForLayer(
 }
 
 export function sortSeniorities(chosen: Seniority[]): Seniority[] {
-  return seniorities.filter((seniority) => chosen.includes(seniority))
+  return inOrder(seniorities, chosen)
 }
 
 // The Skill Catalog's name for TypeScript; Aliases such as "TS" resolve to it.
@@ -291,11 +319,6 @@ export function sameName(a: string, b: string): boolean {
 
 export function isTypeScript(name: string): boolean {
   return sameName(name, typeScript)
-}
-
-// How a new Catalog entry spells a typed name: as typed, minus extra spaces.
-export function tidyName(typed: string): string {
-  return typed.trim().replace(/\s+/g, ' ')
 }
 
 // Accepts a URL on linkedin.com, with or without "https://".

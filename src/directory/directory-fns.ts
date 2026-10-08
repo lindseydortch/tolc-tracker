@@ -21,14 +21,17 @@ export const submitProfile = createServerFn({ method: 'POST' })
   })
 
 // The Quick View's cards, narrowed and ranked by `search`, plus the
-// Catalogs its search form autocompletes from.
+// Catalogs its search form autocompletes from, and whether the signed-in
+// Member still needs to add their Location and Work Arrangement.
 export const getDirectory = createServerFn({ method: 'GET' })
   .validator(parseDirectorySearch)
   .handler(async ({ data }) => {
-    await requireLandingPage('/')
+    const authUserId = await requireLandingPage('/')
     return {
       entries: await directory.searchDirectory(data),
       catalogs: await directory.catalogs(),
+      needsLocationAndWorkArrangement:
+        await directory.needsLocationAndWorkArrangement(authUserId),
     }
   })
 

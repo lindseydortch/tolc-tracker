@@ -50,6 +50,22 @@ _Avoid_: level, experience
 Where a Member is in their job search: Actively Looking, Employed and Looking, Employed and Open to Offers, or Not Looking.
 _Avoid_: availability, open to work
 
+**Work Arrangement**:
+How a Member is willing to work: Remote, Hybrid, or In Person. A Member chooses at least one, and may choose several.
+_Avoid_: work mode, remote preference
+
+**Location**:
+Where a Member lives now: City, an optional State/Region, Country, and Time Zone (an IANA name such as `America/Chicago`). Members who signed up before Location existed have none until they add it in Edit Profile.
+_Avoid_: address, home, based in
+
+**Wants to Work From**:
+Other places a Member would like to work from, each a Country with an optional City and State/Region. A Member can have none or several. Example: a Member living in the US who wants to work from Italy adds Italy.
+_Avoid_: preferred location, target location
+
+**Willing to Relocate**:
+A yes/no on a Member's profile saying whether they would move for a role. It defaults to No, and the card shows "Open to relocate" only when it is Yes.
+_Avoid_: open to relocation, will move
+
 **Tech Stack**:
 The Skills a Member knows, split into Primary Skills and Secondary Skills.
 _Avoid_: skills list, technologies
@@ -97,5 +113,5 @@ _Avoid_: synonym, variant
 ### Views
 
 **Quick View**:
-The Directory shown as a grid of Member cards, used to scan for someone before searching. Each card shows the Member's Discord avatar, first and last name, Discord handle, LinkedIn, GitHub and X Links (X only if added), Job Search Status, Target Roles, Seniority, and Primary Skills.
+The Directory shown as a grid of Member cards, used to scan for someone before searching. Each card shows the Member's Discord avatar, first and last name, Discord handle, LinkedIn, GitHub and X Links (X only if added), Job Search Status, Target Roles, Seniority, Work Arrangements, Location with Time Zone, Wants to Work From (if any), "Open to relocate" (if Willing to Relocate), and Primary Skills. A card leaves out the Work Arrangement and Location lines for a Member who hasn't added them yet.
 _Avoid_: dashboard, home

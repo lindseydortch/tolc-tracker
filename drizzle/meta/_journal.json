@@ -78,6 +78,13 @@
       "when": 1791326854586,
       "tag": "0010_members_edit_profile_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791420653846,
+      "tag": "0011_member_location",
+      "breakpoints": true
     }
   ]
 }
