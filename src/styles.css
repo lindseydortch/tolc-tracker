@@ -980,7 +980,7 @@ label.field {
   flex: none;
   width: var(--photo);
   height: var(--photo);
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: var(--badge-hi);
   overflow: hidden;
