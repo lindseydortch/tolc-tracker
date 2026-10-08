@@ -825,7 +825,9 @@ label.field {
 
 .wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15.25rem, 1fr));
+  /* At least a third of the row (less the two 1rem column gaps), so a
+     fourth column never fits. Update the 2rem if the column gap changes. */
+  grid-template-columns: repeat(auto-fill, minmax(max(15.25rem, (100% - 2rem) / 3), 1fr));
   gap: 1.75rem 1rem;
   margin: 0;
   padding: 0.5rem 0 0;

@@ -195,7 +195,7 @@ components:
 
 Every Member is an attendee badge hung on a violet-black wall. A badge has a punched lanyard slot at its top, the Member's Discord avatar as an ID photo beside a big condensed first name, the Discord handle in mono, a dashed perforation above its facts, and a full-strength status ribbon across its foot. The world is a conference hall after dark: dark badge stock, printed ink, lanyards in the club's violet. The pages before the Directory (sign-in, connect Discord, members only, not found) are a single blank badge hanging from a TOLC lanyard and clip.
 
-The system is dense and operational. Lookup speed comes first, so the wall runs four columns at desktop width, the filter rail stays pinned, and every surface outside the badge is quiet: tonal violet-black panels, hairline borders, one button vocabulary. Color is saved for meaning. The four brand inks (apricot, crimson, violet, sage) appear at full strength on status ribbons and swatches, violet carries the primary action and the selected state, and apricot carries focus.
+The system is dense and operational. Lookup speed comes first, so the wall runs up to three columns at desktop width, the filter rail stays pinned, and every surface outside the badge is quiet: tonal violet-black panels, hairline borders, one button vocabulary. Color is saved for meaning. The four brand inks (apricot, crimson, violet, sage) appear at full strength on status ribbons and swatches, violet carries the primary action and the selected state, and apricot carries focus.
 
 Motion is physical and small. A badge swings a few degrees from its slot on hover or focus; a badge that arrives on a page settles from a short hang. While a page loads, a thin violet strap sweeps across the top of the window. Everything is instant under reduced motion. It refuses the category default of neutral dark SaaS cards with one neon accent.
 
@@ -265,7 +265,7 @@ A dark violet-black hall lit by four printed inks, each with one job.
 
 The app shell is a sticky 3.75rem top bar (translucent ground with blur, a hairline bottom border) over a centered page up to 88rem wide, padded 2rem 1.5rem 4rem. Narrow pages (forms) cap at 52rem.
 
-Quick View is a two-column grid: an 18.5rem sticky filter rail and the badge wall, with a 2.25rem gap. The wall auto-fills 15.25rem minimum columns with 1.75rem row and 1rem column gaps, which gives four columns at 1440. Badges in a row stretch to equal height, so their ribbons line up. The profile is a 21rem sticky badge column beside a 3rem gap and the detail sections (2.5rem apart). Forms use two-column grids (1.25rem gap) inside raised sections.
+Quick View is a two-column grid: an 18.5rem sticky filter rail and the badge wall, with a 2.25rem gap. The wall auto-fills 15.25rem minimum columns with 1.75rem row and 1rem column gaps, and each column is at least a third of the row (less the two gaps), so the wall caps at three columns: three at 1440, two when three wouldn't fit at 15.25rem. Badges in a row stretch to equal height, so their ribbons line up. The profile is a 21rem sticky badge column beside a 3rem gap and the detail sections (2.5rem apart). Forms use two-column grids (1.25rem gap) inside raised sections.
 
 Breakpoints: at 960px the rail folds into a full-width "Filters" disclosure above the wall, and the profile stacks with the badge capped at 22rem. At 720px the wall goes to one column, form grids collapse, nav labels hide to icons, the signed-in name hides, and page padding tightens to 1.25rem 1rem.
 
