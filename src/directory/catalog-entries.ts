@@ -3,7 +3,7 @@ import type { Db } from '../db/client'
 import { skillAliases, skills, targetRoleAliases, targetRoles } from '../db/schema'
 import type { StackLayer } from './directory'
 import { normalizeName } from './normalize-name'
-import { tidyName } from './profile'
+import { tidyName } from './normalize-name'
 
 export type CatalogEntryRef = { id: number; name: string }
 

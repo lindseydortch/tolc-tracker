@@ -10,6 +10,7 @@ import {
   type PreferredStack,
   type ProfileForm,
 } from './profile'
+import { workArrangementLabels, type Place } from './location'
 import { linksFrom, type LinksForm } from './profile-links'
 
 export function parseProfileForm(input: unknown): ProfileForm {
@@ -87,7 +88,22 @@ function readDetails(read: FormReader): DetailsForm {
     otherSeniorities: read.list('otherSeniorities').map((value) =>
       read.oneOf('otherSeniorities', value, seniorityLabels),
     ),
+    workArrangements: read.list('workArrangements').map((value) =>
+      read.oneOf('workArrangements', value, workArrangementLabels),
+    ),
+    location: (() => {
+      const location = formReader(form.location, 'Location')
+      return { ...readPlace(location), timeZone: location.text('timeZone') }
+    })(),
+    wantsToWorkFrom: read
+      .list('wantsToWorkFrom')
+      .map((place) => readPlace(formReader(place, 'Wants to Work From place'))),
+    willingToRelocate: read.flag('willingToRelocate'),
   }
+}
+
+function readPlace(read: FormReader): Place {
+  return { city: read.text('city'), region: read.text('region'), country: read.text('country') }
 }
 
 type FormReader = ReturnType<typeof formReader>

@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ChevronDown, CircleCheck, SlidersHorizontal, UserPen } from 'lucide-react'
 import { getDirectory } from '../../directory/directory-fns'
 import { MemberBadge } from '../../directory/member-card'
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_member/')({
 })
 
 function QuickView() {
-  const { entries, catalogs } = Route.useLoaderData()
+  const { entries, catalogs, needsLocationAndWorkArrangement } = Route.useLoaderData()
   const search = Route.useLoaderDeps()
   const navigate = Route.useNavigate()
   const searching = !isEmptySearch(search)
@@ -41,7 +41,17 @@ function QuickView() {
 
   return (
     <main className="page quick-view">
-      {justSignedUp && <FinishProfilePrompt />}
+      {justSignedUp && (
+        <FinishProfilePrompt>
+          Your profile is live. Add Secondary Skills and Links so Members can find
+          and refer you.
+        </FinishProfilePrompt>
+      )}
+      {!justSignedUp && needsLocationAndWorkArrangement && (
+        <FinishProfilePrompt>
+          Add your Location and Work Arrangement so Members know which roles fit you.
+        </FinishProfilePrompt>
+      )}
       <div className="rail" data-open={filtersOpen || undefined}>
         <button
           type="button"
@@ -111,16 +121,15 @@ function QuickView() {
   )
 }
 
-// Shown once, on the Directory visit right after signup: the signup form
-// only asks for what's required, and Edit Profile has the rest.
-function FinishProfilePrompt() {
+// Sends the Member to Edit Profile. Shown once, on the Directory visit right
+// after signup, since the signup form only asks for what's required and
+// Edit Profile has the rest. Also shown to Members who signed up before
+// Location and Work Arrangement existed, until they add them.
+function FinishProfilePrompt({ children }: { children: ReactNode }) {
   return (
     <div className="banner banner-ok finish-profile">
       <CircleCheck size={16} aria-hidden="true" />
-      <span>
-        Your profile is live. Add Secondary Skills and Links so Members can find
-        and refer you.
-      </span>
+      <span>{children}</span>
       <Link to="/edit-profile" className="btn btn-primary">
         <UserPen size={16} aria-hidden="true" />
         Finish your profile

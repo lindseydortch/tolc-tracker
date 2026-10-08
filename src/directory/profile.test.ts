@@ -18,6 +18,8 @@ describe('the signup form', () => {
   it('reports every missing required field', async () => {
     const catalogs = await seededCatalogs()
     expect(Object.keys(profileProblems(emptyForm, catalogs)).sort()).toEqual([
+      'city',
+      'country',
       'firstName',
       'jobSearchStatus',
       'lastName',
@@ -25,6 +27,8 @@ describe('the signup form', () => {
       'preferredSeniority',
       'preferredStack',
       'targetRoles',
+      'timeZone',
+      'workArrangements',
     ])
     expect(profileProblems(octoForm, catalogs)).toEqual({})
   })
@@ -173,6 +177,10 @@ describe('completing a profile', () => {
           { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat' },
           { kind: 'github', url: 'https://github.com/octocat' },
         ],
+        workArrangements: ['remote', 'hybrid'],
+        location: octoForm.location,
+        wantsToWorkFrom: [],
+        willingToRelocate: false,
       },
     ])
     const member = await setup.directory.memberForAuthUser(authUserId)
@@ -526,6 +534,10 @@ describe('a Member profile page', () => {
         { kind: 'github', url: 'https://github.com/octocat' },
         { kind: 'x', url: 'https://x.com/octocat' },
       ],
+      workArrangements: ['remote', 'hybrid'],
+      location: octoForm.location,
+      wantsToWorkFrom: [],
+      willingToRelocate: false,
       secondarySkills: ['Docker', 'TypeScript'],
       links: [
         { kind: 'linkedin', url: 'https://www.linkedin.com/in/octocat', label: null },

@@ -5,6 +5,8 @@ import {
   memberSeniorities,
   memberSkills,
   memberTargetRoles,
+  memberWantsToWorkFrom,
+  memberWorkArrangements,
   members,
   skills,
   targetRoles,
@@ -15,6 +17,8 @@ import {
   findSkill,
 } from './catalog-entries'
 import type { LinkKind, StackLayer } from './directory'
+import { sortWorkArrangements } from './location'
+import { locationColumns, placeColumns } from './location-columns'
 import { normalizeName } from './normalize-name'
 import {
   checkDetails,
@@ -94,7 +98,8 @@ export function createProfileEditing(
   }
 
   // Replaces the Member's details: names, LinkedIn Link, Job Search
-  // Status, Target Roles and Seniorities.
+  // Status, Target Roles, Seniorities, Work Arrangements, Location, Wants to
+  // Work From and Willing to Relocate.
   async function saveDetails(tx: Db, memberId: number, details: ResolvedDetails) {
     await tx
       .update(members)
@@ -102,8 +107,27 @@ export function createProfileEditing(
         firstName: details.firstName,
         lastName: details.lastName,
         jobSearchStatus: details.jobSearchStatus,
+        ...details.location,
+        region: details.location.region || null,
+        willingToRelocate: details.willingToRelocate,
       })
       .where(eq(members.id, memberId))
+
+    await tx
+      .delete(memberWorkArrangements)
+      .where(eq(memberWorkArrangements.memberId, memberId))
+    await tx.insert(memberWorkArrangements).values(
+      details.workArrangements.map((workArrangement) => ({ memberId, workArrangement })),
+    )
+
+    await tx
+      .delete(memberWantsToWorkFrom)
+      .where(eq(memberWantsToWorkFrom.memberId, memberId))
+    if (details.wantsToWorkFrom.length > 0) {
+      await tx
+        .insert(memberWantsToWorkFrom)
+        .values(details.wantsToWorkFrom.map((place) => ({ memberId, ...place })))
+    }
 
     await tx
       .delete(links)
@@ -189,6 +213,8 @@ export function createProfileEditing(
           firstName: members.firstName,
           lastName: members.lastName,
           jobSearchStatus: members.jobSearchStatus,
+          location: locationColumns,
+          willingToRelocate: members.willingToRelocate,
         })
         .from(members)
         .where(eq(members.id, id))
@@ -221,6 +247,15 @@ export function createProfileEditing(
         .innerJoin(skills, eq(memberSkills.skillId, skills.id))
         .where(eq(memberSkills.memberId, id))
         .orderBy(asc(skills.name))
+      const arrangements = await db
+        .select({ workArrangement: memberWorkArrangements.workArrangement })
+        .from(memberWorkArrangements)
+        .where(eq(memberWorkArrangements.memberId, id))
+      const wantsToWorkFrom = await db
+        .select(placeColumns)
+        .from(memberWantsToWorkFrom)
+        .where(eq(memberWantsToWorkFrom.memberId, id))
+        .orderBy(asc(memberWantsToWorkFrom.id))
       return {
         details: {
           firstName: member.firstName ?? '',
@@ -233,6 +268,19 @@ export function createProfileEditing(
           otherSeniorities: sortSeniorities(
             seniorities.filter((s) => !s.preferred).map((s) => s.seniority),
           ),
+          workArrangements: sortWorkArrangements(
+            arrangements.map((row) => row.workArrangement),
+          ),
+          // Blank for a Member who signed up before Location existed; the
+          // browser fills in its own Time Zone.
+          location: {
+            city: member.location.city ?? '',
+            region: member.location.region ?? '',
+            country: member.location.country ?? '',
+            timeZone: member.location.timeZone ?? '',
+          },
+          wantsToWorkFrom,
+          willingToRelocate: member.willingToRelocate,
         },
         links: savedLinks,
         techStack,

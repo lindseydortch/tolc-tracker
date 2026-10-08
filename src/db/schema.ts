@@ -69,6 +69,12 @@ export const seniority = pgEnum('seniority', [
   'staffPlus',
 ])
 
+export const workArrangement = pgEnum('work_arrangement', [
+  'remote',
+  'hybrid',
+  'inPerson',
+])
+
 // A Member is created on first GitHub sign-in. `authUserId` points at Better
 // Auth's own user row, which holds the sign-in identity. The Discord columns
 // stay null until the Member connects Discord. `hidden` marks a Hidden
@@ -78,8 +84,10 @@ export const seniority = pgEnum('seniority', [
 // `membershipCheckedAt` when Discord last answered "not in TOLC" (null if it
 // never has, or since refused to answer). `membershipAttemptedAt` is when
 // Discord was last asked, answer or not. The profile columns stay null until
-// the Member fills the signup form. `editProfileSeenAt` is when the Member
-// first opened Edit Profile; until then, its nav link carries a dot.
+// the Member fills the signup form; Members who signed up before Location
+// existed keep a null Location until they add one. `editProfileSeenAt` is
+// when the Member first opened Edit Profile; until then, its nav link
+// carries a dot.
 export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   authUserId: text('auth_user_id')
@@ -100,6 +108,13 @@ export const members = pgTable('members', {
   firstName: text('first_name'),
   lastName: text('last_name'),
   jobSearchStatus: jobSearchStatus('job_search_status'),
+  // Location: where the Member lives now. `timeZone` is an IANA name, such
+  // as "America/Chicago"; `region` (State/Region) is optional.
+  city: text('city'),
+  region: text('region'),
+  country: text('country'),
+  timeZone: text('time_zone'),
+  willingToRelocate: boolean('willing_to_relocate').default(false).notNull(),
   editProfileSeenAt: timestamp('edit_profile_seen_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
@@ -165,6 +180,30 @@ export const memberSeniorities = pgTable(
       .where(sql`${table.preferred}`),
   ],
 )
+
+// Every Work Arrangement the Member would take.
+export const memberWorkArrangements = pgTable(
+  'member_work_arrangements',
+  {
+    memberId: integer('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    workArrangement: workArrangement('work_arrangement').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.memberId, table.workArrangement] })],
+)
+
+// The Member's Wants to Work From places, in the order they added them.
+// Only `country` is required; a blank City or State/Region is ''.
+export const memberWantsToWorkFrom = pgTable('member_wants_to_work_from', {
+  id: serial('id').primaryKey(),
+  memberId: integer('member_id')
+    .notNull()
+    .references(() => members.id, { onDelete: 'cascade' }),
+  city: text('city').notNull(),
+  region: text('region').notNull(),
+  country: text('country').notNull(),
+})
 
 // A Member's Tech Stack. A Skill with a `stackLayer` is a Primary Skill in
 // that Layer of the Preferred Stack; one without is a Secondary Skill.

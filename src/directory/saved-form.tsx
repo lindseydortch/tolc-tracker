@@ -1,5 +1,5 @@
 import { Check, CircleAlert } from 'lucide-react'
-import { useRef, useState, type FormEvent } from 'react'
+import { useCallback, useRef, useState, type FormEvent } from 'react'
 import type { SaveResult } from './profile'
 import { useReloadAfterChange } from './reload-after-change'
 
@@ -33,11 +33,12 @@ export function useSavedForm<Form, Problems extends object>({
     ? { ...serverProblems, ...problemsOf(form) }
     : {}
 
-  const update = (changes: Partial<Form>) => {
+  // Stable, so effects can list it.
+  const update = useCallback((changes: Partial<Form>) => {
     setForm((current) => ({ ...current, ...changes }))
     setServerProblems({})
     setStatus('editing')
-  }
+  }, [])
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()

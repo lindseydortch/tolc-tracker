@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { createNeonDb } from '../src/db/neon'
 import { memberSkills, members } from '../src/db/schema'
 import { createDirectory } from '../src/directory/directory'
+import { emptyPlace } from '../src/directory/location'
 import { emptyLinks } from '../src/directory/profile-links'
 
 // Resets the Admin's Member in the dev database to a standing, clearly fake
@@ -53,6 +54,15 @@ const steps = [
       targetRoles: ['Software Engineer', 'Product Engineer'],
       preferredSeniority: 'senior',
       otherSeniorities: ['mid', 'staffPlus'],
+      workArrangements: ['remote', 'hybrid'],
+      location: {
+        city: 'Testville',
+        region: 'TX',
+        country: 'United States',
+        timeZone: 'America/Chicago',
+      },
+      wantsToWorkFrom: [{ ...emptyPlace, country: 'Italy' }],
+      willingToRelocate: true,
       preferredStack: {
         frontendFramework: 'React',
         backendFramework: 'Express',

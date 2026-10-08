@@ -5,6 +5,8 @@ import {
   memberSeniorities,
   memberSkills,
   memberTargetRoles,
+  memberWantsToWorkFrom,
+  memberWorkArrangements,
   members,
   skillAliases,
   skills,
@@ -27,6 +29,14 @@ import {
   reactivateMember,
   type AdminMemberAction,
 } from './member-admin'
+import {
+  completeLocation,
+  hasWhereToWork,
+  sortWorkArrangements,
+  type Location,
+  type Place,
+} from './location'
+import { locationColumns, placeColumns } from './location-columns'
 import { normalizeName } from './normalize-name'
 import { createProfileEditing } from './profile-editing'
 import {
@@ -42,6 +52,9 @@ export type StackLayer = (typeof skills.$inferSelect)['suggestedLayer'] & {}
 export type JobSearchStatus = (typeof members.$inferSelect)['jobSearchStatus'] & {}
 
 export type Seniority = (typeof memberSeniorities.$inferSelect)['seniority']
+
+export type WorkArrangement =
+  (typeof memberWorkArrangements.$inferSelect)['workArrangement']
 
 export type SkillSeed = {
   name: string
@@ -108,6 +121,12 @@ export type DirectoryEntry = {
   typeScriptBadge: boolean
   // The Links the badge shows, in `badgeLinkKinds` order.
   badgeLinks: Pick<MemberLink, 'kind' | 'url'>[]
+  // Empty, and null, for a Member who signed up before Work Arrangement
+  // and Location existed and hasn't added them yet.
+  workArrangements: WorkArrangement[]
+  location: Location | null
+  wantsToWorkFrom: Place[]
+  willingToRelocate: boolean
 }
 
 // LinkedIn and GitHub are required; X shows only if the Member added one.
@@ -155,6 +174,8 @@ export function createDirectory(
         discordHandle: members.discordHandle,
         discordAvatar: members.discordAvatar,
         jobSearchStatus: members.jobSearchStatus,
+        location: locationColumns,
+        willingToRelocate: members.willingToRelocate,
       })
       .from(members)
       .innerJoin(
@@ -199,6 +220,15 @@ export function createDirectory(
       .where(and(inArray(links.memberId, ids), inArray(links.kind, badgeLinkKinds)))
       // Link kinds sort in the order the `link_kind` enum declares them.
       .orderBy(asc(links.kind), asc(links.id))
+    const arrangements = await db
+      .select()
+      .from(memberWorkArrangements)
+      .where(inArray(memberWorkArrangements.memberId, ids))
+    const wantsToWorkFrom = await db
+      .select({ memberId: memberWantsToWorkFrom.memberId, place: placeColumns })
+      .from(memberWantsToWorkFrom)
+      .where(inArray(memberWantsToWorkFrom.memberId, ids))
+      .orderBy(asc(memberWantsToWorkFrom.id))
 
     const entries: CompleteProfile[] = []
     for (const row of rows) {
@@ -246,6 +276,12 @@ export function createDirectory(
         // Turning the Badge on adds TypeScript to the Tech Stack.
         typeScriptBadge: own(techStack).some((skill) => isTypeScript(skill.name)),
         badgeLinks: own(badgeLinks).map(({ kind, url }) => ({ kind, url })),
+        workArrangements: sortWorkArrangements(
+          own(arrangements).map((row) => row.workArrangement),
+        ),
+        location: completeLocation(row.location),
+        wantsToWorkFrom: own(wantsToWorkFrom).map((row) => row.place),
+        willingToRelocate: row.willingToRelocate,
         secondarySkills,
       })
     }
@@ -471,6 +507,24 @@ export function createDirectory(
     async isProfileComplete(authUserId: string): Promise<boolean> {
       const found = await completeProfiles(eq(members.authUserId, authUserId))
       return found.length > 0
+    },
+
+    // True while the Member lacks a Work Arrangement or their Location, as
+    // Members who signed up before those existed do until they add them.
+    async needsLocationAndWorkArrangement(authUserId: string): Promise<boolean> {
+      const [member] = await db
+        .select({ id: members.id, location: locationColumns })
+        .from(members)
+        .where(eq(members.authUserId, authUserId))
+      if (!member) return false
+      const arrangements = await db
+        .select({ workArrangement: memberWorkArrangements.workArrangement })
+        .from(memberWorkArrangements)
+        .where(eq(memberWorkArrangements.memberId, member.id))
+      return !hasWhereToWork({
+        workArrangements: arrangements.map((row) => row.workArrangement),
+        location: member.location,
+      })
     },
 
     // False until the Member first opens Edit Profile, which marks it.

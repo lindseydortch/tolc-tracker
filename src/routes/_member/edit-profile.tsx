@@ -27,7 +27,8 @@ import {
   type CustomLinkForm,
   type LinksForm,
 } from '../../directory/profile-links'
-import { DetailsFields, Problem, Resolved } from '../../directory/profile-fields'
+import { Problem } from '../../directory/problem'
+import { DetailsFields, Resolved } from '../../directory/profile-fields'
 import { useReloadAfterChange } from '../../directory/reload-after-change'
 import { SaveStatus, useSavedForm, useServerChange } from '../../directory/saved-form'
 
