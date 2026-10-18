@@ -4,3 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "24"
+
+# Only production deploys touch the production database. Deploy previews share
+# its DATABASE_URL and would otherwise apply a PR's migrations before merge.
+[context.production]
+  command = "pnpm db:migrate && pnpm db:seed && pnpm build"
