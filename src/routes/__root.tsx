@@ -4,6 +4,13 @@ import { NotFoundPage } from '../not-found-page'
 import { NavigationProgress } from '../ui/navigation-progress'
 import appCss from '../styles.css?url'
 
+const description =
+  'The members-only referral Directory of TOLC, the Offer Letter Club.'
+// Netlify exposes the production site URL as `URL` at build time; fall back to
+// a relative path in dev so previews still resolve on a local server.
+const siteUrl = typeof process !== 'undefined' ? (process.env.URL ?? '') : ''
+const siteOrigin = siteUrl.replace(/\/+$/, '')
+
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
@@ -18,8 +25,64 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         title: 'TOLC Tracker',
       },
       {
+        name: 'description',
+        content: description,
+      },
+      {
         name: 'theme-color',
         content: '#110f15',
+      },
+      {
+        property: 'og:title',
+        content: 'TOLC Tracker',
+      },
+      {
+        property: 'og:description',
+        content: description,
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:site_name',
+        content: 'TOLC Tracker',
+      },
+      {
+        property: 'og:url',
+        content: `${siteOrigin}/`,
+      },
+      {
+        property: 'og:image',
+        content: `${siteOrigin}/og-image.png`,
+      },
+      {
+        property: 'og:image:width',
+        content: '1200',
+      },
+      {
+        property: 'og:image:height',
+        content: '630',
+      },
+      {
+        property: 'og:image:alt',
+        content: description,
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:title',
+        content: 'TOLC Tracker',
+      },
+      {
+        name: 'twitter:description',
+        content: description,
+      },
+      {
+        name: 'twitter:image',
+        content: `${siteOrigin}/og-image.png`,
       },
     ],
     links: [
